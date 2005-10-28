@@ -30,9 +30,14 @@
 #include	<Foundation/NSArray.h>
 
 /**
- * The GSCache class is used to maintain a cache of objects.<br />
- * When full, old objects are removed to make room for new ones
- * on a least-recently-used basis.<br />
+ * The GSCache class is used to maintain a cache of objects in memory
+ * for relatiovely rapid access.<br />
+ * Typical usage might be to keep the results of a database query around
+ * for a while in order to re-use them ... for instance when application
+ * configuration is obtained from a database which might be updated while
+ * the application is running.<br />
+ * When the cache is full, old objects are removed to make room for new
+ * ones on a least-recently-used basis.<br />
  * Cache sizes may be limited by the number of objects in the cache,
  * or by the memory used by the cache, or both.  Calculation of the
  * size of items in the cache is relatively expensive, so caches are
@@ -50,7 +55,7 @@
  * Return all the current cache instances... useful if you want to do
  * something to all cache instances in your process.
  */
-+ (NSArray*) allCaches;
++ (NSArray*) allInstances;
 
 /**
  * Return a report on all GSCache instances ... calls the [GSCache-description]
@@ -204,7 +209,13 @@
  * valid (has expired).<br />
  * If the method returns YES, then anObject will not be removed as it
  * normally would.  This allows the delegate to change the cached item
- * or refresh it.
+ * or refresh it.<br />
+ * For instance, the delegate could replace the object
+ * in the cache before returning YES in order to update the cached value
+ * when its lifetime has expired.<br />
+ * Another possibility would be for the delegate to return YES (in order
+ * to continue using the existing object) and queue an asynchronous
+ * database query to update the cache later.
  */
 - (BOOL) shouldKeepItem: (id)anObject
 		withKey: (NSString*)aKey

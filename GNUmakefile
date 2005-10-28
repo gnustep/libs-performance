@@ -15,13 +15,16 @@ DOCUMENT_NAME=Performance
 Performance_INTERFACE_VERSION=0.1
 
 Performance_OBJC_FILES += \
-	GSCache.m
+	GSCache.m \
+	GSThroughput.m
 
 Performance_HEADER_FILES += \
-	GSCache.h
+	GSCache.h \
+	GSThroughput.h
 
 Performance_AGSDOC_FILES += \
-	GSCache.h
+	GSCache.h \
+	GSThroughput.h
 
 # Optional Java wrappers for the library
 JAVA_WRAPPER_NAME = Performance

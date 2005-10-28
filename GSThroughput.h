@@ -1,0 +1,99 @@
+/** 
+   Copyright (C) 2005 Free Software Foundation, Inc.
+   
+   Written by:  Richard Frith-Macdonald <rfm@gnu.org>
+   Date:	October 2005
+   
+   This file is part of the Performance Library.
+
+   This library is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Library General Public
+   License as published by the Free Software Foundation; either
+   version 2 of the License, or (at your option) any later version.
+   
+   This library is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Library General Public License for more details.
+   
+   You should have received a copy of the GNU Library General Public
+   License along with this library; if not, write to the Free
+   Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111 USA.
+
+   $Date$ $Revision$
+   */ 
+
+#ifndef	INCLUDED_GSThroughput_H
+#define	INCLUDED_GSThroughput_H
+
+#include	<Foundation/NSObject.h>
+#include	<Foundation/NSArray.h>
+
+/**
+ * The GSThroughput class is used maintain statistics about the number
+ * of events or the duration of operations in your software.
+ */
+@interface	GSThroughput : NSObject
+{
+}
+
+/**
+ * Return all the current throughput measuring objects ...
+ * useful if you want to do to all instances in your process.
+ */
++ (NSArray*) allInstances;
+
+/**
+ * Return a report on all GSThroughput instances ... calls
+ * the [GSThroughput-description] * method of the individual
+ * instances to get a report on each one.
+ */
++ (NSString*) description;
+
+/**
+ * Instructs the minitoring system to use a timer at the specified interval
+ * for keeping its idea of the current time up to date.
+ */
++ (void) setTick: (NSTimeInterval)interval;
+
+/**
+ * Updates the monitoring system's notion of the current time.<br />
+ * This should be called at the start of each (or more often) if
+ * you want accurate monitoring by the second.
+ */
++ (void) tick;
+
+/**
+ * Add to the count of the number of transactions in the current second.
+ * Use this only if you are not logging event durations.
+ */
+- (void) add: (unsigned)count;
+
+/**
+ * Adds a record for a single event of the specified duration.
+ */
+- (void) addDuration: (NSTimeInterval)length;
+
+/**
+ * Returns a string describing the status of the receiver for debug/reporting.
+ */
+- (NSString*) description;
+
+/**
+ * Return the name of this instance (as set using -setName:)
+ */
+- (NSString*) name;
+
+/**
+ * Sets the name of this instance.
+ */
+- (void) setName: (NSString*)name;
+
+/**
+ * Internal method called by +tick in order to update stats for this instance.
+ */
+- (void) update;
+@end
+
+#endif
+

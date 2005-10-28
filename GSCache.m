@@ -150,7 +150,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
   item->prev = item->next = item;
 }
 
-+ (NSArray*) allCaches
++ (NSArray*) allInstances
 {
   NSArray	*a;
 
