@@ -31,34 +31,38 @@
 
 /**
  * The GSThroughput class is used maintain statistics about the number
- * of events or the duration of operations in your software.
+ * of events or the duration of operations in your software.<br />
+ * For performance reasons, the class avoids locking and you must ensure
+ * that an instance of the class is only ever used by a single thread
+ * (the one in which it was created).
  */
 @interface	GSThroughput : NSObject
 {
 }
 
 /**
- * Return all the current throughput measuring objects ...
- * useful if you want to do to all instances in your process.
+ * Return all the current throughput measuring objects in the current thread...
  */
 + (NSArray*) allInstances;
 
 /**
- * Return a report on all GSThroughput instances ... calls
- * the [GSThroughput-description] * method of the individual
- * instances to get a report on each one.
+ * Return a report on all GSThroughput instances in the current thread...
+ * calls the [GSThroughput-description] method of the individual instances
+ * to get a report on each one.
  */
 + (NSString*) description;
 
 /**
- * Instructs the minitoring system to use a timer at the specified interval
- * for keeping its idea of the current time up to date.
+ * Instructs the monitoring system to use a timer at the specified interval
+ * for keeping its idea of the current time up to date.  This timer is used
+ * by all instances associated with the current thread.
  */
 + (void) setTick: (NSTimeInterval)interval;
 
 /**
- * Updates the monitoring system's notion of the current time.<br />
- * This should be called at the start of each (or more often) if
+ * Updates the monitoring system's notion of the current time for all
+ * instances associated with the current thread.<br />
+ * This should be called at the start of each second (or more often) if
  * you want accurate monitoring by the second.
  */
 + (void) tick;
@@ -84,22 +88,22 @@
 
 /**
  * Ends duration recording for the current event started by a matching
- * call to -startDuration.<br />
+ * call to the -startDuration: method.<br />
  * You may use this method only if the receiver was initialised with
  * duration logging turned on.
  */
 - (void) endDuration;
 
 /**
- * Initialises the receiver for duration logging for fifteen minute
- * periods over the last twentyfour hours.
+ * Initialises the receiver for duration logging (in the current thread only)
+ * for fifteen minute periods over the last twentyfour hours.
  */
- - (id) init;
+- (id) init;
 
 /** <init />
- * Initialises the receiver to maintain stats over a particular time range,
- * specifying whether duration statistics are to be maintained, or just
- * event/transation counts.
+ * Initialises the receiver to maintain stats (for the current thread only)
+ * over a particular time range, specifying whether duration statistics are
+ * to be maintained, or just event/transaction counts.
  */
 - (id) initWithDurations: (BOOL)aFlag
 	      forPeriods: (unsigned)numberOfPeriods
@@ -117,16 +121,16 @@
 
 /**
  * Starts recording the duration of an event.  This must be followed by
- * a matching call to -endDuration.<br />
+ * a matching call to the -endDuration method.<br />
+ * The name argument is used to identify the location of the call for
+ * debugging/logging purposes, and you must ensure that the string
+ * continues to exist up to the point where -endDuration is called,
+ * as the receiver will not retain it.<br />
  * You may use this method only if the receiver was initialised with
  * duration logging turned on.
  */
-- (void) startDuration;
+- (void) startDuration: (NSString*)name;
 
-/**
- * Internal method called by +tick in order to update stats for this instance.
- */
-- (void) update;
 @end
 
 #endif
