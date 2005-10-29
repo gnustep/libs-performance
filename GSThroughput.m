@@ -29,6 +29,7 @@
 #include	<Foundation/NSString.h>
 #include	<Foundation/NSData.h>
 #include	<Foundation/NSDate.h>
+#include	<Foundation/NSCalendarDate.h>
 #include	<Foundation/NSException.h>
 #include	<Foundation/NSNotification.h>
 #include	<Foundation/NSHashTable.h>
@@ -68,6 +69,7 @@ typedef	struct {
   NSTimeInterval	max;	// Longest duration
   NSTimeInterval	min;	// Shortest duration
   NSTimeInterval	sum;	// Total (sum of durations for event)
+  unsigned		tick;
 } Info;
 
 typedef struct {
@@ -227,19 +229,64 @@ typedef struct {
 
 - (NSString*) description
 {
-  NSString	*n = my->name;
+  NSString		*n = my->name;
+  NSMutableString	*m;
+  unsigned		i;
 
   if (n == nil)
     {
       n = [super description];
     }
-  // FIXME
-  return n;
+  m = [n mutableCopy];
+  if (my->second > 0)
+    {
+      [m appendString: @"\nCurrent minute:\n"];
+      for (i = 0; i < my->second; i++)
+	{
+	  Info			*info = &my->seconds[i];
+	  NSTimeInterval	ti = info->tick + baseTime;
+
+	  [m appendFormat: @"%u, %g, %g, %g, %@\n",
+	    info->cnt, info->max, info->min, info->sum,
+	    [NSDate dateWithTimeIntervalSinceReferenceDate: ti]];
+	}
+    }
+
+  if (my->minute > 0)
+    {
+      [m appendString: @"\nCurrent hour:\n"];
+      for (i = 0; i < my->minute; i++)
+	{
+	  Info			*info = &my->minutes[i];
+	  NSTimeInterval	ti = info->tick + baseTime;
+
+	  [m appendFormat: @"%u, %g, %g, %g, %@\n",
+	    info->cnt, info->max, info->min, info->sum,
+	    [NSDate dateWithTimeIntervalSinceReferenceDate: ti]];
+	}
+    }
+
+  if (my->hour > 0)
+    {
+      [m appendString: @"\nCurrent day:\n"];
+      for (i = 0; i < my->hour; i++)
+	{
+	  Info			*info = &my->hours[i];
+	  NSTimeInterval	ti = info->tick + baseTime;
+
+	  [m appendFormat: @"%u, %g, %g, %g, %@\n",
+	    info->cnt, info->max, info->min, info->sum,
+	    [NSDate dateWithTimeIntervalSinceReferenceDate: ti]];
+	}
+    }
+
+  return AUTORELEASE(m);
 }
 
 - (id) init
 {
-  unsigned	i;
+  NSCalendarDate	*c;	
+  unsigned		i;
 
   for (i = 0; i < 24; i++)
     {
@@ -251,6 +298,14 @@ typedef struct {
       my->minutes[i].min = MAXDURATION;
     }
   my->last = GSThroughputTimeTick() - 1;
+  c = [[NSCalendarDate alloc] initWithTimeIntervalSinceReferenceDate: lastTime];
+  my->second = [c secondOfMinute];
+  my->minute = [c minuteOfHour];
+  my->hour = [c hourOfDay];
+  RELEASE(c);
+  my->seconds[my->second].tick = my->last;
+  my->minutes[my->minute].tick = my->last;
+  my->hours[my->hour].tick = my->last;
   return self;
 }
 
@@ -268,7 +323,6 @@ typedef struct {
 {
   unsigned	tick = GSThroughputTimeTick();
 
-  // FIXME
   while (my->last < tick)
     {
       Info	*info;
@@ -318,18 +372,21 @@ typedef struct {
 	      info->max = 0.0;
 	      info->min = MAXDURATION;
 	      info->sum = 0.0;
+	      info->tick = tick;
 	    }
 	  info = &my->minutes[my->minute];
 	  info->cnt = 0;
 	  info->max = 0.0;
 	  info->min = MAXDURATION;
 	  info->sum = 0.0;
+	  info->tick = tick;
 	}
       info = &my->seconds[my->second];
       info->cnt = 0;
       info->max = 0.0;
       info->min = MAXDURATION;
       info->sum = 0.0;
+      info->tick = tick;
 
       my->last++;
     }
