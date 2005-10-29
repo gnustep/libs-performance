@@ -64,13 +64,16 @@
 + (void) tick;
 
 /**
- * Add to the count of the number of transactions in the current second.
- * Use this only if you are not logging event durations.
+ * Add to the count of the number of transactions in the current second.<br />
+ * You may use this method only if the receiver was initialised with
+ * duration logging turned off.
  */
 - (void) add: (unsigned)count;
 
 /**
- * Adds a record for a single event of the specified duration.
+ * Adds a record for a single event of the specified duration.<br />
+ * You may use this method only if the receiver was initialised with
+ * duration logging turned on.
  */
 - (void) addDuration: (NSTimeInterval)length;
 
@@ -78,6 +81,29 @@
  * Returns a string describing the status of the receiver for debug/reporting.
  */
 - (NSString*) description;
+
+/**
+ * Ends duration recording for the current event started by a matching
+ * call to -startDuration.<br />
+ * You may use this method only if the receiver was initialised with
+ * duration logging turned on.
+ */
+- (void) endDuration;
+
+/**
+ * Initialises the receiver for duration logging for fifteen minute
+ * periods over the last twentyfour hours.
+ */
+ - (id) init;
+
+/** <init />
+ * Initialises the receiver to maintain stats over a particular time range,
+ * specifying whether duration statistics are to be maintained, or just
+ * event/transation counts.
+ */
+- (id) initWithDurations: (BOOL)aFlag
+	      forPeriods: (unsigned)numberOfPeriods
+		ofLength: (unsigned)minutesPerPeriod;
 
 /**
  * Return the name of this instance (as set using -setName:)
@@ -88,6 +114,14 @@
  * Sets the name of this instance.
  */
 - (void) setName: (NSString*)name;
+
+/**
+ * Starts recording the duration of an event.  This must be followed by
+ * a matching call to -endDuration.<br />
+ * You may use this method only if the receiver was initialised with
+ * duration logging turned on.
+ */
+- (void) startDuration;
 
 /**
  * Internal method called by +tick in order to update stats for this instance.
