@@ -469,7 +469,7 @@ typedef struct {
 	{
 	  if (my->second > 0)
 	    {
-	      [m appendString: @"\nCurrent minute:\n"];
+	      [m appendString: @"\nSeconds in current minute:\n"];
 	      for (i = 0; i < my->second; i++)
 		{
 		  DInfo			*info = &dseconds[i];
@@ -483,7 +483,7 @@ typedef struct {
 
 	  if (my->minute > 0)
 	    {
-	      [m appendString: @"\nCurrent period:\n"];
+	      [m appendString: @"\nPrevious minutes in current period:\n"];
 	      for (i = 0; i < my->minute; i++)
 		{
 		  DInfo			*info = &dminutes[i];
