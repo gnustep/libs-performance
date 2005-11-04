@@ -19,6 +19,7 @@ Performance_OBJC_FILES += \
 	GSThroughput.m
 
 Performance_HEADER_FILES += \
+	Performance.h \
 	GSCache.h \
 	GSThroughput.h
 

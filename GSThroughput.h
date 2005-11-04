@@ -38,6 +38,7 @@
  */
 @interface	GSThroughput : NSObject
 {
+  void	*_data;
 }
 
 /**

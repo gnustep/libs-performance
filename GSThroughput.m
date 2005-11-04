@@ -77,7 +77,7 @@ typedef struct {
   NSString		*name;		// Name of this instance
   GSThroughputThread	*thread;	// Thread info
 } Item;
-#define	my	((Item*)&self[1])
+#define	my	((Item*)_data)
 
 #define	cseconds	((CInfo*)my->seconds)
 #define	cminutes	((CInfo*)my->minutes)
@@ -361,7 +361,6 @@ typedef struct {
   return ms;
 }
 
-
 + (void) initialize
 {
   if (NSDateClass == 0)
@@ -431,17 +430,22 @@ typedef struct {
 
 - (void) dealloc
 {
-  if (my->seconds != 0)
+  if (_data)
     {
-      NSZoneFree(NSDefaultMallocZone(), my->seconds);
+      if (my->seconds != 0)
+	{
+	  NSZoneFree(NSDefaultMallocZone(), my->seconds);
+	}
+      RELEASE(my->name);
+      if (my->thread != nil)
+	{
+	  NSHashRemove(my->thread->instances, (void*)self);
+	  my->thread = nil;
+	}
+      NSZoneFree(NSDefaultMallocZone(), _data);
+      _data = 0;
     }
-  RELEASE(my->name);
-  if (my->thread != nil)
-    {
-      NSHashRemove(my->thread->instances, (void*)self);
-      my->thread = nil;
-    }
-  NSDeallocateObject(self);
+  [super dealloc];
 }
 
 - (NSString*) description
@@ -574,6 +578,9 @@ typedef struct {
   NSCalendarDate	*c;	
   unsigned		i;
 
+  _data = (Item*)NSZoneMalloc(NSDefaultMallocZone(), sizeof(Item));
+  memset(_data, '\0', sizeof(Item));
+
   if (numberOfPeriods < 1 || minutesPerPeriod < 1)
     {
       DESTROY(self);
@@ -634,9 +641,9 @@ typedef struct {
       my->seconds = ptr;
       my->minutes = &ptr[60];
       my->periods = &ptr[60 + minutesPerPeriod];
-      dseconds[my->second].tick = my->last;
-      dminutes[my->minute].tick = my->last;
-      dperiods[my->period].tick = my->last;
+      cseconds[my->second].tick = my->last;
+      cminutes[my->minute].tick = my->last;
+      cperiods[my->period].tick = my->last;
     }
   return self;
 }
