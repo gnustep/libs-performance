@@ -464,48 +464,65 @@ typedef struct {
   if (my->thread != nil)
     {
       NSTimeInterval	baseTime = my->thread->baseTime;
+      unsigned		tick;
 
       if (my->supportDurations == YES)
 	{
 	  if (my->second > 0)
 	    {
+	      tick = dseconds[my->second].tick;
+
 	      [m appendString: @"\nSeconds in current minute:\n"];
 	      for (i = 0; i < my->second; i++)
 		{
 		  DInfo			*info = &dseconds[i];
 		  NSTimeInterval	ti = info->tick + baseTime;
 
-		  [m appendFormat: @"%u, %g, %g, %g, %@\n",
-		    info->cnt, info->max, info->min, info->sum,
-		    [NSDate dateWithTimeIntervalSinceReferenceDate: ti]];
+		  if (info->tick != tick)
+		    {
+		      tick = info->tick;
+		      [m appendFormat: @"%u, %g, %g, %g, %@\n",
+			info->cnt, info->max, info->min, info->sum,
+			[NSDate dateWithTimeIntervalSinceReferenceDate: ti]];
+		    }
 		}
 	    }
 
 	  if (my->minute > 0)
 	    {
+	      tick = dminutes[my->minute].tick;
 	      [m appendString: @"\nPrevious minutes in current period:\n"];
 	      for (i = 0; i < my->minute; i++)
 		{
 		  DInfo			*info = &dminutes[i];
 		  NSTimeInterval	ti = info->tick + baseTime;
 
-		  [m appendFormat: @"%u, %g, %g, %g, %@\n",
-		    info->cnt, info->max, info->min, info->sum,
-		    [NSDate dateWithTimeIntervalSinceReferenceDate: ti]];
+		  if (info->tick != tick)
+		    {
+		      tick = info->tick;
+		      [m appendFormat: @"%u, %g, %g, %g, %@\n",
+			info->cnt, info->max, info->min, info->sum,
+			[NSDate dateWithTimeIntervalSinceReferenceDate: ti]];
+		    }
 		}
 	    }
 
 	  if (my->period > 0)
 	    {
+	      tick = dperiods[my->period].tick;
 	      [m appendString: @"\nPrevious periods:\n"];
 	      for (i = 0; i < my->period; i++)
 		{
 		  DInfo			*info = &dperiods[i];
 		  NSTimeInterval	ti = info->tick + baseTime;
 
-		  [m appendFormat: @"%u, %g, %g, %g, %@\n",
-		    info->cnt, info->max, info->min, info->sum,
-		    [NSDate dateWithTimeIntervalSinceReferenceDate: ti]];
+		  if (info->tick != tick)
+		    {
+		      tick = info->tick;
+		      [m appendFormat: @"%u, %g, %g, %g, %@\n",
+			info->cnt, info->max, info->min, info->sum,
+			[NSDate dateWithTimeIntervalSinceReferenceDate: ti]];
+		    }
 		}
 	    }
 	}
@@ -513,40 +530,55 @@ typedef struct {
 	{
 	  if (my->second > 0)
 	    {
+	      tick = cseconds[my->second].tick;
 	      [m appendString: @"\nCurrent minute:\n"];
 	      for (i = 0; i < my->second; i++)
 		{
 		  CInfo			*info = &cseconds[i];
 		  NSTimeInterval	ti = info->tick + baseTime;
 
-		  [m appendFormat: @"%u, %@\n", info->cnt,
-		    [NSDate dateWithTimeIntervalSinceReferenceDate: ti]];
+		  if (info->tick != tick)
+		    {
+		      tick = info->tick;
+		      [m appendFormat: @"%u, %@\n", info->cnt,
+			[NSDate dateWithTimeIntervalSinceReferenceDate: ti]];
+		    }
 		}
 	    }
 
 	  if (my->minute > 0)
 	    {
+	      tick = cminutes[my->minute].tick;
 	      [m appendString: @"\nCurrent period:\n"];
 	      for (i = 0; i < my->minute; i++)
 		{
 		  CInfo			*info = &cminutes[i];
 		  NSTimeInterval	ti = info->tick + baseTime;
 
-		  [m appendFormat: @"%u, %@\n", info->cnt,
-		    [NSDate dateWithTimeIntervalSinceReferenceDate: ti]];
+		  if (info->tick != tick)
+		    {
+		      tick = info->tick;
+		      [m appendFormat: @"%u, %@\n", info->cnt,
+			[NSDate dateWithTimeIntervalSinceReferenceDate: ti]];
+		    }
 		}
 	    }
 
 	  if (my->period > 0)
 	    {
+	      tick = cperiods[my->period].tick;
 	      [m appendString: @"\nPrevious periods:\n"];
 	      for (i = 0; i < my->period; i++)
 		{
 		  CInfo			*info = &cperiods[i];
 		  NSTimeInterval	ti = info->tick + baseTime;
 
-		  [m appendFormat: @"%u, %@\n", info->cnt,
-		    [NSDate dateWithTimeIntervalSinceReferenceDate: ti]];
+		  if (info->tick != tick)
+		    {
+		      tick = info->tick;
+		      [m appendFormat: @"%u, %@\n", info->cnt,
+			[NSDate dateWithTimeIntervalSinceReferenceDate: ti]];
+		    }
 		}
 	    }
 	}
