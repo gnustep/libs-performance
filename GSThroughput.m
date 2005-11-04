@@ -222,7 +222,7 @@ typedef struct {
 			}
 		      info->sum += from->sum;
 		    }
-		  if (my->minute++ == my->minutesPerPeriod)
+		  if (my->minute++ == my->minutesPerPeriod - 1)
 		    {
 		      info = &dperiods[my->period];
 		      for (i = 0; i < my->minutesPerPeriod; i++)
@@ -240,7 +240,7 @@ typedef struct {
 			    }
 			  info->sum += from->sum;
 			}
-		      if (my->period++ == my->numberOfPeriods)
+		      if (my->period++ == my->numberOfPeriods - 1)
 			{
 			  my->period = 0;
 			}
@@ -283,14 +283,14 @@ typedef struct {
 		    {
 		      info->cnt += cseconds[i].cnt;
 		    }
-		  if (my->minute++ == my->minutesPerPeriod)
+		  if (my->minute++ == my->minutesPerPeriod - 1)
 		    {
 		      info = &cperiods[my->period];
 		      for (i = 0; i < my->minutesPerPeriod; i++)
 			{
 			  info->cnt += cminutes[i].cnt;
 			}
-		      if (my->period++ == my->numberOfPeriods)
+		      if (my->period++ == my->numberOfPeriods - 1)
 			{
 			  my->period = 0;
 			}
@@ -633,7 +633,7 @@ typedef struct {
   my->second = [c secondOfMinute];
   i = [c hourOfDay] * 60 + [c minuteOfHour];
   my->minute = i % minutesPerPeriod;
-  my->period = i / minutesPerPeriod;
+  my->period = (i / minutesPerPeriod) % numberOfPeriods;
   RELEASE(c);
 
   i = 60 + minutesPerPeriod + numberOfPeriods;
@@ -644,8 +644,8 @@ typedef struct {
       ptr = (DInfo*)NSZoneMalloc(NSDefaultMallocZone(), sizeof(DInfo) * i);
       memset(ptr, '\0', sizeof(DInfo) * i);
       my->seconds = ptr;
-      my->minutes = &ptr[60];
-      my->periods = &ptr[60 + minutesPerPeriod];
+      my->minutes = ptr + 60;
+      my->periods = ptr + 60 + minutesPerPeriod;
       dseconds[my->second].tick = my->last;
       dminutes[my->minute].tick = my->last;
       dperiods[my->period].tick = my->last;
@@ -670,8 +670,8 @@ typedef struct {
       ptr = (CInfo*)NSZoneMalloc(NSDefaultMallocZone(), sizeof(CInfo) * i);
       memset(ptr, '\0', sizeof(CInfo) * i);
       my->seconds = ptr;
-      my->minutes = &ptr[60];
-      my->periods = &ptr[60 + minutesPerPeriod];
+      my->minutes = ptr + 60;
+      my->periods = ptr + 60 + minutesPerPeriod;
       cseconds[my->second].tick = my->last;
       cminutes[my->minute].tick = my->last;
       cperiods[my->period].tick = my->last;
