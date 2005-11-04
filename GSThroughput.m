@@ -249,7 +249,7 @@ typedef struct {
 		      info->max = 0.0;
 		      info->min = MAXDURATION;
 		      info->sum = 0.0;
-		      info->tick = tick;
+		      info->tick = my->last;
 		      my->minute = 0;
 		    }
 		  info = &dminutes[my->minute];
@@ -257,7 +257,7 @@ typedef struct {
 		  info->max = 0.0;
 		  info->min = MAXDURATION;
 		  info->sum = 0.0;
-		  info->tick = tick;
+		  info->tick = my->last;
 		  my->second = 0;
 		}
 	      info = &dseconds[my->second];
@@ -265,7 +265,7 @@ typedef struct {
 	      info->max = 0.0;
 	      info->min = MAXDURATION;
 	      info->sum = 0.0;
-	      info->tick = tick;
+	      info->tick = my->last;
 
 	      my->last++;
 	    }
@@ -296,17 +296,17 @@ typedef struct {
 			}
 		      info = &cperiods[my->period];
 		      info->cnt = 0;
-		      info->tick = tick;
+		      info->tick = my->last;
 		      my->minute = 0;
 		    }
 		  info = &cminutes[my->minute];
 		  info->cnt = 0;
-		  info->tick = tick;
+		  info->tick = my->last;
 		  my->second = 0;
 		}
 	      info = &cseconds[my->second];
 	      info->cnt = 0;
-	      info->tick = tick;
+	      info->tick = my->last;
 
 	      my->last++;
 	    }
@@ -471,7 +471,7 @@ typedef struct {
 	  [m appendString: @"\nSeconds in current minute:\n"];
 	  if (my->second > 0)
 	    {
-	      tick = dseconds[my->second].tick;
+	      tick = 0;
 	      for (i = 0; i < my->second; i++)
 		{
 		  DInfo			*info = &dseconds[i];
@@ -490,7 +490,7 @@ typedef struct {
 	  [m appendString: @"\nPrevious minutes in current period:\n"];
 	  if (my->minute > 0)
 	    {
-	      tick = dminutes[my->minute].tick;
+	      tick = 0;
 	      for (i = 0; i < my->minute; i++)
 		{
 		  DInfo			*info = &dminutes[i];
@@ -509,7 +509,7 @@ typedef struct {
 	  [m appendString: @"\nPrevious periods:\n"];
 	  if (my->period > 0)
 	    {
-	      tick = dperiods[my->period].tick;
+	      tick = 0;
 	      for (i = 0; i < my->period; i++)
 		{
 		  DInfo			*info = &dperiods[i];
@@ -530,7 +530,7 @@ typedef struct {
 	  [m appendString: @"\nSeconds in current minute:\n"];
 	  if (my->second > 0)
 	    {
-	      tick = cseconds[my->second].tick;
+	      tick = 0;
 	      for (i = 0; i < my->second; i++)
 		{
 		  CInfo			*info = &cseconds[i];
@@ -548,7 +548,7 @@ typedef struct {
 	  [m appendString: @"\nPrevious minutes in current period:\n"];
 	  if (my->minute > 0)
 	    {
-	      tick = cminutes[my->minute].tick;
+	      tick = 0;
 	      for (i = 0; i < my->minute; i++)
 		{
 		  CInfo			*info = &cminutes[i];
@@ -566,7 +566,7 @@ typedef struct {
 	  [m appendString: @"\nPrevious periods:\n"];
 	  if (my->period > 0)
 	    {
-	      tick = cperiods[my->period].tick;
+	      tick = 0;
 	      for (i = 0; i < my->period; i++)
 		{
 		  CInfo			*info = &cperiods[i];
