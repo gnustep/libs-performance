@@ -468,11 +468,10 @@ typedef struct {
 
       if (my->supportDurations == YES)
 	{
+	  [m appendString: @"\nSeconds in current minute:\n"];
 	  if (my->second > 0)
 	    {
 	      tick = dseconds[my->second].tick;
-
-	      [m appendString: @"\nSeconds in current minute:\n"];
 	      for (i = 0; i < my->second; i++)
 		{
 		  DInfo			*info = &dseconds[i];
@@ -488,10 +487,10 @@ typedef struct {
 		}
 	    }
 
+	  [m appendString: @"\nPrevious minutes in current period:\n"];
 	  if (my->minute > 0)
 	    {
 	      tick = dminutes[my->minute].tick;
-	      [m appendString: @"\nPrevious minutes in current period:\n"];
 	      for (i = 0; i < my->minute; i++)
 		{
 		  DInfo			*info = &dminutes[i];
@@ -507,10 +506,10 @@ typedef struct {
 		}
 	    }
 
+	  [m appendString: @"\nPrevious periods:\n"];
 	  if (my->period > 0)
 	    {
 	      tick = dperiods[my->period].tick;
-	      [m appendString: @"\nPrevious periods:\n"];
 	      for (i = 0; i < my->period; i++)
 		{
 		  DInfo			*info = &dperiods[i];
@@ -528,10 +527,10 @@ typedef struct {
 	}
       else
 	{
+	  [m appendString: @"\nSeconds in current minute:\n"];
 	  if (my->second > 0)
 	    {
 	      tick = cseconds[my->second].tick;
-	      [m appendString: @"\nCurrent minute:\n"];
 	      for (i = 0; i < my->second; i++)
 		{
 		  CInfo			*info = &cseconds[i];
@@ -546,10 +545,10 @@ typedef struct {
 		}
 	    }
 
+	  [m appendString: @"\nPrevious minutes in current period:\n"];
 	  if (my->minute > 0)
 	    {
 	      tick = cminutes[my->minute].tick;
-	      [m appendString: @"\nCurrent period:\n"];
 	      for (i = 0; i < my->minute; i++)
 		{
 		  CInfo			*info = &cminutes[i];
@@ -564,10 +563,10 @@ typedef struct {
 		}
 	    }
 
+	  [m appendString: @"\nPrevious periods:\n"];
 	  if (my->period > 0)
 	    {
 	      tick = cperiods[my->period].tick;
-	      [m appendString: @"\nPrevious periods:\n"];
 	      for (i = 0; i < my->period; i++)
 		{
 		  CInfo			*info = &cperiods[i];
