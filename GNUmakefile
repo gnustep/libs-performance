@@ -19,20 +19,22 @@ Performance_OBJC_FILES += \
 	GSThroughput.m \
 	GSTicker.m \
 
+
 Performance_HEADER_FILES += \
 	Performance.h \
 	GSCache.h \
 	GSThroughput.h \
 	GSTicker.h \
 
+
 Performance_AGSDOC_FILES += \
 	GSCache.h \
 	GSThroughput.h \
 	GSTicker.h
 
+
 # Optional Java wrappers for the library
 JAVA_WRAPPER_NAME = Performance
-Performance_HEADER_FILES=Performance.jigs.h
 
 #
 # Assume that the use of the gnu runtime means we have the gnustep
