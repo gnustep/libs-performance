@@ -53,6 +53,10 @@ Performance_HEADER_FILES_INSTALL_DIR = Performance
 -include GNUmakefile.preamble
 
 include $(GNUSTEP_MAKEFILES)/library.make
+# If JIGS is installed, automatically generate Java wrappers as well.
+# Because of the '-', should not complain if java-wrapper.make can't be
+# found ... simply skip generation of java wrappers in that case.
+-include $(GNUSTEP_MAKEFILES)/java-wrapper.make
 include $(GNUSTEP_MAKEFILES)/test-tool.make
 include $(GNUSTEP_MAKEFILES)/documentation.make
 
