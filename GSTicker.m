@@ -43,8 +43,8 @@ static NSDate		*startDate = nil;
 @interface	GSTickerObservation : NSObject
 {
   @public
-  id	observer;
-  id	userInfo;
+  id<GSTicker>	observer;
+  id		userInfo;
 }
 - (void) fire: (NSArray*)live;
 @end
