@@ -32,6 +32,7 @@ Performance_AGSDOC_FILES += \
 
 # Optional Java wrappers for the library
 JAVA_WRAPPER_NAME = Performance
+Performance_HEADER_FILES=Performance.jigs.h
 
 #
 # Assume that the use of the gnu runtime means we have the gnustep
