@@ -21,7 +21,6 @@ Performance_OBJC_FILES += \
 
 
 Performance_HEADER_FILES += \
-	Performance.h \
 	GSCache.h \
 	GSThroughput.h \
 	GSTicker.h \

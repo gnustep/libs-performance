@@ -1,5 +1,5 @@
 /*
-   Global include file for the GNUstep Performance Library.
+   JIGS include file for the GNUstep Performance Library.
 
    Copyright (C) 2005 Free Software Foundation, Inc.
 
@@ -23,11 +23,7 @@
    Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02111 USA.
    */ 
 
-#ifndef __Performance_h__
-#define __Performance_h__
+#include "GSCache.h"
+#include "GSThroughput.h"
+#include "GSTicker.h"
 
-#include <Performance/GSCache.h>
-#include <Performance/GSThroughput.h>
-#include <Performance/GSTicker.h>
-
-#endif /* __Performance_h__ */
