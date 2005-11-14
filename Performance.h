@@ -28,5 +28,6 @@
 
 #include <Performance/GSCache.h>
 #include <Performance/GSThroughput.h>
+#include <Performance/GSTicker.h>
 
 #endif /* __Performance_h__ */

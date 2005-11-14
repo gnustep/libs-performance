@@ -41,21 +41,7 @@
 #include	<Foundation/NSTimer.h>
 
 #include	"GSCache.h"
-
-static Class		NSDateClass = 0;
-static SEL		tiSel = 0;
-static NSTimeInterval	(*tiImp)(Class,SEL) = 0;
-
-static NSTimer		*theTimer = nil;
-static NSTimeInterval	baseTime = 0;
-static NSTimeInterval	lastTime = 0;
-
-inline unsigned	GSCacheTimeTick()
-{
-  return (lastTime - baseTime) + 1;
-}
-
-
+#include	"GSTicker.h"
 
 @interface	GSCacheItem : NSObject
 {
@@ -198,53 +184,11 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 {
   if (GSCacheInstances == 0)
     {
-      NSDateClass = [NSDate class];
-      tiSel = @selector(timeIntervalSinceReferenceDate);
-      tiImp
-	= (NSTimeInterval (*)(Class,SEL))[NSDateClass methodForSelector: tiSel];
-      baseTime = lastTime = (*tiImp)(NSDateClass, tiSel);
       GSCacheLock = [NSLock new];
       GSCacheInstances
 	= NSCreateHashTable(NSNonRetainedObjectHashCallBacks, 0);
-      [self setTick: 1.0];
+      GSTickerTimeNow();
     }
-}
-
-+ (void) setTick: (NSTimeInterval)interval
-{
-  [GSCacheLock lock];
-  if (theTimer != nil)
-    {
-      [theTimer invalidate];
-      theTimer = nil;
-    }
-  if (interval > 0.0)
-    {
-      theTimer = [NSTimer scheduledTimerWithTimeInterval: interval
-						  target: self
-						selector: @selector(tick)
-						userInfo: 0
-						 repeats: YES];
-    }
-  [GSCacheLock unlock];
-}
-
-+ (void) tick
-{
-  NSTimeInterval	now;
-
-  [GSCacheLock lock];
-  /*
-   * If the clock has been reset so that time has gone backwards,
-   * we adjust the baseTime so that lastTime >= baseTime is true.
-   */
-  now = (*tiImp)(NSDateClass, tiSel);
-  if (now < lastTime)
-    {
-      baseTime -= (lastTime - now);
-    }
-  lastTime = now;
-  [GSCacheLock unlock];
 }
 
 - (unsigned) currentObjects
@@ -330,7 +274,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 - (id) objectForKey: (NSString*)aKey
 {
   GSCacheItem	*item;
-  unsigned	when = GSCacheTimeTick();
+  unsigned	when = GSTickerTimeTick();
 
   item = (GSCacheItem*)NSMapGet(my->contents, aKey);
   if (item == nil)
@@ -375,7 +319,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 
 - (void) purge
 {
-  unsigned	when = GSCacheTimeTick();
+  unsigned	when = GSTickerTimeTick();
 
   if (my->contents != 0)
     {
@@ -528,7 +472,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
       item = [GSCacheItem newWithObject: anObject forKey: aKey];
       if (lifetime > 0)
 	{
-	  item->when = GSCacheTimeTick() + lifetime;
+	  item->when = GSTickerTimeTick() + lifetime;
 	}
       item->size = addSize;
       NSMapInsert(my->contents, (void*)item->key, (void*)item);

@@ -16,16 +16,19 @@ Performance_INTERFACE_VERSION=0.1
 
 Performance_OBJC_FILES += \
 	GSCache.m \
-	GSThroughput.m
+	GSThroughput.m \
+	GSTicker.m \
 
 Performance_HEADER_FILES += \
 	Performance.h \
 	GSCache.h \
-	GSThroughput.h
+	GSThroughput.h \
+	GSTicker.h \
 
 Performance_AGSDOC_FILES += \
 	GSCache.h \
-	GSThroughput.h
+	GSThroughput.h \
+	GSTicker.h
 
 # Optional Java wrappers for the library
 JAVA_WRAPPER_NAME = Performance

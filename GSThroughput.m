@@ -39,6 +39,7 @@
 #include	<Foundation/NSThread.h>
 
 #include	"GSThroughput.h"
+#include	"GSTicker.h"
 
 #define	MAXDURATION	24.0*60.0*60.0
 
@@ -92,16 +93,13 @@ typedef struct {
 {
   @public
   NSTimer		*theTimer;
-  NSTimeInterval	baseTime;
-  NSTimeInterval	lastTime;
   NSHashTable		*instances;
 }
 @end
 
 @interface	GSThroughput (Private)
 + (GSThroughputThread*) _threadInfo;
-+ (void) _tick: (NSTimer*)aTimer;
-+ (void) _tickForThread: (GSThroughputThread*)t;
++ (void) newSecond: (GSThroughputThread*)t;
 - (void) _detach;
 - (void) _update;
 @end
@@ -130,7 +128,6 @@ typedef struct {
 
 - (id) init
 {
-  baseTime = lastTime = (*tiImp)(NSDateClass, tiSel);
   instances = NSCreateHashTable(NSNonRetainedObjectHashCallBacks, 0);
   return self;
 }
@@ -157,27 +154,11 @@ typedef struct {
   return t;
 }
 
-+ (void) _tick: (NSTimer*)aTimer
++ (void) newSecond: (GSThroughputThread*)t
 {
-  [self _tickForThread: [aTimer userInfo]];
-}
-
-+ (void) _tickForThread: (GSThroughputThread*)t
-{
-  NSTimeInterval	now;
   NSHashEnumerator	e;
   GSThroughput		*i;
 
-  /*
-   * If the clock has been reset so that time has gone backwards,
-   * we adjust the baseTime so that lastTime >= baseTime is true.
-   */
-  now = (*tiImp)(NSDateClass, tiSel);
-  if (now < t->lastTime)
-    {
-      t->baseTime -= (t->lastTime - now);
-    }
-  t->lastTime = now;
   e = NSEnumerateHashTable(t->instances);
   while ((i = (GSThroughput*)NSNextHashEnumeratorItem(&e)) != nil)
     {
@@ -195,7 +176,7 @@ typedef struct {
 {
   if (my->thread != nil)
     {
-      unsigned	tick = (my->thread->lastTime - my->thread->baseTime) + 1;
+      unsigned	tick = GSTickerTimeTick();
       unsigned	i;
 
       if (my->supportDurations == YES)
@@ -372,28 +353,23 @@ typedef struct {
     }
 }
 
-+ (void) setTick: (NSTimeInterval)interval
++ (void) setTick: (BOOL)aFlag
 {
-  GSThroughputThread	*t = [self _threadInfo];
+  if (aFlag == YES)
+    {
+      GSThroughputThread	*t = [self _threadInfo];
 
-  if (t->theTimer != nil)
-    {
-      [t->theTimer invalidate];
-      t->theTimer = nil;
+      [GSTicker registerObserver: (id<GSTicker>)self userInfo: t];
     }
-  if (interval > 0.0)
+  else
     {
-      t->theTimer = [NSTimer scheduledTimerWithTimeInterval: interval
-						     target: self
-						   selector: @selector(_tick:)
-						   userInfo: t
-						    repeats: YES];
+      [GSTicker unregisterObserver: (id<GSTicker>)self];
     }
 }
 
 + (void) tick
 {
-  [self _tickForThread: [self _threadInfo]];
+  [self newSecond: [self _threadInfo]];
 }
 
 - (void) add: (unsigned)count
@@ -463,7 +439,7 @@ typedef struct {
 
   if (my->thread != nil)
     {
-      NSTimeInterval	baseTime = my->thread->baseTime;
+      NSTimeInterval	baseTime = GSTickerTimeStart();
       unsigned		tick;
 
       if (my->supportDurations == YES)
@@ -627,9 +603,9 @@ typedef struct {
   my->supportDurations = aFlag;
   my->numberOfPeriods = numberOfPeriods;
   my->minutesPerPeriod = minutesPerPeriod;
-  my->last = (my->thread->lastTime - my->thread->baseTime) + 1;
+  my->last = GSTickerTimeTick();
   c = [[NSCalendarDate alloc] initWithTimeIntervalSinceReferenceDate:
-    my->thread->lastTime];
+    GSTickerTimeLast()];
   my->second = [c secondOfMinute];
   i = [c hourOfDay] * 60 + [c minuteOfHour];
   my->minute = i % minutesPerPeriod;

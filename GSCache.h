@@ -2,7 +2,7 @@
    Copyright (C) 2005 Free Software Foundation, Inc.
    
    Written by:  Richard Frith-Macdonald <rfm@gnu.org>
-   Date:	october 2005
+   Date:	October 2005
    
    This file is part of the Performance Library.
 
@@ -28,6 +28,8 @@
 
 #include	<Foundation/NSObject.h>
 #include	<Foundation/NSArray.h>
+
+@class	NSMutableSet;
 
 /**
  * The GSCache class is used to maintain a cache of objects in memory
@@ -62,17 +64,6 @@
  * method of the individual cache instances to get a report on each one.
  */
 + (NSString*) description;
-
-/**
- * Instructs the caching system to use a timer at the specified interval
- * for keeping its idea of the current time up to date.
- */
-+ (void) setTick: (NSTimeInterval)interval;
-
-/**
- * Updates the caching system's notion of the current time.
- */
-+ (void) tick;
 
 /**
  * Return the count of objects currently in the cache.

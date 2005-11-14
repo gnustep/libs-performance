@@ -54,11 +54,13 @@
 + (NSString*) description;
 
 /**
- * Instructs the monitoring system to use a timer at the specified interval
+ * Instructs the monitoring system to use a timer at the start of each second
  * for keeping its idea of the current time up to date.  This timer is used
- * by all instances associated with the current thread.
+ * by all instances associated with the current thread.<br />
+ * Passing a value of NO for aFlag will turn off the timer for the current
+ * thread.
  */
-+ (void) setTick: (NSTimeInterval)interval;
++ (void) setTick: (BOOL)aFlag;
 
 /**
  * Updates the monitoring system's notion of the current time for all
