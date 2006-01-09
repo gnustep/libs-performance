@@ -36,7 +36,7 @@ extern NSTimeInterval GSTickerTimeLast();
 /**
  * Convenience function to provide timing information quickly.<br />
  * This returns the current date/time, and stores the value for use
- * by the SQLClientTimeLast() function.
+ * by the GSTickerTimeLast() function.
  */
 extern NSTimeInterval	GSTickerTimeNow();
 
