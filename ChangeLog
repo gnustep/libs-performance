@@ -1,3 +1,9 @@
+2006-01-11  Nicola Pero <nicola@brainstorm.co.uk>
+
+	* GNUmakefile.wrapper.objc.preamble: New file that fixes the
+	"/usr/bin/ld: cannot find -lPerformance" error when linking Java
+	wrappers.
+
 2005-10-28 Richard Frith-Macdonald  <rfm@gnu.org>
 
 	New Performance library (0.1) 
