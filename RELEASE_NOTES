@@ -1,0 +1,50 @@
+
+This is the initial release of the 'performance' library (version 0.1.0)
+
+
+Scope
+====
+This library is a collection of classes intended to be used to help
+improve the performance of GNUstep and Cocoa applications.  The scope
+of the library is therefore -
+1. Subclasses of standard Cocoa classes which are optimised for particular
+uses.
+2. Classes to perform tasks which can improve application performance
+by mechanisms not covered by existing classes.
+3. Classes to monitor/analyse performance issues so you can tell what
+needs to be optimised.
+
+
+Platforms
+=========
+GNUstep gnu/linux
+GNUstep	windows/mingw32
+Cocoa ... reported to work.
+
+
+Contents
+========
+GSTicker ... functions for efficient timing where great accuracy is not
+required (eg. nearest second is OK), but the overhead of getting the system
+time many times per second would be a problem.  This code is used by the
+GSThroughput class.
+
+GSThroughput ... class to maintain throughput/transaction count information
+to enable monitoring of application performance over long periods of time.
+
+GSCache ... a least-recently-used cache with cahcne size limits controlled
+by the number of objects in the cache or the amount of memory used by the
+cache or both.  This class is used by the SQLClient library to handle
+in-memory caching of information retrieved from databases.
+
+
+Location
+========
+Available from the gnustep subversion repository.
+
+Browse at http://svn.gna.org/viewcvs/gnustep/libs/performance/tags/0.1.0
+
+Download with:
+svn co svn://svn.gna.org/svn/gnustep/libs/performance/tags/0.1.0 performance
+
+
