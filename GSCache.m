@@ -70,7 +70,7 @@
 {
   RELEASE(key);
   RELEASE(object);
-  NSDeallocateObject(self);
+  [super dealloc];
 }
 @end
 
@@ -212,8 +212,8 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
   RELEASE(my->exclude);
   RELEASE(my->name);
   NSHashRemove(GSCacheInstances, (void*)self);
-  NSDeallocateObject(self);
   [GSCacheLock unlock];
+  [super dealloc];
 }
 
 - (id) delegate
@@ -480,6 +480,36 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
       my->currentObjects += addObjects;
       my->currentSize += addSize;
       RELEASE(item);
+    }
+}
+
+- (void) setObject: (id)anObject
+            forKey: (NSString*)aKey
+	     until: (NSDate*)expires
+{
+  NSTimeInterval	 i;
+
+  i = (expires == nil) ? 0.0 : [expires timeIntervalSinceReferenceDate];
+  i -= GSTickerTimeNow();
+  if (i <= 0.0)
+    {
+      [self setObject: nil forKey: aKey];	// Already expired
+    }
+  else
+    {
+      unsigned	limit;
+
+      if (i > 2415919103.0)
+        {
+	  limit = 0;	// Limit in far future.
+	}
+      else
+	{
+	  limit = (unsigned)i;
+	}
+      [self setObject: anObject
+	       forKey: aKey
+	     lifetime: limit];
     }
 }
 

@@ -171,6 +171,19 @@
 	  lifetime: (unsigned)lifetime;
 
 /**
+ * Sets (or replaces)the cached value for the specified key, giving
+ * the value the specified expiry date.  Calls -setObject:forKey:lifetime:
+ * to do the real work ... this is just a convenience method to
+ * handle working out the lifetime in seconds.<br />
+ * If expires is nil or not in the future, this method simply removes the
+ * cache entry for aKey.  If it is many years in the future, the item is
+ * set in the cache so that it is not limited by lifetime.
+ */
+- (void) setObject: (id)anObject
+	    forKey: (NSString*)aKey
+	     until: (NSDate*)expires;
+
+/**
  * Called by -setObject:forKey:lifetime: to make space for a new
  * object in the cache (also when the cache is resized).<br />
  * This will, if a lifetime is set (see the -setLifetime: method)
