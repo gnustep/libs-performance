@@ -28,6 +28,9 @@
 
 #include	<Foundation/NSObject.h>
 #include	<Foundation/NSArray.h>
+#include	<Foundation/NSData.h>
+#include	<Foundation/NSDate.h>
+#include	<Foundation/NSString.h>
 
 @class	NSMutableSet;
 
