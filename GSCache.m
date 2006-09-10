@@ -204,6 +204,8 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 - (void) dealloc
 {
   [GSCacheLock lock];
+  NSHashRemove(GSCacheInstances, (void*)self);
+  [GSCacheLock unlock];
   if (my->contents != 0)
     {
       [self shrinkObjects: 0 andSize: 0];
@@ -211,8 +213,6 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
     }
   RELEASE(my->exclude);
   RELEASE(my->name);
-  NSHashRemove(GSCacheInstances, (void*)self);
-  [GSCacheLock unlock];
   [super dealloc];
 }
 
@@ -342,6 +342,28 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 	    }
 	}
       NSEndMapTableEnumeration(&e);
+    }
+}
+
+- (void) release
+{
+  /* We lock the table while checking, to prevent
+   * another thread from grabbing this object while we are
+   * checking it.
+   * If we are going to deallocate the object, we first remove
+   * it from the table so that no other thread will find it
+   * and try to use it while it is being deallocated.
+   */
+  [GSCacheLock lock];
+  if (NSDecrementExtraRefCountWasZero(self))
+    {
+      NSHashRemove(GSCacheInstances, (void*)self);
+      [GSCacheLock unlock];
+      [self dealloc];
+    }
+  else
+    {
+      [GSCacheLock unlock];
     }
 }
 
