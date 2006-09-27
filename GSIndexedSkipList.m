@@ -28,6 +28,10 @@
 #include <string.h>
 #include "GSIndexedSkipList.h"
 
+#if	defined(__MINGW32__)
+#include <cstdlib.h>	/* declares rand() */
+#endif
+
 #define PrettyErr(x) do { fprintf(stderr, "%s:%i: %s\n",__FILE__, __LINE__, x); exit(EXIT_FAILURE); } while (0)
 
 GSISLNode GSISLNil;
@@ -107,6 +111,7 @@ int GSISLRandomLevel()
 {
   int level = 0;
   static int p = RAND_MAX / 4;
+
   while (rand() < p && level < GSISLMaxLevel)
     {
       level++;
@@ -141,7 +146,7 @@ void GSISLInsertItemAtIndex(GSISList l, GSISLValueType value,
   do
     {
       while (q = p->forward[k].next,
-	     q != GSISLNil && depth + p->forward[k].delta < index + 1)
+	q != GSISLNil && depth + p->forward[k].delta < index + 1)
 	{
 	  depth += p->forward[k].delta;
 	  p = q;
@@ -234,7 +239,7 @@ GSISLValueType GSISLRemoveItemAtIndex(GSISList l, unsigned index)
   do
     {
       while (q = p->forward[k].next,
-	     q != GSISLNil && depth + p->forward[k].delta < index + 1)
+	q != GSISLNil && depth + p->forward[k].delta < index + 1)
         {
           depth += p->forward[k].delta;
           p = q;
@@ -252,9 +257,9 @@ GSISLValueType GSISLRemoveItemAtIndex(GSISList l, unsigned index)
 #endif
       if (p->forward[k].next == q)
         {
-          p->forward[k].delta = (q->forward[k].next == GSISLNil)
-		        ? 0 
-			: p->forward[k].delta + q->forward[k].delta - 1;
+          p->forward[k].delta
+	    = (q->forward[k].next == GSISLNil) ? 0 
+	    : p->forward[k].delta + q->forward[k].delta - 1;
 	  	
           p->forward[k].next = q->forward[k].next;
         }
@@ -305,7 +310,8 @@ GSISLValueType GSISLItemAtIndex(GSISList l, unsigned index)
   
   do
     {
-      while (q = p->forward[k].next, q != GSISLNil && depth + p->forward[k].delta < index + 1)
+      while (q = p->forward[k].next,
+	q != GSISLNil && depth + p->forward[k].delta < index + 1)
         {
           depth += p->forward[k].delta;
           p = q;
@@ -319,7 +325,8 @@ GSISLValueType GSISLItemAtIndex(GSISList l, unsigned index)
   return(q->value);
 }
 
-GSISLValueType GSISLReplaceItemAtIndex(GSISList l, GSISLValueType newVal, unsigned index)
+GSISLValueType
+GSISLReplaceItemAtIndex(GSISList l, GSISLValueType newVal, unsigned index)
 {
   int k;
   unsigned depth = 0;
@@ -345,7 +352,7 @@ GSISLValueType GSISLReplaceItemAtIndex(GSISList l, GSISLValueType newVal, unsign
   do
     {
       while (q = p->forward[k].next,
-	     q != GSISLNil && depth + p->forward[k].delta < index + 1)
+	q != GSISLNil && depth + p->forward[k].delta < index + 1)
         {
           depth += p->forward[k].delta;
           p = q;

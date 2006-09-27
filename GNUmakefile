@@ -26,7 +26,6 @@ Performance_HEADER_FILES += \
 	GSCache.h \
 	GSThroughput.h \
 	GSTicker.h \
-	GSIndexedSkipList.h \
 	GSSkipMutableArray.h \
 
 
