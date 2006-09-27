@@ -18,18 +18,23 @@ Performance_OBJC_FILES += \
 	GSCache.m \
 	GSThroughput.m \
 	GSTicker.m \
+	GSIndexedSkipList.m \
+	GSSkipMutableArray.m \
 
 
 Performance_HEADER_FILES += \
 	GSCache.h \
 	GSThroughput.h \
 	GSTicker.h \
+	GSIndexedSkipList.h \
+	GSSkipMutableArray.h \
 
 
 Performance_AGSDOC_FILES += \
 	GSCache.h \
 	GSThroughput.h \
-	GSTicker.h
+	GSTicker.h \
+	GSSkipMutableArray.h
 
 
 # Optional Java wrappers for the library
