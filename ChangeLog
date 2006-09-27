@@ -8,6 +8,7 @@
 	Hide implementation details.
 	Add convenience method (to create skiplist) to NSMutableArray.
 	Some reformatting for coding standards.
+	* Performance.h: Ad new header for skip lists.
 
 2006-09-27  Matt Rice <ratmice@yahoo.com>
 	
