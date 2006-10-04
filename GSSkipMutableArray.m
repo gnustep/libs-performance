@@ -31,6 +31,9 @@
 static Class	abstractClass = 0;
 static Class	concreteClass = 0;
 
+@interface GSSkipMutableArray : NSMutableArray
+@end
+
 @interface GSConcreteSkipArray : GSSkipMutableArray
 {
   GSISList l;
@@ -39,7 +42,7 @@ static Class	concreteClass = 0;
 @end
 
 @implementation	NSMutableArray (GSSkipMutableArray)
-+ (GSSkipMutableArray*) skipArray
++ (NSMutableArray*) skipArray
 {
   return [GSSkipMutableArray array];
 }

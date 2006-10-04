@@ -3,7 +3,7 @@ include $(GNUSTEP_MAKEFILES)/common.make
 -include config.make
 
 PACKAGE_NAME = Performance
-PACKAGE_VERSION = 0.1.0
+PACKAGE_VERSION = 0.2.0
 CVS_MODULE_NAME = gnustep/dev-libs/Performance
 CVS_TAG_NAME = Performance
 
@@ -12,7 +12,7 @@ TEST_TOOL_NAME=
 LIBRARY_NAME=Performance
 DOCUMENT_NAME=Performance
 
-Performance_INTERFACE_VERSION=0.1
+Performance_INTERFACE_VERSION=0.2
 
 Performance_OBJC_FILES += \
 	GSCache.m \

@@ -23,8 +23,8 @@
 #include <Foundation/NSArray.h>
 
 /** 
-  <p>An NSMutableArray subclass which uses a skip list variant for
-  it's underlying data structure.
+  <p>An NSMutableArray category to provide an NSMutableArray instance
+  which uses a skip list variant for it's underlying data structure.
   </p>
   <p>While a skip list is typically sorted and represents a dictionary.
   the indexed skip list is sorted by index and maintains deltas to represent
@@ -68,17 +68,12 @@ index ->  HEAD   1    2    3    4    5    6    TAIL
   memory overhead.
   </p>
  */
-@interface GSSkipMutableArray : NSMutableArray
-@end
 
-/**
- * This category just provides a simpole convenience method to obtain
- * a GSSkipMutableArray instance;
- */
 @interface NSMutableArray (GSSkipMutableArray)
 /**
- * Creates and returns an autoreleased GSSkipMutableArray.
+ * Creates and returns an autoreleased NSMutableArray implemented as a
+ * skip list for rapid insertion/deletion within very large arrays.
  */
-+ (GSSkipMutableArray*) skipArray;
++ (NSMutableArray*) skipArray;
 @end
 
