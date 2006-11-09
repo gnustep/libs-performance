@@ -3,9 +3,9 @@ include $(GNUSTEP_MAKEFILES)/common.make
 -include config.make
 
 PACKAGE_NAME = Performance
-PACKAGE_VERSION = 0.2.0
-CVS_MODULE_NAME = gnustep/dev-libs/Performance
-CVS_TAG_NAME = Performance
+PACKAGE_VERSION = 0.2.1
+SVN_MODULE_NAME = gnustep/libs/performance
+SVN_TAG_NAME = Performance
 
 TEST_TOOL_NAME=
 
