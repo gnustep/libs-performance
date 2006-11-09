@@ -92,8 +92,11 @@
 /**
  * Ends duration recording for the current event started by a matching
  * call to the -startDuration: method.<br />
- * You may use this method only if the receiver was initialised with
- * duration logging turned on.
+ * Calls to this method without a matching call to -startDuration: are
+ * quietly ignored.  This is useful if you wish to time a function or
+ * method by starting/ending timing before/after calling it, but also
+ * want the function/method to be able to end timing of itsself before
+ * it calls another function/method.
  */
 - (void) endDuration;
 
@@ -104,9 +107,15 @@
 - (id) init;
 
 /** <init />
- * Initialises the receiver to maintain stats (for the current thread only)
+ * <p>Initialises the receiver to maintain stats (for the current thread only)
  * over a particular time range, specifying whether duration statistics are
  * to be maintained, or just event/transaction counts.
+ * </p>
+ * <p>If the specified numberOfPeriods or minutesPerPeriod is zero, only a
+ * running total is maintained rather than a per-second breakdown for the
+ * current minute and per minute breakdown for the current period and
+ * period breakdown for the number of periods.
+ * </p>
  */
 - (id) initWithDurations: (BOOL)aFlag
 	      forPeriods: (unsigned)numberOfPeriods
@@ -130,7 +139,10 @@
  * continues to exist up to the point where -endDuration is called,
  * as the receiver will not retain it.<br />
  * You may use this method only if the receiver was initialised with
- * duration logging turned on.
+ * duration logging turned on.<br />
+ * Use of this method if the reciever does not support duration logging
+ * or if the method has already been called without a matching call to
+ * -endDuration will cause an exception to be raised.
  */
 - (void) startDuration: (NSString*)name;
 

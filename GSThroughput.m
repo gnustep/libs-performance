@@ -66,6 +66,7 @@ typedef struct {
   void			*seconds;
   void			*minutes;
   void			*periods;
+  void			*total;
   BOOL			supportDurations;
   unsigned		numberOfPeriods;
   unsigned		minutesPerPeriod;
@@ -174,7 +175,7 @@ typedef struct {
 
 - (void) _update
 {
-  if (my->thread != nil)
+  if (my->thread != nil && my->numberOfPeriods > 0)
     {
       unsigned	tick = GSTickerTimeTick();
       unsigned	i;
@@ -442,117 +443,144 @@ typedef struct {
       NSTimeInterval	baseTime = GSTickerTimeStart();
       unsigned		tick;
 
-      if (my->supportDurations == YES)
+      if (my->numberOfPeriods == 0)
 	{
-	  [m appendString: @"\nSeconds in current minute:\n"];
-	  if (my->second > 0)
+	  if (my->supportDurations == YES)
 	    {
-	      tick = 0;
-	      for (i = 0; i < my->second; i++)
-		{
-		  DInfo			*info = &dseconds[i];
-		  NSTimeInterval	ti = info->tick + baseTime;
+	      DInfo	*info = &dseconds[0];
 
-		  if (info->tick != tick)
-		    {
-		      tick = info->tick;
-		      [m appendFormat: @"%u, %g, %g, %g, %@\n",
-			info->cnt, info->max, info->min, info->sum,
-			[NSDate dateWithTimeIntervalSinceReferenceDate: ti]];
-		    }
-		}
+	      [m appendFormat: @": cnt %u, max %g, min %g, avg %g",
+		info->cnt, info->max,
+		info->min == MAXDURATION ? 0.0 : info->min,
+		info->cnt == 0 ? 0 : info->sum];
 	    }
-
-	  [m appendString: @"\nPrevious minutes in current period:\n"];
-	  if (my->minute > 0)
+	  else
 	    {
-	      tick = 0;
-	      for (i = 0; i < my->minute; i++)
-		{
-		  DInfo			*info = &dminutes[i];
-		  NSTimeInterval	ti = info->tick + baseTime;
+	      CInfo	*info = &cseconds[0];
 
-		  if (info->tick != tick)
-		    {
-		      tick = info->tick;
-		      [m appendFormat: @"%u, %g, %g, %g, %@\n",
-			info->cnt, info->max, info->min, info->sum,
-			[NSDate dateWithTimeIntervalSinceReferenceDate: ti]];
-		    }
-		}
-	    }
-
-	  [m appendString: @"\nPrevious periods:\n"];
-	  if (my->period > 0)
-	    {
-	      tick = 0;
-	      for (i = 0; i < my->period; i++)
-		{
-		  DInfo			*info = &dperiods[i];
-		  NSTimeInterval	ti = info->tick + baseTime;
-
-		  if (info->tick != tick)
-		    {
-		      tick = info->tick;
-		      [m appendFormat: @"%u, %g, %g, %g, %@\n",
-			info->cnt, info->max, info->min, info->sum,
-			[NSDate dateWithTimeIntervalSinceReferenceDate: ti]];
-		    }
-		}
+	      [m appendFormat: @": cnt %u", info->cnt];
 	    }
 	}
       else
 	{
-	  [m appendString: @"\nSeconds in current minute:\n"];
-	  if (my->second > 0)
+	  if (my->supportDurations == YES)
 	    {
-	      tick = 0;
-	      for (i = 0; i < my->second; i++)
+	      [m appendString: @"\nSeconds in current minute:\n"];
+	      if (my->second > 0)
 		{
-		  CInfo			*info = &cseconds[i];
-		  NSTimeInterval	ti = info->tick + baseTime;
-
-		  if (info->tick != tick)
+		  tick = 0;
+		  for (i = 0; i < my->second; i++)
 		    {
-		      tick = info->tick;
-		      [m appendFormat: @"%u, %@\n", info->cnt,
-			[NSDate dateWithTimeIntervalSinceReferenceDate: ti]];
+		      DInfo		*info = &dseconds[i];
+		      NSTimeInterval	ti = info->tick + baseTime;
+
+		      if (info->tick != tick)
+			{
+			  tick = info->tick;
+			  [m appendFormat: @"%u, %g, %g, %g, %@\n",
+			    info->cnt, info->max, info->min, info->sum,
+			    [NSDate dateWithTimeIntervalSinceReferenceDate:
+			      ti]];
+			}
+		    }
+		}
+
+	      [m appendString: @"\nPrevious minutes in current period:\n"];
+	      if (my->minute > 0)
+		{
+		  tick = 0;
+		  for (i = 0; i < my->minute; i++)
+		    {
+		      DInfo		*info = &dminutes[i];
+		      NSTimeInterval	ti = info->tick + baseTime;
+
+		      if (info->tick != tick)
+			{
+			  tick = info->tick;
+			  [m appendFormat: @"%u, %g, %g, %g, %@\n",
+			    info->cnt, info->max, info->min, info->sum,
+			    [NSDate dateWithTimeIntervalSinceReferenceDate:
+			      ti]];
+			}
+		    }
+		}
+
+	      [m appendString: @"\nPrevious periods:\n"];
+	      if (my->period > 0)
+		{
+		  tick = 0;
+		  for (i = 0; i < my->period; i++)
+		    {
+		      DInfo		*info = &dperiods[i];
+		      NSTimeInterval	ti = info->tick + baseTime;
+
+		      if (info->tick != tick)
+			{
+			  tick = info->tick;
+			  [m appendFormat: @"%u, %g, %g, %g, %@\n",
+			    info->cnt, info->max, info->min, info->sum,
+			    [NSDate dateWithTimeIntervalSinceReferenceDate:
+			      ti]];
+			}
 		    }
 		}
 	    }
-
-	  [m appendString: @"\nPrevious minutes in current period:\n"];
-	  if (my->minute > 0)
+	  else
 	    {
-	      tick = 0;
-	      for (i = 0; i < my->minute; i++)
+	      [m appendString: @"\nSeconds in current minute:\n"];
+	      if (my->second > 0)
 		{
-		  CInfo			*info = &cminutes[i];
-		  NSTimeInterval	ti = info->tick + baseTime;
-
-		  if (info->tick != tick)
+		  tick = 0;
+		  for (i = 0; i < my->second; i++)
 		    {
-		      tick = info->tick;
-		      [m appendFormat: @"%u, %@\n", info->cnt,
-			[NSDate dateWithTimeIntervalSinceReferenceDate: ti]];
+		      CInfo		*info = &cseconds[i];
+		      NSTimeInterval	ti = info->tick + baseTime;
+
+		      if (info->tick != tick)
+			{
+			  tick = info->tick;
+			  [m appendFormat: @"%u, %@\n", info->cnt,
+			    [NSDate dateWithTimeIntervalSinceReferenceDate:
+			      ti]];
+			}
 		    }
 		}
-	    }
 
-	  [m appendString: @"\nPrevious periods:\n"];
-	  if (my->period > 0)
-	    {
-	      tick = 0;
-	      for (i = 0; i < my->period; i++)
+	      [m appendString: @"\nPrevious minutes in current period:\n"];
+	      if (my->minute > 0)
 		{
-		  CInfo			*info = &cperiods[i];
-		  NSTimeInterval	ti = info->tick + baseTime;
-
-		  if (info->tick != tick)
+		  tick = 0;
+		  for (i = 0; i < my->minute; i++)
 		    {
-		      tick = info->tick;
-		      [m appendFormat: @"%u, %@\n", info->cnt,
-			[NSDate dateWithTimeIntervalSinceReferenceDate: ti]];
+		      CInfo		*info = &cminutes[i];
+		      NSTimeInterval	ti = info->tick + baseTime;
+
+		      if (info->tick != tick)
+			{
+			  tick = info->tick;
+			  [m appendFormat: @"%u, %@\n", info->cnt,
+			    [NSDate dateWithTimeIntervalSinceReferenceDate:
+			      ti]];
+			}
+		    }
+		}
+
+	      [m appendString: @"\nPrevious periods:\n"];
+	      if (my->period > 0)
+		{
+		  tick = 0;
+		  for (i = 0; i < my->period; i++)
+		    {
+		      CInfo		*info = &cperiods[i];
+		      NSTimeInterval	ti = info->tick + baseTime;
+
+		      if (info->tick != tick)
+			{
+			  tick = info->tick;
+			  [m appendFormat: @"%u, %@\n", info->cnt,
+			    [NSDate dateWithTimeIntervalSinceReferenceDate:
+			      ti]];
+			}
 		    }
 		}
 	    }
@@ -565,10 +593,12 @@ typedef struct {
 
 - (void) endDuration
 {
-  NSAssert(my->started > 0.0, NSInternalInconsistencyException);
-  [self addDuration: (*tiImp)(NSDateClass, tiSel) - my->started];
-  my->event = nil;
-  my->started = 0.0;
+  if (my->started > 0.0)
+    {
+      [self addDuration: (*tiImp)(NSDateClass, tiSel) - my->started];
+      my->event = nil;
+      my->started = 0.0;
+    }
 }
 
 - (id) init
@@ -582,17 +612,8 @@ typedef struct {
               forPeriods: (unsigned)numberOfPeriods
 		ofLength: (unsigned)minutesPerPeriod
 {
-  NSCalendarDate	*c;	
-  unsigned		i;
-
   _data = (Item*)NSZoneMalloc(NSDefaultMallocZone(), sizeof(Item));
   memset(_data, '\0', sizeof(Item));
-
-  if (numberOfPeriods < 1 || minutesPerPeriod < 1)
-    {
-      DESTROY(self);
-      return nil;
-    }
 
   /*
    * Add this instance to the current thread.
@@ -601,56 +622,98 @@ typedef struct {
   NSHashInsert(my->thread->instances, (void*)self);
 
   my->supportDurations = aFlag;
-  my->numberOfPeriods = numberOfPeriods;
-  my->minutesPerPeriod = minutesPerPeriod;
   my->last = GSTickerTimeTick();
-  c = [[NSCalendarDate alloc] initWithTimeIntervalSinceReferenceDate:
-    GSTickerTimeLast()];
-  my->second = [c secondOfMinute];
-  i = [c hourOfDay] * 60 + [c minuteOfHour];
-  my->minute = i % minutesPerPeriod;
-  my->period = (i / minutesPerPeriod) % numberOfPeriods;
-  RELEASE(c);
 
-  i = 60 + minutesPerPeriod + numberOfPeriods;
-  if (my->supportDurations == YES)
+  if (numberOfPeriods < 1 || minutesPerPeriod < 1)
     {
-      DInfo	*ptr;
+      /* If we are not using periods of N minutes, we must just be keeping
+       * a running total recorded second by second.
+       */
+      my->numberOfPeriods = 0;
+      my->minutesPerPeriod = 0;
+      my->second = 0;
+      my->minute = 0;
+      my->period = 0;
+      if (my->supportDurations == YES)
+        {
+	  DInfo	*ptr;
 
-      ptr = (DInfo*)NSZoneMalloc(NSDefaultMallocZone(), sizeof(DInfo) * i);
-      memset(ptr, '\0', sizeof(DInfo) * i);
-      my->seconds = ptr;
-      my->minutes = ptr + 60;
-      my->periods = ptr + 60 + minutesPerPeriod;
-      dseconds[my->second].tick = my->last;
-      dminutes[my->minute].tick = my->last;
-      dperiods[my->period].tick = my->last;
+	  ptr = (DInfo*)NSZoneMalloc(NSDefaultMallocZone(), sizeof(DInfo));
+	  memset(ptr, '\0', sizeof(DInfo));
+	  my->seconds = ptr;
+	  my->minutes = 0;
+	  my->periods = 0;
+	  dseconds[0].tick = my->last;
+	  dseconds[0].min = MAXDURATION;
+	}
+      else
+        {
+	  CInfo	*ptr;
 
-      for (i = 0; i < my->numberOfPeriods; i++)
-	{
-	  dperiods[i].min = MAXDURATION;
-	}
-      for (i = 0; i < my->minutesPerPeriod; i++)
-	{
-	  dminutes[i].min = MAXDURATION;
-	}
-      for (i = 0; i < 60; i++)
-	{
-	  dseconds[i].min = MAXDURATION;
+	  ptr = (CInfo*)NSZoneMalloc(NSDefaultMallocZone(), sizeof(CInfo));
+	  memset(ptr, '\0', sizeof(CInfo));
+	  my->seconds = ptr;
+	  my->minutes = 0;
+	  my->periods = 0;
+	  cseconds[0].tick = my->last;
 	}
     }
   else
     {
-      CInfo	*ptr;
+      NSCalendarDate	*c;	
+      unsigned		i;
 
-      ptr = (CInfo*)NSZoneMalloc(NSDefaultMallocZone(), sizeof(CInfo) * i);
-      memset(ptr, '\0', sizeof(CInfo) * i);
-      my->seconds = ptr;
-      my->minutes = ptr + 60;
-      my->periods = ptr + 60 + minutesPerPeriod;
-      cseconds[my->second].tick = my->last;
-      cminutes[my->minute].tick = my->last;
-      cperiods[my->period].tick = my->last;
+      c = [[NSCalendarDate alloc] initWithTimeIntervalSinceReferenceDate:
+	GSTickerTimeLast()];
+
+      my->numberOfPeriods = numberOfPeriods;
+      my->minutesPerPeriod = minutesPerPeriod;
+      my->second = [c secondOfMinute];
+      i = [c hourOfDay] * 60 + [c minuteOfHour];
+      my->minute = i % minutesPerPeriod;
+      my->period = (i / minutesPerPeriod) % numberOfPeriods;
+      RELEASE(c);
+
+      i = 60 + minutesPerPeriod + numberOfPeriods;
+      if (my->supportDurations == YES)
+	{
+	  DInfo	*ptr;
+
+	  ptr = (DInfo*)NSZoneMalloc(NSDefaultMallocZone(), sizeof(DInfo) * i);
+	  memset(ptr, '\0', sizeof(DInfo) * i);
+	  my->seconds = ptr;
+	  my->minutes = ptr + 60;
+	  my->periods = ptr + 60 + minutesPerPeriod;
+	  dseconds[my->second].tick = my->last;
+	  dminutes[my->minute].tick = my->last;
+	  dperiods[my->period].tick = my->last;
+
+	  for (i = 0; i < my->numberOfPeriods; i++)
+	    {
+	      dperiods[i].min = MAXDURATION;
+	    }
+	  for (i = 0; i < my->minutesPerPeriod; i++)
+	    {
+	      dminutes[i].min = MAXDURATION;
+	    }
+	  for (i = 0; i < 60; i++)
+	    {
+	      dseconds[i].min = MAXDURATION;
+	    }
+	}
+      else
+	{
+	  CInfo	*ptr;
+
+	  ptr = (CInfo*)NSZoneMalloc(NSDefaultMallocZone(), sizeof(CInfo) * i);
+	  memset(ptr, '\0', sizeof(CInfo) * i);
+	  my->seconds = ptr;
+	  my->minutes = ptr + 60;
+	  my->periods = ptr + 60 + minutesPerPeriod;
+	  cseconds[my->second].tick = my->last;
+	  cminutes[my->minute].tick = my->last;
+	  cperiods[my->period].tick = my->last;
+	}
     }
   return self;
 }
