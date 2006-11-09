@@ -474,7 +474,7 @@ typedef struct {
 	      [m appendFormat: @": cnt %u, max %g, min %g, avg %g",
 		info->cnt, info->max,
 		info->min == MAXDURATION ? 0.0 : info->min,
-		info->cnt == 0 ? 0 : info->sum / inco->cnt];
+		info->cnt == 0 ? 0 : info->sum / info->cnt];
 	    }
 	  else
 	    {
