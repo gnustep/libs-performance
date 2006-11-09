@@ -4,9 +4,8 @@ include $(GNUSTEP_MAKEFILES)/common.make
 
 PACKAGE_NAME = Performance
 PACKAGE_VERSION = 0.2.1
-SVN_BASE_URL = http://svn.gna.org/svn/gnustep/libs
+SVN_BASE_URL = svn+ssh://svn.gna.org/svn/gnustep/libs
 SVN_MODULE_NAME = performance
-SVN_TAG_NAME = Performance
 
 TEST_TOOL_NAME=
 
