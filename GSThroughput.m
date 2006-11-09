@@ -330,15 +330,17 @@ typedef struct {
     objectForKey: @"GSThroughput"];
   if (t != nil)
     {
-      NSHashEnumerator	e;
+      NSArray		*a;
+      NSEnumerator	*e;
       GSThroughput	*c;
 
-      e = NSEnumerateHashTable(t->instances);
-      while ((c = (GSThroughput*)NSNextHashEnumeratorItem(&e)) != nil)
+      a = [NSAllHashTableObjects(t->instances) sortedArrayUsingSelector:
+        @selector(compare:)];
+      e = [a objectEnumerator];
+      while ((c = (GSThroughput*)[e nextObject]) != nil)
 	{
 	  [ms appendFormat: @"\n%@", [c description]];
 	}
-      NSEndHashTableEnumeration(&e);
     }
   return ms;
 }
@@ -403,6 +405,26 @@ typedef struct {
 	  info->min = length;
 	}
     }
+}
+
+- (NSComparisonResult) compare: (id)other
+{
+  if ([other isKindOfClass: [GSThroughput class]] == YES)
+    {
+      NSString	*myName = [self name];
+      NSString	*otherName = [other name];
+
+      if (myName == nil)
+        {
+          myName = @"";
+	}
+      if (otherName == nil)
+        {
+          otherName = @"";
+	}
+      return [myName compare: otherName];
+    }
+  return NSOrderedAscending;
 }
 
 - (void) dealloc
