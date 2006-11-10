@@ -30,11 +30,24 @@
 #include	<Foundation/NSArray.h>
 
 /**
- * The GSThroughput class is used maintain statistics about the number
- * of events or the duration of operations in your software.<br />
- * For performance reasons, the class avoids locking and you must ensure
+ * <p>The GSThroughput class is used maintain statistics about the number
+ * of events or the duration of operations in your software.
+ * </p>
+ * <p>For performance reasons, the class avoids locking and you must ensure
  * that an instance of the class is only ever used by a single thread
  * (the one in which it was created).
+ * </p>
+ * <p>You create an instance of the class for each event/operation that you
+ * are interested in monitoring, and you call the -add: or -addDuration:
+ * method to record events.<br />
+ * For duration logging, you may also use the -startDuration: and
+ * -endDuration methods to handle adding of the amount of time taken between
+ * the tweo calls.
+ * </p>
+ * <p>To dump a record of the gathered statistics, you may call the
+ * -description method of an instance or the class +description method
+ * to dump statistics for all instances in the current thread.
+ * </p>
  */
 @interface	GSThroughput : NSObject
 {
@@ -47,18 +60,23 @@
 + (NSArray*) allInstances;
 
 /**
- * Return a report on all GSThroughput instances in the current thread...
- * calls the [GSThroughput-description] method of the individual instances
- * to get a report on each one.
+ * Return a report on all GSThroughput instances in the current thread...<br />
+ * This calls the [GSThroughput-description] method of the individual instances
+ * to get a report on each one.<br />
+ * The results are ordered alphabetically by name of the instances (an
+ * instance without a name is treated as having an empty string as a name).
  */
 + (NSString*) description;
 
 /**
  * Instructs the monitoring system to use a timer at the start of each second
  * for keeping its idea of the current time up to date.  This timer is used
- * by all instances associated with the current thread.<br />
+ * to call the +tick method in the current thread.<br />
  * Passing a value of NO for aFlag will turn off the timer for the current
- * thread.
+ * thread.<br />
+ * Keeping the notion of the current time up to date is important for
+ * instances configured to record stats broken down over a number of periods,
+ * since the periodic breakdown must be adjusted each second.
  */
 + (void) setTick: (BOOL)aFlag;
 
@@ -66,12 +84,16 @@
  * Updates the monitoring system's notion of the current time for all
  * instances associated with the current thread.<br />
  * This should be called at the start of each second (or more often) if
- * you want accurate monitoring by the second.
+ * you want an accurate breakdown of monitoring by the second.<br />
+ * If you don't want to call this yourself, you can call +setTick: to
+ * have it called automatically.<br />
+ * If you are not using any instances of the class configured to maintain
+ * a breakdown of stats by periods, you do not need to call this method.
  */
 + (void) tick;
 
 /**
- * Add to the count of the number of transactions in the current second.<br />
+ * Add to the count of the number of transactions for the receiver.<br />
  * You may use this method only if the receiver was initialised with
  * duration logging turned off.
  */
@@ -85,7 +107,14 @@
 - (void) addDuration: (NSTimeInterval)length;
 
 /**
- * Returns a string describing the status of the receiver for debug/reporting.
+ * Returns a string describing the status of the receiver.<br />
+ * For an instance configured to maintain a periodic breakdown of stats,
+ * this reports information for the current second, all seconds in the
+ * current minute, all minutes in the current period, and all periods
+ * in the configured number of periods.<br />
+ * For an instance configured with no periodic breakdown, this produces
+ * a short summary of the total count of events and, where durations are used,
+ * the maximum, minimum and average duration of events.
  */
 - (NSString*) description;
 
@@ -116,13 +145,19 @@
  * current minute and per minute breakdown for the current period and
  * period breakdown for the number of periods.
  * </p>
+ * <p>If all instances in a thread are initialised with numberOfPeriods or
+ * minutesPerPeriod of zero, the +tick method does not need to be called and
+ * +setTick: should not be used.
+ * </p>
  */
 - (id) initWithDurations: (BOOL)aFlag
 	      forPeriods: (unsigned)numberOfPeriods
 		ofLength: (unsigned)minutesPerPeriod;
 
 /**
- * Return the name of this instance (as set using -setName:)
+ * Return the name of this instance (as set using -setName:).<br />
+ * This is used in the -description method and for ordering instances
+ * in the +description method.
  */
 - (NSString*) name;
 
