@@ -1,3 +1,10 @@
+2006-11-11  Richard Frith-Macdonald  <rfm@gnu.org>
+
+	* GSThroughput.h: New ([add:duration:]) method.
+	* GSThroughput.m: Method to add multiple events with a total
+	duration (eg where recording individual event times has too
+	high an overhead).
+
 2006-11-09  Richard Frith-Macdonald  <rfm@gnu.org>
 
 	* GNUmakefile: update version

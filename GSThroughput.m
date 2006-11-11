@@ -381,6 +381,40 @@ typedef struct {
   cseconds[my->second].cnt += count;
 }
 
+- (void) add: (unsigned)count duration: (NSTimeInterval)length
+{
+  NSAssert(my->supportDurations == YES, @"not configured for durations");
+
+  if (count > 0)
+    {
+      NSTimeInterval	total = length;
+      DInfo		*info;
+
+      info = &dseconds[my->second];
+      length /= count;
+      if (info->cnt == 0)
+	{
+	  info->cnt = count;
+	  info->min = length;
+	  info->max = length;
+	  info->sum = total;
+	}
+      else
+	{
+	  info->cnt += count;
+	  info->sum += total;
+	  if (length > info->max)
+	    {
+	      info->max = length;
+	    }
+	  if (length < info->min)
+	    {
+	      info->min = length;
+	    }
+	}
+    }
+}
+
 - (void) addDuration: (NSTimeInterval)length
 {
   DInfo	*info;

@@ -100,6 +100,18 @@
 - (void) add: (unsigned)count;
 
 /**
+ * Adds a record for multiple events of the specified
+ * <em>total</em> duration.<br />
+ * This is useful where you know a lot of similar events have completed
+ * in a particular period of time, but can't afford to measure the
+ * duration of the individual events because the timing overheads
+ * would be too great.<br />
+ * You may use this method only if the receiver was initialised with
+ * duration logging turned on.
+ */
+- (void) add: (unsigned)count duration: (NSTimeInterval)length;
+
+/**
  * Adds a record for a single event of the specified duration.<br />
  * You may use this method only if the receiver was initialised with
  * duration logging turned on.
