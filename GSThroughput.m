@@ -657,6 +657,16 @@ typedef struct {
     }
 }
 
+- (void) endDuration: (unsigned)count
+{
+  if (my->started > 0.0)
+    {
+      [self add: count duration: (*tiImp)(NSDateClass, tiSel) - my->started];
+      my->event = nil;
+      my->started = 0.0;
+    }
+}
+
 - (id) init
 {
   return [self initWithDurations: YES

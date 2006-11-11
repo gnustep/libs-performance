@@ -142,6 +142,15 @@
 - (void) endDuration;
 
 /**
+ * Acts like -endDuration but records the duration as a total for
+ * count events (if count is zero then this ends the interval started
+ * by the corresponding -startDuration: call, but nothing is logged).<br />
+ * This can be used when recording multiple events where the overhead of
+ * timing each event individually would be too great.
+ */
+- (void) endDuration: (unsigned)count;
+
+/**
  * Initialises the receiver for duration logging (in the current thread only)
  * for fifteen minute periods over the last twentyfour hours.
  */
