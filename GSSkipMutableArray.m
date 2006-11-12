@@ -164,13 +164,14 @@ static Class	concreteClass = 0;
   GSISLNode p,q;
 
   p = l->header->forward[0].next;
-  do
+  while (p != GSISLNil)
     {
       q = p->forward[0].next;
       RELEASE(p->value);
       NSZoneFree(l->zone,p);
       p = q;
-    } while (p != GSISLNil);
+    }
+  
   NSZoneFree(l->zone, l->header); 
   NSZoneFree(l->zone, l);
   [super dealloc];
