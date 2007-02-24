@@ -21,12 +21,14 @@
    Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111 USA.
    */
 
-#include <Foundation/NSException.h>
-#include <Foundation/NSValue.h>
-#include <Foundation/NSEnumerator.h>
+#import <Foundation/NSDictionary.h>
+#import <Foundation/NSException.h>
+#import <Foundation/NSValue.h>
+#import <Foundation/NSEnumerator.h>
+#import <Foundation/NSString.h>
 
-#include "GSSkipMutableArray.h"
-#include "GSIndexedSkipList.h"
+#import "GSSkipMutableArray.h"
+#import "GSIndexedSkipList.h"
 
 static Class	abstractClass = 0;
 static Class	concreteClass = 0;

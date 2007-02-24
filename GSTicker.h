@@ -26,7 +26,7 @@
 #ifndef	INCLUDED_GSTicker_H
 #define	INCLUDED_GSTicker_H
 
-#include	<Foundation/NSDate.h>
+#import	<Foundation/NSDate.h>
 
 /**
  * Returns the timestamp of the most recent call to GSTickerTimeNow().

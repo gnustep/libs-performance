@@ -25,21 +25,21 @@
    $Date$ $Revision$
    */ 
 
-#include	<Foundation/NSArray.h>
-#include	<Foundation/NSString.h>
-#include	<Foundation/NSData.h>
-#include	<Foundation/NSDate.h>
-#include	<Foundation/NSCalendarDate.h>
-#include	<Foundation/NSException.h>
-#include	<Foundation/NSNotification.h>
-#include	<Foundation/NSHashTable.h>
-#include	<Foundation/NSAutoreleasePool.h>
-#include	<Foundation/NSDebug.h>
-#include	<Foundation/NSTimer.h>
-#include	<Foundation/NSThread.h>
+#import	<Foundation/NSArray.h>
+#import	<Foundation/NSString.h>
+#import	<Foundation/NSData.h>
+#import	<Foundation/NSDate.h>
+#import	<Foundation/NSCalendarDate.h>
+#import	<Foundation/NSException.h>
+#import	<Foundation/NSNotification.h>
+#import	<Foundation/NSHashTable.h>
+#import	<Foundation/NSAutoreleasePool.h>
+#import	<Foundation/NSDebug.h>
+#import	<Foundation/NSTimer.h>
+#import	<Foundation/NSThread.h>
 
-#include	"GSThroughput.h"
-#include	"GSTicker.h"
+#import	"GSThroughput.h"
+#import	"GSTicker.h"
 
 #define	MAXDURATION	24.0*60.0*60.0
 

@@ -25,12 +25,12 @@
    $Date$ $Revision$
    */ 
 
-#include	<Foundation/NSArray.h>
-#include	<Foundation/NSDate.h>
-#include	<Foundation/NSThread.h>
-#include	<Foundation/NSTimer.h>
+#import	<Foundation/NSArray.h>
+#import	<Foundation/NSDate.h>
+#import	<Foundation/NSThread.h>
+#import	<Foundation/NSTimer.h>
 
-#include	"GSTicker.h"
+#import	"GSTicker.h"
 
 static Class		NSDateClass = 0;
 static SEL		tiSel = 0;

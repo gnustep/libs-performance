@@ -25,23 +25,23 @@
    $Date$ $Revision$
    */ 
 
-#include	<Foundation/NSArray.h>
-#include	<Foundation/NSString.h>
-#include	<Foundation/NSData.h>
-#include	<Foundation/NSDate.h>
-#include	<Foundation/NSException.h>
-#include	<Foundation/NSNotification.h>
-#include	<Foundation/NSHashTable.h>
-#include	<Foundation/NSMapTable.h>
-#include	<Foundation/NSLock.h>
-#include	<Foundation/NSAutoreleasePool.h>
-#include	<Foundation/NSValue.h>
-#include	<Foundation/NSDebug.h>
-#include	<Foundation/NSSet.h>
-#include	<Foundation/NSTimer.h>
+#import	<Foundation/NSArray.h>
+#import	<Foundation/NSString.h>
+#import	<Foundation/NSData.h>
+#import	<Foundation/NSDate.h>
+#import	<Foundation/NSException.h>
+#import	<Foundation/NSNotification.h>
+#import	<Foundation/NSHashTable.h>
+#import	<Foundation/NSMapTable.h>
+#import	<Foundation/NSLock.h>
+#import	<Foundation/NSAutoreleasePool.h>
+#import	<Foundation/NSValue.h>
+#import	<Foundation/NSDebug.h>
+#import	<Foundation/NSSet.h>
+#import	<Foundation/NSTimer.h>
 
-#include	"GSCache.h"
-#include	"GSTicker.h"
+#import	"GSCache.h"
+#import	"GSTicker.h"
 
 @interface	GSCacheItem : NSObject
 {

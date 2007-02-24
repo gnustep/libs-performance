@@ -26,11 +26,11 @@
 #ifndef	INCLUDED_GSCache_H
 #define	INCLUDED_GSCache_H
 
-#include	<Foundation/NSObject.h>
-#include	<Foundation/NSArray.h>
-#include	<Foundation/NSData.h>
-#include	<Foundation/NSDate.h>
-#include	<Foundation/NSString.h>
+#import	<Foundation/NSObject.h>
+#import	<Foundation/NSArray.h>
+#import	<Foundation/NSData.h>
+#import	<Foundation/NSDate.h>
+#import	<Foundation/NSString.h>
 
 @class	NSMutableSet;
 

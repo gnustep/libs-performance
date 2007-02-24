@@ -26,8 +26,8 @@
 #ifndef	INCLUDED_GSThroughput_H
 #define	INCLUDED_GSThroughput_H
 
-#include	<Foundation/NSObject.h>
-#include	<Foundation/NSArray.h>
+#import	<Foundation/NSObject.h>
+#import	<Foundation/NSArray.h>
 
 /**
  * <p>The GSThroughput class is used maintain statistics about the number

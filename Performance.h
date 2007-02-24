@@ -1,5 +1,5 @@
 /*
-   JIGS include file for the GNUstep Performance Library.
+   JIGS import file for the GNUstep Performance Library.
 
    Copyright (C) 2005 Free Software Foundation, Inc.
 
@@ -24,8 +24,8 @@
    Boston, MA 02111 USA.
    */ 
 
-#include "GSCache.h"
-#include "GSThroughput.h"
-#include "GSTicker.h"
-#include "GSSkipMutableArray.h"
+#import "GSCache.h"
+#import "GSThroughput.h"
+#import "GSTicker.h"
+#import "GSSkipMutableArray.h"
 

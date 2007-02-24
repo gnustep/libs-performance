@@ -21,7 +21,7 @@
    Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111 USA.
    */
 
-#include <Foundation/NSZone.h>
+#import <Foundation/NSZone.h>
 #define GSISLMaxNumberOfLevels 16
 #define GSISLMaxLevel 15
 
