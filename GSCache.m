@@ -601,12 +601,11 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 @implementation	NSObject (SizeInBytes)
 - (unsigned) sizeInBytes: (NSMutableSet*)exclude
 {
+  Class	c;
+
   if ([exclude member: self] != nil) return 0;
-#if 0
-  return isa->instance_size;
-#else
-  return 16;	// A guess ... but runtime portable
-#endif
+  c = [self class];
+  return c->instance_size;
 }
 @end
 
