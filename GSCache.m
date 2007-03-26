@@ -467,7 +467,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
       NSMapRemove(my->contents, (void*)aKey);
     }
 
-  if (maxSize > 0 || maxObjects > 0)
+  if (addObjects > 0 && (maxSize > 0 || maxObjects > 0))
     {
       if (maxSize > 0)
 	{

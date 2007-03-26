@@ -160,14 +160,18 @@
 - (void) setName: (NSString*)name;
 
 /**
- * Sets (or replaces)the cached value for the specified key.
+ * Sets (or replaces)the cached value for the specified key.<br />
+ * The value of anObject may be nil to remove any cached object
+ * for aKey.
  */
 - (void) setObject: (id)anObject forKey: (NSString*)aKey;
 
 /**
  * Sets (or replaces)the cached value for the specified key, giving
  * the value the specified lifetime (in seconds).  A lifetime of zero
- * means that the item is not limited by lifetime.
+ * means that the item is not limited by lifetime.<br />
+ * The value of anObject may be nil to remove any cached object
+ * for aKey.
  */
 - (void) setObject: (id)anObject
 	    forKey: (NSString*)aKey
