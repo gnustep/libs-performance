@@ -26,21 +26,20 @@
    */ 
 
 #import	<Foundation/NSArray.h>
-#import	<Foundation/NSString.h>
+#import	<Foundation/NSAutoreleasePool.h>
 #import	<Foundation/NSData.h>
 #import	<Foundation/NSDate.h>
-#import	<Foundation/NSException.h>
-#import	<Foundation/NSNotification.h>
-#import	<Foundation/NSHashTable.h>
-#import	<Foundation/NSMapTable.h>
-#import	<Foundation/NSLock.h>
-#import	<Foundation/NSAutoreleasePool.h>
-#import	<Foundation/NSValue.h>
 #import	<Foundation/NSDebug.h>
+#import	<Foundation/NSDictionary.h>
+#import	<Foundation/NSException.h>
+#import	<Foundation/NSHashTable.h>
+#import	<Foundation/NSLock.h>
+#import	<Foundation/NSMapTable.h>
+#import	<Foundation/NSNotification.h>
 #import	<Foundation/NSSet.h>
+#import	<Foundation/NSString.h>
 #import	<Foundation/NSTimer.h>
-
-#import	<GNUstepBase/GNUstep.h>
+#import	<Foundation/NSValue.h>
 
 #import	"GSCache.h"
 #import	"GSTicker.h"
@@ -570,7 +569,107 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 }
 @end
 
-@implementation	NSArray (SizeInBytes)
+@implementation	NSArray (GSCacheSizeInBytes)
+- (unsigned) sizeInBytes: (NSMutableSet*)exclude
+{
+  unsigned	size = [super sizeInBytes: exclude];
+
+  if (size > 0)
+    {
+      unsigned	count = [self count];
+
+      size += count*sizeof(void*);
+      while (count-- > 0)
+	{
+	  size += [[self objectAtIndex: count] sizeInBytes: exclude];
+	}
+    }
+  return size;
+}
+@end
+
+@implementation	NSData (GSCacheSizeInBytes)
+- (unsigned) sizeInBytes: (NSMutableSet*)exclude
+{
+  unsigned	size = [super sizeInBytes: exclude];
+
+  if (size > 0)
+    {
+      size += [self length];
+    }
+  return size;
+}
+@end
+
+@implementation	NSDictionary (GSCacheSizeInBytes)
+- (unsigned) sizeInBytes: (NSMutableSet*)exclude
+{
+  unsigned	size = [super sizeInBytes: exclude];
+
+  if (size > 0)
+    {
+      unsigned	count = [self count];
+
+      size += 3 * sizeof(void*) * count;
+      if (count > 0)
+        {
+	  CREATE_AUTORELEASE_POOL(pool);
+	  NSEnumerator	*enumerator = [self keyEnumerator];
+	  NSObject	*k;
+
+	  while ((k = [enumerator nextObject]) != nil)
+	    {
+	      NSObject	*o = [self objectForKey: k];
+
+	      size += [k sizeInBytes: exclude] + [o sizeInBytes: exclude];
+	    }
+	  RELEASE(pool);
+	}
+    }
+  return size;
+}
+@end
+
+@implementation	NSObject (GSCacheSizeInBytes)
+- (unsigned) sizeInBytes: (NSMutableSet*)exclude
+{
+  if ([exclude member: self] != nil)
+    {
+      return 0;
+    }
+  [exclude addObject: self];
+  return isa->instance_size;
+}
+@end
+
+@implementation	NSSet (GSCacheSizeInBytes)
+- (unsigned) sizeInBytes: (NSMutableSet*)exclude
+{
+  unsigned	size = [super sizeInBytes: exclude];
+
+  if (size > 0)
+    {
+      unsigned	count = [self count];
+
+      size += 3 * sizeof(void*) * count;
+      if (count > 0)
+        {
+	  CREATE_AUTORELEASE_POOL(pool);
+	  NSEnumerator	*enumerator = [self objectEnumerator];
+	  NSObject	*o;
+
+	  while ((o = [enumerator nextObject]) != nil)
+	    {
+	      size += [o sizeInBytes: exclude];
+	    }
+	  RELEASE(pool);
+	}
+    }
+  return size;
+}
+@end
+
+@implementation	NSString (GSCacheSizeInBytes)
 - (unsigned) sizeInBytes: (NSMutableSet*)exclude
 {
   if ([exclude member: self] != nil)
@@ -579,44 +678,43 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
     }
   else
     {
-      unsigned	count = [self count];
-      unsigned	size = [super sizeInBytes: exclude] + count*sizeof(void*);
-
-      if (exclude == nil)
-	{
-	  exclude = [NSMutableSet setWithCapacity: 8];
-	}
-      [exclude addObject: self];
-      while (count-- > 0)
-	{
-	  size += [[self objectAtIndex: count] sizeInBytes: exclude];
-	}
-      return size;
+      return [super sizeInBytes: exclude] + sizeof(unichar) * [self length];
     }
 }
 @end
 
-@implementation	NSData (SizeInBytes)
+#if	defined(GNUSTEP_BASE_LIBRARY)
+
+#include	<GNUstepBase/GSMime.h>
+
+@implementation	GSMimeDocument (GSCacheSizeInBytes)
 - (unsigned) sizeInBytes: (NSMutableSet*)exclude
 {
-  if ([exclude member: self] != nil) return 0;
-  return [super sizeInBytes: exclude] + [self length];
+  unsigned	size = [super sizeInBytes: exclude];
+
+  if (size > 0)
+    {
+      size += [content sizeInBytes: exclude]; + [headers sizeInBytes: exclude];
+    }
+  return size;
 }
 @end
 
-@implementation	NSObject (SizeInBytes)
+@implementation	GSMimeHeader (GSCacheSizeInBytes)
 - (unsigned) sizeInBytes: (NSMutableSet*)exclude
 {
-  if ([exclude member: self] != nil) return 0;
-  return isa->instance_size;
+  unsigned	size = [super sizeInBytes: exclude];
+
+  if (size > 0)
+    {
+      size += [name sizeInBytes: exclude]
+        + [value sizeInBytes: exclude]
+        + [objects sizeInBytes: exclude]
+        + [params sizeInBytes: exclude];
+    }
+  return size;
 }
 @end
 
-@implementation	NSString (SizeInBytes)
-- (unsigned) sizeInBytes: (NSMutableSet*)exclude
-{
-  if ([exclude member: self] != nil) return 0;
-  return [super sizeInBytes: exclude] + sizeof(unichar) * [self length];
-}
-@end
+#endif
 

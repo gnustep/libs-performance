@@ -5,6 +5,7 @@
 	* GSSkipMutableArray.m:
 	* GSTicker.m:
 	Changes to avoid compiler warnings on MacOS-X
+	Improvements to calculations for size of instances for cache.
 
 2006-11-11  Matt Rice <ratmice@gmail.com>
 

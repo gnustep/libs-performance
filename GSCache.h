@@ -27,12 +27,12 @@
 #define	INCLUDED_GSCache_H
 
 #import	<Foundation/NSObject.h>
-#import	<Foundation/NSArray.h>
-#import	<Foundation/NSData.h>
-#import	<Foundation/NSDate.h>
-#import	<Foundation/NSString.h>
 
+@class	NSArray;
+@class	NSDate;
+@class	NSDate;
 @class	NSMutableSet;
+@class	NSString;
 
 /**
  * The GSCache class is used to maintain a cache of objects in memory
@@ -234,20 +234,55 @@
 
 @end
 
-
-@interface	NSArray (SizeInBytes)
-- (unsigned) sizeInBytes: (NSMutableSet*)exclude;
-@end
-
-@interface	NSData (SizeInBytes)
-- (unsigned) sizeInBytes: (NSMutableSet*)exclude;
-@end
-
-@interface	NSObject (SizeInBytes)
-- (unsigned) sizeInBytes: (NSMutableSet*)exclude;
-@end
-
-@interface	NSString (SizeInBytes)
+/**
+ * <p>This category declares the -sizeInBytes: method which is used by
+ * [GSCache] to ask objects for their size when adding them to a cache
+ * which has a limited size in bytes.
+ * </p>
+ * <p>The [NSObject] implementation of this method is intended to
+ * provide a rough estimnate of object size which subclasses may refine
+ * in order to provide more accurate sizing information.<br />
+ * Subclasses should call the superclass implementation and use the
+ * resulting size information (if it is zero then the object is in the
+ * exclude set and the subclass implementation should also return zero)
+ * as a starting point on which to add the sizes of any objects contained.
+ * </p>
+ * For example:
+ * <example>
+ * - (unsigned) sizeInBytes: (NSMutableSet*)exclude
+ * {
+ *   unsigned size = [super sizeInBytes: exclude];
+ *   if (size > 0)
+ *     {
+ *       size += [myInstanceVariable sizeInBytes: exclude];
+ *     }
+ *   return size;
+ * }
+ * </example>
+ * <p>The performance library contains implementations giving reasonable size
+ * estimates for several common classes:
+ * </p>
+ * <list>
+ *   <item>NSArray</item>
+ *   <item>NSData</item>
+ *   <item>NSDictionary</item>
+ *   <item>NSSet</item>
+ *   <item>NSString</item>
+ *   <item>GSMimeDocument (if built with the GNUstep base library)</item>
+ * </list>
+ * <p>The default ([NSObject]) implementation provides a reasonable size
+ * for any class whose instance variables do not include other objects
+ * or pointers to memory allocated on the heap.
+ * </p>
+ */
+@interface	NSObject (GSCacheSizeInBytes)
+/**
+ * If the receiver is a member of the exclude set, this method simply
+ * returns zero.  Otherwise, the receiver adds itsself to the exclude
+ * set and returns its own size in bytes (the size of the memory used
+ * to hold all the instance variables defined for the receiver's class
+ * including all superclasses).
+ */
 - (unsigned) sizeInBytes: (NSMutableSet*)exclude;
 @end
 
