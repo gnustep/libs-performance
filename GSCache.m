@@ -31,6 +31,7 @@
 #import	<Foundation/NSDate.h>
 #import	<Foundation/NSDebug.h>
 #import	<Foundation/NSDictionary.h>
+#import	<Foundation/NSEnumerator.h>
 #import	<Foundation/NSException.h>
 #import	<Foundation/NSHashTable.h>
 #import	<Foundation/NSLock.h>
@@ -40,6 +41,8 @@
 #import	<Foundation/NSString.h>
 #import	<Foundation/NSTimer.h>
 #import	<Foundation/NSValue.h>
+
+#import	<GNUstepBase/GNUstep.h>
 
 #import	"GSCache.h"
 #import	"GSTicker.h"
