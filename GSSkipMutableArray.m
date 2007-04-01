@@ -27,6 +27,8 @@
 #import <Foundation/NSEnumerator.h>
 #import <Foundation/NSString.h>
 
+#import	<GNUstepBase/GNUstep.h>
+
 #import "GSSkipMutableArray.h"
 #import "GSIndexedSkipList.h"
 

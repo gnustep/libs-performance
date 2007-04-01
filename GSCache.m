@@ -40,8 +40,14 @@
 #import	<Foundation/NSSet.h>
 #import	<Foundation/NSTimer.h>
 
+#import	<GNUstepBase/GNUstep.h>
+
 #import	"GSCache.h"
 #import	"GSTicker.h"
+
+#if NeXT_RUNTIME
+#include <objc/objc-class.h>
+#endif
 
 @interface	GSCacheItem : NSObject
 {
@@ -601,11 +607,8 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 @implementation	NSObject (SizeInBytes)
 - (unsigned) sizeInBytes: (NSMutableSet*)exclude
 {
-  Class	c;
-
   if ([exclude member: self] != nil) return 0;
-  c = [self class];
-  return c->instance_size;
+  return isa->instance_size;
 }
 @end
 

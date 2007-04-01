@@ -30,6 +30,8 @@
 #import	<Foundation/NSData.h>
 #import	<Foundation/NSDate.h>
 #import	<Foundation/NSCalendarDate.h>
+#import	<Foundation/NSDictionary.h>
+#import	<Foundation/NSEnumerator.h>
 #import	<Foundation/NSException.h>
 #import	<Foundation/NSNotification.h>
 #import	<Foundation/NSHashTable.h>
@@ -37,6 +39,8 @@
 #import	<Foundation/NSDebug.h>
 #import	<Foundation/NSTimer.h>
 #import	<Foundation/NSThread.h>
+
+#import	<GNUstepBase/GNUstep.h>
 
 #import	"GSThroughput.h"
 #import	"GSTicker.h"
@@ -678,8 +682,7 @@ typedef struct {
               forPeriods: (unsigned)numberOfPeriods
 		ofLength: (unsigned)minutesPerPeriod
 {
-  _data = (Item*)NSZoneMalloc(NSDefaultMallocZone(), sizeof(Item));
-  memset(_data, '\0', sizeof(Item));
+  _data = (Item*)NSZoneCalloc(NSDefaultMallocZone(), 1, sizeof(Item));
 
   /*
    * Add this instance to the current thread.
@@ -704,8 +707,7 @@ typedef struct {
         {
 	  DInfo	*ptr;
 
-	  ptr = (DInfo*)NSZoneMalloc(NSDefaultMallocZone(), sizeof(DInfo));
-	  memset(ptr, '\0', sizeof(DInfo));
+	  ptr = (DInfo*)NSZoneCalloc(NSDefaultMallocZone(), 1, sizeof(DInfo));
 	  my->seconds = ptr;
 	  my->minutes = 0;
 	  my->periods = 0;
@@ -716,8 +718,7 @@ typedef struct {
         {
 	  CInfo	*ptr;
 
-	  ptr = (CInfo*)NSZoneMalloc(NSDefaultMallocZone(), sizeof(CInfo));
-	  memset(ptr, '\0', sizeof(CInfo));
+	  ptr = (CInfo*)NSZoneCalloc(NSDefaultMallocZone(), 1, sizeof(CInfo));
 	  my->seconds = ptr;
 	  my->minutes = 0;
 	  my->periods = 0;
@@ -745,8 +746,7 @@ typedef struct {
 	{
 	  DInfo	*ptr;
 
-	  ptr = (DInfo*)NSZoneMalloc(NSDefaultMallocZone(), sizeof(DInfo) * i);
-	  memset(ptr, '\0', sizeof(DInfo) * i);
+	  ptr = (DInfo*)NSZoneCalloc(NSDefaultMallocZone(), i, sizeof(DInfo));
 	  my->seconds = ptr;
 	  my->minutes = ptr + 60;
 	  my->periods = ptr + 60 + minutesPerPeriod;
@@ -771,8 +771,7 @@ typedef struct {
 	{
 	  CInfo	*ptr;
 
-	  ptr = (CInfo*)NSZoneMalloc(NSDefaultMallocZone(), sizeof(CInfo) * i);
-	  memset(ptr, '\0', sizeof(CInfo) * i);
+	  ptr = (CInfo*)NSZoneCalloc(NSDefaultMallocZone(), i, sizeof(CInfo));
 	  my->seconds = ptr;
 	  my->minutes = ptr + 60;
 	  my->periods = ptr + 60 + minutesPerPeriod;

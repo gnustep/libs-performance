@@ -27,9 +27,12 @@
 
 #import	<Foundation/NSArray.h>
 #import	<Foundation/NSDate.h>
+#import	<Foundation/NSDictionary.h>
 #import	<Foundation/NSThread.h>
 #import	<Foundation/NSString.h>
 #import	<Foundation/NSTimer.h>
+
+#import	<GNUstepBase/GNUstep.h>
 
 #import	"GSTicker.h"
 
