@@ -297,16 +297,22 @@ NSTimeInterval	GSTickerTimeNow()
   if (tt != nil && [tt->observers count] > 0)
     {
       NSTimeInterval	ti;
-      NSArray		*a = [tt->observers copy];
 
       if (tt->theTimer != t)
 	{
 	  [tt->theTimer invalidate];
 	  tt->theTimer = nil;
 	}
-      [a makeObjectsPerformSelector: @selector(fire:)
-			 withObject: tt->observers];
-      RELEASE(a);
+
+      if ([tt->observers count] > 0)
+        {
+          NSArray	*a = [tt->observers copy];
+
+          GSTickerTimeNow();
+          [a makeObjectsPerformSelector: @selector(fire:)
+                             withObject: tt->observers];
+          RELEASE(a);
+        }
 
       ti = GSTickerTimeNow();
       tt->theTimer = [NSTimer scheduledTimerWithTimeInterval: ti - (int)ti

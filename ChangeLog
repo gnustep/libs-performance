@@ -1,3 +1,7 @@
+2007-05-30  Richard Frith-Macdonald  <rfm@gnu.org>
+
+	* GSTicker.m: Ensure tick is current before calling -newSecond:
+
 2007-04-01  Richard Frith-Macdonald  <rfm@gnu.org>
 
 	* GSCache.m:
