@@ -1,3 +1,7 @@
+2007-09-14 Richard Frith-Macdonald  <rfm@gnu.org>
+
+	Update to LGPL3
+
 2007-05-30  Richard Frith-Macdonald  <rfm@gnu.org>
 
 	* GSTicker.m: Ensure tick is current before calling -newSecond:
