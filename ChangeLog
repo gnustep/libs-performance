@@ -1,3 +1,9 @@
+2007-12-08 Richard Frith-Macdonald  <rfm@gnu.org>
+
+	* GNUmakefile: bump subminor version for release.
+	* GSThroughput.m: backport minor fixes from trunk
+	* GSSkipMutableArray.m: include NSDictionary.h
+
 2007-09-14 Richard Frith-Macdonald  <rfm@gnu.org>
 
 	Update to LGPL3

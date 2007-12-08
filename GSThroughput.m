@@ -25,21 +25,25 @@
    $Date$ $Revision$
    */ 
 
-#include	<Foundation/NSArray.h>
-#include	<Foundation/NSString.h>
-#include	<Foundation/NSData.h>
-#include	<Foundation/NSDate.h>
-#include	<Foundation/NSCalendarDate.h>
-#include	<Foundation/NSException.h>
-#include	<Foundation/NSNotification.h>
-#include	<Foundation/NSHashTable.h>
-#include	<Foundation/NSAutoreleasePool.h>
-#include	<Foundation/NSDebug.h>
-#include	<Foundation/NSTimer.h>
-#include	<Foundation/NSThread.h>
+#import	<Foundation/NSArray.h>
+#import	<Foundation/NSString.h>
+#import	<Foundation/NSData.h>
+#import	<Foundation/NSDate.h>
+#import	<Foundation/NSCalendarDate.h>
+#import	<Foundation/NSDictionary.h>
+#import	<Foundation/NSEnumerator.h>
+#import	<Foundation/NSException.h>
+#import	<Foundation/NSNotification.h>
+#import	<Foundation/NSHashTable.h>
+#import	<Foundation/NSAutoreleasePool.h>
+#import	<Foundation/NSDebug.h>
+#import	<Foundation/NSTimer.h>
+#import	<Foundation/NSThread.h>
 
-#include	"GSThroughput.h"
-#include	"GSTicker.h"
+#import	<GNUstepBase/GNUstep.h>
+
+#import	"GSThroughput.h"
+#import	"GSTicker.h"
 
 #define	MAXDURATION	24.0*60.0*60.0
 
@@ -565,6 +569,24 @@ typedef struct {
 	      if (my->period > 0)
 		{
 		  tick = 0;
+                  /* Periods from last cycle
+                   */
+		  for (i = my->period; i < my->numberOfPeriods; i++)
+		    {
+		      DInfo		*info = &dperiods[i];
+		      NSTimeInterval	ti = info->tick + baseTime;
+
+		      if (info->tick != tick)
+			{
+			  tick = info->tick;
+			  [m appendFormat: @"%u, %g, %g, %g, %@\n",
+			    info->cnt, info->max, info->min, info->sum,
+			    [NSDate dateWithTimeIntervalSinceReferenceDate:
+			      ti]];
+			}
+		    }
+                  /* Periods from current cycle
+                   */
 		  for (i = 0; i < my->period; i++)
 		    {
 		      DInfo		*info = &dperiods[i];
@@ -625,6 +647,23 @@ typedef struct {
 	      if (my->period > 0)
 		{
 		  tick = 0;
+                  /* Periods from last cycle
+                   */
+		  for (i = my->period; i < my->numberOfPeriods; i++)
+                    {
+		      CInfo		*info = &cperiods[i];
+		      NSTimeInterval	ti = info->tick + baseTime;
+
+		      if (info->tick != tick)
+			{
+			  tick = info->tick;
+			  [m appendFormat: @"%u, %@\n", info->cnt,
+			    [NSDate dateWithTimeIntervalSinceReferenceDate:
+			      ti]];
+			}
+                    }
+                  /* Periods from current cycle
+                   */
 		  for (i = 0; i < my->period; i++)
 		    {
 		      CInfo		*info = &cperiods[i];
@@ -678,8 +717,7 @@ typedef struct {
               forPeriods: (unsigned)numberOfPeriods
 		ofLength: (unsigned)minutesPerPeriod
 {
-  _data = (Item*)NSZoneMalloc(NSDefaultMallocZone(), sizeof(Item));
-  memset(_data, '\0', sizeof(Item));
+  _data = (Item*)NSZoneCalloc(NSDefaultMallocZone(), 1, sizeof(Item));
 
   /*
    * Add this instance to the current thread.
@@ -704,8 +742,7 @@ typedef struct {
         {
 	  DInfo	*ptr;
 
-	  ptr = (DInfo*)NSZoneMalloc(NSDefaultMallocZone(), sizeof(DInfo));
-	  memset(ptr, '\0', sizeof(DInfo));
+	  ptr = (DInfo*)NSZoneCalloc(NSDefaultMallocZone(), 1, sizeof(DInfo));
 	  my->seconds = ptr;
 	  my->minutes = 0;
 	  my->periods = 0;
@@ -716,8 +753,7 @@ typedef struct {
         {
 	  CInfo	*ptr;
 
-	  ptr = (CInfo*)NSZoneMalloc(NSDefaultMallocZone(), sizeof(CInfo));
-	  memset(ptr, '\0', sizeof(CInfo));
+	  ptr = (CInfo*)NSZoneCalloc(NSDefaultMallocZone(), 1, sizeof(CInfo));
 	  my->seconds = ptr;
 	  my->minutes = 0;
 	  my->periods = 0;
@@ -745,8 +781,7 @@ typedef struct {
 	{
 	  DInfo	*ptr;
 
-	  ptr = (DInfo*)NSZoneMalloc(NSDefaultMallocZone(), sizeof(DInfo) * i);
-	  memset(ptr, '\0', sizeof(DInfo) * i);
+	  ptr = (DInfo*)NSZoneCalloc(NSDefaultMallocZone(), i, sizeof(DInfo));
 	  my->seconds = ptr;
 	  my->minutes = ptr + 60;
 	  my->periods = ptr + 60 + minutesPerPeriod;
@@ -771,8 +806,7 @@ typedef struct {
 	{
 	  CInfo	*ptr;
 
-	  ptr = (CInfo*)NSZoneMalloc(NSDefaultMallocZone(), sizeof(CInfo) * i);
-	  memset(ptr, '\0', sizeof(CInfo) * i);
+	  ptr = (CInfo*)NSZoneCalloc(NSDefaultMallocZone(), i, sizeof(CInfo));
 	  my->seconds = ptr;
 	  my->minutes = ptr + 60;
 	  my->periods = ptr + 60 + minutesPerPeriod;

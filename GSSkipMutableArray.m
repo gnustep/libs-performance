@@ -23,6 +23,7 @@
 
 #include <Foundation/NSException.h>
 #include <Foundation/NSValue.h>
+#include <Foundation/NSDictionary.h>
 #include <Foundation/NSEnumerator.h>
 
 #include "GSSkipMutableArray.h"
