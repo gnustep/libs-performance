@@ -1,5 +1,6 @@
 2007-12-08 Richard Frith-Macdonald  <rfm@gnu.org>
 
+	* GNUmakefile: bump subminor version for release
 	* GSThroughput.m: ([-description]) output information for periods
 	from last cycle as well as current cycle.
 
