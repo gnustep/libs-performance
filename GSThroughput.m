@@ -569,6 +569,24 @@ typedef struct {
 	      if (my->period > 0)
 		{
 		  tick = 0;
+                  /* Periods from last cycle
+                   */
+		  for (i = my->period; i < my->numberOfPeriods; i++)
+		    {
+		      DInfo		*info = &dperiods[i];
+		      NSTimeInterval	ti = info->tick + baseTime;
+
+		      if (info->tick != tick)
+			{
+			  tick = info->tick;
+			  [m appendFormat: @"%u, %g, %g, %g, %@\n",
+			    info->cnt, info->max, info->min, info->sum,
+			    [NSDate dateWithTimeIntervalSinceReferenceDate:
+			      ti]];
+			}
+		    }
+                  /* Periods from current cycle
+                   */
 		  for (i = 0; i < my->period; i++)
 		    {
 		      DInfo		*info = &dperiods[i];
@@ -629,6 +647,23 @@ typedef struct {
 	      if (my->period > 0)
 		{
 		  tick = 0;
+                  /* Periods from last cycle
+                   */
+		  for (i = my->period; i < my->numberOfPeriods; i++)
+                    {
+		      CInfo		*info = &cperiods[i];
+		      NSTimeInterval	ti = info->tick + baseTime;
+
+		      if (info->tick != tick)
+			{
+			  tick = info->tick;
+			  [m appendFormat: @"%u, %@\n", info->cnt,
+			    [NSDate dateWithTimeIntervalSinceReferenceDate:
+			      ti]];
+			}
+                    }
+                  /* Periods from current cycle
+                   */
 		  for (i = 0; i < my->period; i++)
 		    {
 		      CInfo		*info = &cperiods[i];

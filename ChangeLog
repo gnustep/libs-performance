@@ -1,3 +1,8 @@
+2007-12-08 Richard Frith-Macdonald  <rfm@gnu.org>
+
+	* GSThroughput.m: ([-description]) output information for periods
+	from last cycle as well as current cycle.
+
 2007-09-14 Richard Frith-Macdonald  <rfm@gnu.org>
 
 	Update to LGPL3
