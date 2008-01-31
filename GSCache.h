@@ -50,7 +50,11 @@
  * Objects stored in the cache may be given a limited lifetime,
  * in which case an attempt to fetch an <em>expired</em> object
  * from the cache will cause it to be removed from the cache instead
- * (subject to control by the delegate).
+ * (subject to control by the delegate).<br />
+ * Cache keys may be objects of any type as long as they are copyable
+ * (and the copied keys are immutable) and implement the -hash and
+ * -isEqual: methods such that any two keys can be tested for equality
+ *  and used as dictionary keys.
  */
 @interface	GSCache : NSObject
 {
@@ -115,7 +119,7 @@
  * Return the cached value for the specified key, or nil if there
  * is no value in the cache.
  */
-- (id) objectForKey: (NSString*)aKey;
+- (id) objectForKey: (id)aKey;
 
 /**
  * Remove all items whose lifetimes have passed
@@ -164,7 +168,7 @@
  * The value of anObject may be nil to remove any cached object
  * for aKey.
  */
-- (void) setObject: (id)anObject forKey: (NSString*)aKey;
+- (void) setObject: (id)anObject forKey: (id)aKey;
 
 /**
  * Sets (or replaces)the cached value for the specified key, giving
@@ -174,7 +178,7 @@
  * for aKey.
  */
 - (void) setObject: (id)anObject
-	    forKey: (NSString*)aKey
+	    forKey: (id)aKey
 	  lifetime: (unsigned)lifetime;
 
 /**
@@ -187,7 +191,7 @@
  * set in the cache so that it is not limited by lifetime.
  */
 - (void) setObject: (id)anObject
-	    forKey: (NSString*)aKey
+	    forKey: (id)aKey
 	     until: (NSDate*)expires;
 
 /**
@@ -229,7 +233,7 @@
  * database query to update the cache later.
  */
 - (BOOL) shouldKeepItem: (id)anObject
-		withKey: (NSString*)aKey
+		withKey: (id)aKey
 		  after: (unsigned)delay;
 
 @end

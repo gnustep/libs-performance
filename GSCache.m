@@ -58,14 +58,14 @@
   GSCacheItem	*prev;
   unsigned	when;
   unsigned	size;
-  NSString	*key;
+  id	        key;
   id		object;
 }
-+ (GSCacheItem*) newWithObject: (id)anObject forKey: (NSString*)aKey;
++ (GSCacheItem*) newWithObject: (id)anObject forKey: (id)aKey;
 @end
 
 @implementation	GSCacheItem
-+ (GSCacheItem*) newWithObject: (id)anObject forKey: (NSString*)aKey
++ (GSCacheItem*) newWithObject: (id)anObject forKey: (id)aKey
 {
   GSCacheItem	*i;
 
@@ -279,7 +279,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
   return my->name;
 }
 
-- (id) objectForKey: (NSString*)aKey
+- (id) objectForKey: (id)aKey
 {
   GSCacheItem	*item;
   unsigned	when = GSTickerTimeTick();
@@ -332,8 +332,8 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
   if (my->contents != 0)
     {
       NSMapEnumerator	e;
-      GSCacheItem		*i;
-      NSString		*k;
+      GSCacheItem	*i;
+      id		k;
 
       e = NSEnumerateMapTable(my->contents);
       while (NSNextMapEnumeratorPair(&e, (void**)&k, (void**)&i) != 0)
@@ -400,8 +400,8 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
   if (max > 0 && my->maxSize == 0)
     {
       NSMapEnumerator	e = NSEnumerateMapTable(my->contents);
-      GSCacheItem		*i;
-      NSString		*k;
+      GSCacheItem	*i;
+      id		k;
       unsigned		size = 0;
 
       if (my->exclude == nil)
@@ -448,13 +448,13 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
   ASSIGN(my->name, name);
 }
 
-- (void) setObject: (id)anObject forKey: (NSString*)aKey
+- (void) setObject: (id)anObject forKey: (id)aKey
 {
   [self setObject: anObject forKey: aKey lifetime: my->lifetime];
 }
 
 - (void) setObject: (id)anObject
-	    forKey: (NSString*)aKey
+	    forKey: (id)aKey
 	  lifetime: (unsigned)lifetime
 {
   GSCacheItem	*item;
@@ -514,7 +514,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 }
 
 - (void) setObject: (id)anObject
-            forKey: (NSString*)aKey
+            forKey: (id)aKey
 	     until: (NSDate*)expires
 {
   NSTimeInterval	 i;

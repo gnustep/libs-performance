@@ -1,3 +1,10 @@
+2008-01-31 Richard Frith-Macdonald  <rfm@gnu.org>
+
+	* GSCache.h:
+	* GSCache.m:
+	Make cache keys 'id' rather than 'NSString*' as they can actually be
+	any copyable object.
+
 2007-12-08 Richard Frith-Macdonald  <rfm@gnu.org>
 
 	* GNUmakefile: bump subminor version for release
