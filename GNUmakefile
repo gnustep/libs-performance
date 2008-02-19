@@ -35,6 +35,7 @@ Performance_AGSDOC_FILES += \
 	GSTicker.h \
 	GSSkipMutableArray.h
 
+Performance_NEEDS_GUI = NO
 
 # Optional Java wrappers for the library
 JAVA_WRAPPER_NAME = Performance
