@@ -7,6 +7,8 @@ PACKAGE_VERSION = 0.3.1
 SVN_BASE_URL = svn+ssh://svn.gna.org/svn/gnustep/libs
 SVN_MODULE_NAME = performance
 
+NEEDS_GUI = NO
+
 TEST_TOOL_NAME=
 
 LIBRARY_NAME=Performance
@@ -35,7 +37,6 @@ Performance_AGSDOC_FILES += \
 	GSTicker.h \
 	GSSkipMutableArray.h
 
-Performance_NEEDS_GUI = NO
 
 # Optional Java wrappers for the library
 JAVA_WRAPPER_NAME = Performance
