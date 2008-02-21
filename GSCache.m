@@ -40,6 +40,7 @@
 #import	<Foundation/NSSet.h>
 #import	<Foundation/NSString.h>
 #import	<Foundation/NSTimer.h>
+#import	<Foundation/NSThread.h>
 #import	<Foundation/NSValue.h>
 
 #import	<GNUstepBase/GNUstep.h>
@@ -51,11 +52,17 @@
 #include <objc/objc-class.h>
 #endif
 
+@interface	GSCache (Threading)
++ (void) _becomeThreaded: (NSNotification*)n;
+- (void) _createLock;
+@end
+
 @interface	GSCacheItem : NSObject
 {
 @public
   GSCacheItem	*next;
   GSCacheItem	*prev;
+  unsigned	life;
   unsigned	when;
   unsigned	size;
   id	        key;
@@ -85,8 +92,8 @@
 
 @implementation	GSCache
 
-static NSHashTable	*GSCacheInstances = 0;
-static NSLock		*GSCacheLock = nil;
+static NSHashTable	*allCaches = 0;
+static NSLock		*allCachesLock = nil;
 
 typedef struct {
   id		delegate;
@@ -101,6 +108,7 @@ typedef struct {
   GSCacheItem	*first;
   NSString	*name;
   NSMutableSet	*exclude;
+  NSRecursiveLock	*lock;
 } Item;
 #define	my	((Item*)&self[1])
 
@@ -148,9 +156,9 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 {
   NSArray	*a;
 
-  [GSCacheLock lock];
-  a = NSAllHashTableObjects(GSCacheInstances);
-  [GSCacheLock unlock];
+  [allCachesLock lock];
+  a = NSAllHashTableObjects(allCaches);
+  [allCachesLock unlock];
   return a;
 }
 
@@ -164,9 +172,6 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
   GSCache	*c;
 
   c = (GSCache*)NSAllocateObject(self, sizeof(Item), z);
-  [GSCacheLock lock];
-  NSHashInsert(GSCacheInstances, (void*)c);
-  [GSCacheLock unlock];
   return c;
 }
 
@@ -177,24 +182,40 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
   GSCache		*c;
 
   ms = [NSMutableString stringWithString: [super description]];
-  [GSCacheLock lock];
-  e = NSEnumerateHashTable(GSCacheInstances);
+  [allCachesLock lock];
+  e = NSEnumerateHashTable(allCaches);
   while ((c = (GSCache*)NSNextHashEnumeratorItem(&e)) != nil)
     {
       [ms appendFormat: @"\n%@", [c description]];
     }
   NSEndHashTableEnumeration(&e);
-  [GSCacheLock unlock];
+  [allCachesLock unlock];
   return ms;
 }
 
 + (void) initialize
 {
-  if (GSCacheInstances == 0)
+  if (allCaches == 0)
     {
-      GSCacheLock = [NSLock new];
-      GSCacheInstances
+      allCaches
 	= NSCreateHashTable(NSNonRetainedObjectHashCallBacks, 0);
+      if ([NSThread isMultiThreaded] == YES)
+	{
+	  [self _becomeThreaded: nil];
+	}
+      else
+	{
+	  /* If and when we become multi-threaded, the +_becomeThreaded:
+	   * method will remove us as an observer and will create a lock
+	   * for the table of all caches, then ask each cache to create
+	   * its own lock.
+	   */
+	  [[NSNotificationCenter defaultCenter]
+	    addObserver: self
+	    selector: @selector(_becomeThreaded:)
+	    name: NSWillBecomeMultiThreadedNotification
+	    object: nil];
+	}
       GSTickerTimeNow();
     }
 }
@@ -211,9 +232,9 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 
 - (void) dealloc
 {
-  [GSCacheLock lock];
-  NSHashRemove(GSCacheInstances, (void*)self);
-  [GSCacheLock unlock];
+  [allCachesLock lock];
+  NSHashRemove(allCaches, (void*)self);
+  [allCachesLock unlock];
   if (my->contents != 0)
     {
       [self shrinkObjects: 0 andSize: 0];
@@ -221,6 +242,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
     }
   RELEASE(my->exclude);
   RELEASE(my->name);
+  RELEASE(my->lock);
   [super dealloc];
 }
 
@@ -231,13 +253,15 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 
 - (NSString*) description
 {
-  NSString	*n = my->name;
+  NSString	*n;
 
+  [my->lock lock];
+  n = my->name;
   if (n == nil)
     {
       n = [super description];
     }
-  return [NSString stringWithFormat:
+  n = [NSString stringWithFormat:
     @"  %@\n"
     @"    Items: %u(%u)\n"
     @"    Size:  %u(%u)\n"
@@ -250,12 +274,21 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
     my->lifetime,
     my->hits,
     my->misses];
+  [my->lock unlock];
+  return n;
 }
 
 - (id) init
 {
+  if ([NSThread isMultiThreaded] == YES)
+    {
+      [self _createLock];
+    }
   my->contents = NSCreateMapTable(NSObjectMapKeyCallBacks,
     NSObjectMapValueCallBacks, 0);
+  [allCachesLock lock];
+  NSHashInsert(allCaches, (void*)self);
+  [allCachesLock unlock];
   return self;
 }
 
@@ -276,35 +309,78 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 
 - (NSString*) name
 {
-  return my->name;
+  NSString	*n;
+
+  [my->lock lock];
+  n = [my->name retain];
+  [my->lock unlock];
+  return [n autorelease];
 }
 
 - (id) objectForKey: (id)aKey
 {
+  id		object;
   GSCacheItem	*item;
   unsigned	when = GSTickerTimeTick();
 
+  [my->lock lock];
   item = (GSCacheItem*)NSMapGet(my->contents, aKey);
   if (item == nil)
     {
       my->misses++;
+      [my->lock unlock];
       return nil;
     }
   if (item->when > 0 && item->when < when)
     {
-      if ([my->delegate shouldKeepItem: item->object
-			       withKey: aKey
-				 after: when - item->when] == YES)
+      BOOL	keep = NO;
+
+      if (my->delegate != nil)
 	{
-	  // Refetch in case delegate changed it.
-	  item = (GSCacheItem*)NSMapGet(my->contents, aKey);
-	  if (item == nil)
+	  GSCacheItem	*orig = [item retain];
+
+	  [my->lock unlock];
+	  keep = [my->delegate shouldKeepItem: item->object
+				      withKey: aKey
+				     lifetime: item->life
+					after: when - item->when];
+	  [my->lock lock];
+	  if (keep == YES)
 	    {
-	      my->misses++;
-	      return nil;
+	      GSCacheItem	*current;
+
+	      /* Refetch in case delegate changed it.
+	       */
+	      current = (GSCacheItem*)NSMapGet(my->contents, aKey);
+	      if (current == nil)
+		{
+		  /* Delegate must have deleted the item even though
+		   * it returned YES to say we should keep it ...
+		   * we count this as a miss.
+		   */
+		  my->misses++;
+		  [my->lock unlock];
+		  return nil;
+		}
+	      else if (orig == current)
+		{
+		  /* Delegate told us to keep the original item so we
+		   * update its expiry time.
+		   */
+		  item->when = when + item->life;
+		}
+	      else
+		{
+		  /* Delegate replaced the item with another and told
+		   * us to keep that one.
+		   */
+		  item = current;
+		}
 	    }
+	  [orig release];
 	}
-      else
+
+      if (keep == NO)
 	{
 	  removeItem(item, &my->first);
 	  my->currentObjects--;
@@ -314,6 +390,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 	    }
 	  NSMapRemove(my->contents, (void*)item->key);
 	  my->misses++;
+	  [my->lock unlock];
 	  return nil;	// Lifetime expired.
 	}
     }
@@ -322,19 +399,21 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
   removeItem(item, &my->first);
   appendItem(item, &my->first);
   my->hits++;
-  return item->object;
+  object = [item->object retain];
+  [my->lock unlock];
+  return [object autorelease];
 }
 
 - (void) purge
 {
-  unsigned	when = GSTickerTimeTick();
-
   if (my->contents != 0)
     {
+      unsigned		when = GSTickerTimeTick();
       NSMapEnumerator	e;
       GSCacheItem	*i;
       id		k;
 
+      [my->lock lock];
       e = NSEnumerateMapTable(my->contents);
       while (NSNextMapEnumeratorPair(&e, (void**)&k, (void**)&i) != 0)
 	{
@@ -350,6 +429,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 	    }
 	}
       NSEndMapTableEnumeration(&e);
+      [my->lock unlock];
     }
 }
 
@@ -362,16 +442,16 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
    * it from the table so that no other thread will find it
    * and try to use it while it is being deallocated.
    */
-  [GSCacheLock lock];
+  [allCachesLock lock];
   if (NSDecrementExtraRefCountWasZero(self))
     {
-      NSHashRemove(GSCacheInstances, (void*)self);
-      [GSCacheLock unlock];
+      NSHashRemove(allCaches, (void*)self);
+      [allCachesLock unlock];
       [self dealloc];
     }
   else
     {
-      [GSCacheLock unlock];
+      [allCachesLock unlock];
     }
 }
 
@@ -387,16 +467,19 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 
 - (void) setMaxObjects: (unsigned)max
 {
+  [my->lock lock];
   my->maxObjects = max;
   if (my->currentObjects > my->maxObjects)
     {
       [self shrinkObjects: my->maxObjects
 		  andSize: my->maxSize];
     }
+  [my->lock unlock];
 }
 
 - (void) setMaxSize: (unsigned)max
 {
+  [my->lock lock];
   if (max > 0 && my->maxSize == 0)
     {
       NSMapEnumerator	e = NSEnumerateMapTable(my->contents);
@@ -441,11 +524,14 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
       [self shrinkObjects: my->maxObjects
 		  andSize: my->maxSize];
     }
+  [my->lock unlock];
 }
 
 - (void) setName: (NSString*)name
 {
+  [my->lock lock];
   ASSIGN(my->name, name);
+  [my->lock unlock];
 }
 
 - (void) setObject: (id)anObject forKey: (id)aKey
@@ -458,11 +544,14 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 	  lifetime: (unsigned)lifetime
 {
   GSCacheItem	*item;
-  unsigned	maxObjects = my->maxObjects;
-  unsigned	maxSize = my->maxSize;
+  unsigned	maxObjects;
+  unsigned	maxSize;
   unsigned	addObjects = (anObject == nil ? 0 : 1);
   unsigned	addSize = 0;
 
+  [my->lock lock];
+  maxObjects = my->maxObjects;
+  maxSize = my->maxSize;
   item = (GSCacheItem*)NSMapGet(my->contents, aKey);
   if (item != nil)
     {
@@ -487,7 +576,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 	  addSize = [anObject sizeInBytes: my->exclude];
 	  if (addSize > maxSize)
 	    {
-	      return;	// Object too big to cache.
+	      addObjects = 0;	// Object too big to cache.
 	    }
 	}
     }
@@ -504,6 +593,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 	{
 	  item->when = GSTickerTimeTick() + lifetime;
 	}
+      item->life = lifetime;
       item->size = addSize;
       NSMapInsert(my->contents, (void*)item->key, (void*)item);
       appendItem(item, &my->first);
@@ -511,6 +601,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
       my->currentSize += addSize;
       RELEASE(item);
     }
+  [my->lock unlock];
 }
 
 - (void) setObject: (id)anObject
@@ -545,9 +636,12 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 
 - (void) shrinkObjects: (unsigned)objects andSize: (unsigned)size 
 {
-  unsigned	newSize = [self currentSize];
-  unsigned	newObjects = [self currentObjects];
+  unsigned	newSize;
+  unsigned	newObjects;
 
+  [my->lock lock];
+  newSize = [self currentSize];
+  newObjects = [self currentObjects];
   if (newObjects > objects || (my->maxSize > 0 && newSize > size))
     {
       [self purge];
@@ -569,6 +663,28 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
       my->currentObjects = newObjects;
       my->currentSize = newSize;
     }
+  [my->lock unlock];
+}
+@end
+@implementation	GSCache (Threading)
++ (void) _becomeThreaded: (NSNotification*)n
+{
+  NSHashEnumerator	e;
+  GSCache		*c;
+
+  [[NSNotificationCenter defaultCenter] removeObserver: self
+    name: NSWillBecomeMultiThreadedNotification object: nil];
+  allCachesLock = [NSRecursiveLock new];
+  e = NSEnumerateHashTable(allCaches);
+  while ((c = (GSCache*)NSNextHashEnumeratorItem(&e)) != nil)
+    {
+      [c _createLock];
+    }
+  NSEndHashTableEnumeration(&e);
+}
+- (void) _createLock
+{
+  my->lock = [NSRecursiveLock new];
 }
 @end
 

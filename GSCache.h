@@ -36,7 +36,7 @@
 
 /**
  * The GSCache class is used to maintain a cache of objects in memory
- * for relatiovely rapid access.<br />
+ * for relatively rapid access.<br />
  * Typical usage might be to keep the results of a database query around
  * for a while in order to re-use them ... for instance when application
  * configuration is obtained from a database which might be updated while
@@ -54,7 +54,9 @@
  * Cache keys may be objects of any type as long as they are copyable
  * (and the copied keys are immutable) and implement the -hash and
  * -isEqual: methods such that any two keys can be tested for equality
- *  and used as dictionary keys.
+ *  and used as dictionary keys.<br />
+ * NB.  GSCache currently does not support subclassing ... use it as is
+ * or extend it via categories, but do not try to add instance variables.
  */
 @interface	GSCache : NSObject
 {
@@ -230,10 +232,13 @@
  * when its lifetime has expired.<br />
  * Another possibility would be for the delegate to return YES (in order
  * to continue using the existing object) and queue an asynchronous
- * database query to update the cache later.
+ * database query to update the cache later.  In this case the expiry
+ * time of the item will be reset relative to the current time, based
+ * upon its original lifetime.
  */
 - (BOOL) shouldKeepItem: (id)anObject
 		withKey: (id)aKey
+	       lifetime: (unsigned)lifetime
 		  after: (unsigned)delay;
 
 @end
