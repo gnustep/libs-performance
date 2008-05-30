@@ -228,7 +228,7 @@ typedef struct {
 		    }
                   if (my->notify == YES && my->last > 59)
                     {
-                      if (info->min == MAXDURATION)
+                      if (info->min >= MAXDURATION)
                         {
                           info->min = -1.0;
                         }
@@ -245,9 +245,13 @@ typedef struct {
                           [NSNumber numberWithDouble: info->sum],
                           GSThroughputTotalKey,
                           [NSDate dateWithTimeIntervalSinceReferenceDate:
-                            base + my->last - 59],
+                            base + my->last - 60],
                           GSThroughputTimeKey,
                           nil]];
+                      if (info->min < 0.0)
+                        {
+                          info->min = MAXDURATION;
+                        }
                     }
 		  if (my->minute++ == my->minutesPerPeriod - 1)
 		    {
@@ -319,7 +323,7 @@ typedef struct {
                           [NSNumber numberWithUnsignedInt: info->cnt],
                           GSThroughputCountKey,
                           [NSDate dateWithTimeIntervalSinceReferenceDate:
-                            base + my->last - 59],
+                            base + my->last - 60],
                           GSThroughputTimeKey,
                           nil]];
                     }
@@ -382,7 +386,7 @@ typedef struct {
                           [NSNumber numberWithDouble: info->sum],
                           GSThroughputTotalKey,
                           [NSDate dateWithTimeIntervalSinceReferenceDate:
-                            base + my->last - 59],
+                            base + my->last - 60],
                           GSThroughputTimeKey,
                           nil]];
                     }
@@ -404,7 +408,7 @@ typedef struct {
                           [NSNumber numberWithUnsignedInt: info->cnt],
                           GSThroughputCountKey,
                           [NSDate dateWithTimeIntervalSinceReferenceDate:
-                            base + my->last - 59],
+                            base + my->last - 60],
                           GSThroughputTimeKey,
                           nil]];
                     }
