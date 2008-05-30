@@ -39,11 +39,19 @@
 #import	<Foundation/NSDebug.h>
 #import	<Foundation/NSTimer.h>
 #import	<Foundation/NSThread.h>
+#import	<Foundation/NSValue.h>
 
 #import	<GNUstepBase/GNUstep.h>
 
 #import	"GSThroughput.h"
 #import	"GSTicker.h"
+
+NSString * const GSThroughputNotification = @"GSThroughputNotification";
+NSString * const GSThroughputCountKey = @"Count";
+NSString * const GSThroughputMaximumKey = @"Maximum";
+NSString * const GSThroughputMinimumKey = @"Maximum";
+NSString * const GSThroughputTimeKey = @"Time";
+NSString * const GSThroughputTotalKey = @"Total";
 
 #define	MAXDURATION	24.0*60.0*60.0
 
@@ -72,6 +80,7 @@ typedef struct {
   void			*periods;
   void			*total;
   BOOL			supportDurations;
+  BOOL                  notify;
   unsigned		numberOfPeriods;
   unsigned		minutesPerPeriod;
   unsigned		second;
@@ -179,9 +188,18 @@ typedef struct {
 
 - (void) _update
 {
-  if (my->thread != nil && my->numberOfPeriods > 0)
+  NSTimeInterval        base;
+  unsigned	        tick;
+
+  if (my->thread == nil)
     {
-      unsigned	tick = GSTickerTimeTick();
+      return;
+    }
+
+  base = GSTickerTimeStart();
+  tick = GSTickerTimeTick();
+  if (my->numberOfPeriods > 0)
+    {
       unsigned	i;
 
       if (my->supportDurations == YES)
@@ -208,6 +226,29 @@ typedef struct {
 			}
 		      info->sum += from->sum;
 		    }
+                  if (my->notify == YES && my->last > 59)
+                    {
+                      if (info->min == MAXDURATION)
+                        {
+                          info->min = -1.0;
+                        }
+                      [[NSNotificationCenter defaultCenter]
+                        postNotificationName: GSThroughputNotification
+                        object: self
+                        userInfo: [NSDictionary dictionaryWithObjectsAndKeys:
+                          [NSNumber numberWithUnsignedInt: info->cnt],
+                          GSThroughputCountKey,
+                          [NSNumber numberWithDouble: info->max],
+                          GSThroughputMaximumKey,
+                          [NSNumber numberWithDouble: info->min],
+                          GSThroughputMinimumKey,
+                          [NSNumber numberWithDouble: info->sum],
+                          GSThroughputTotalKey,
+                          [NSDate dateWithTimeIntervalSinceReferenceDate:
+                            base + my->last - 59],
+                          GSThroughputTimeKey,
+                          nil]];
+                    }
 		  if (my->minute++ == my->minutesPerPeriod - 1)
 		    {
 		      info = &dperiods[my->period];
@@ -269,6 +310,19 @@ typedef struct {
 		    {
 		      info->cnt += cseconds[i].cnt;
 		    }
+                  if (my->notify == YES && my->last > 59)
+                    {
+                      [[NSNotificationCenter defaultCenter]
+                        postNotificationName: GSThroughputNotification
+                        object: self
+                        userInfo: [NSDictionary dictionaryWithObjectsAndKeys:
+                          [NSNumber numberWithUnsignedInt: info->cnt],
+                          GSThroughputCountKey,
+                          [NSDate dateWithTimeIntervalSinceReferenceDate:
+                            base + my->last - 59],
+                          GSThroughputTimeKey,
+                          nil]];
+                    }
 		  if (my->minute++ == my->minutesPerPeriod - 1)
 		    {
 		      info = &cperiods[my->period];
@@ -297,6 +351,68 @@ typedef struct {
 	      my->last++;
 	    }
 	}
+    }
+  else
+    {
+      while (my->last < tick)
+        {
+          if (my->second++ == 59)
+            {
+              my->second = 0;
+              if (my->supportDurations == YES)
+                {
+                  DInfo		*info = &dseconds[1];
+
+                  if (my->notify == YES && my->last > 59)
+                    {
+                      if (info->min == MAXDURATION)
+                        {
+                          info->min = -1.0;
+                        }
+                      [[NSNotificationCenter defaultCenter]
+                        postNotificationName: GSThroughputNotification
+                        object: self
+                        userInfo: [NSDictionary dictionaryWithObjectsAndKeys:
+                          [NSNumber numberWithUnsignedInt: info->cnt],
+                          GSThroughputCountKey,
+                          [NSNumber numberWithDouble: info->max],
+                          GSThroughputMaximumKey,
+                          [NSNumber numberWithDouble: info->min],
+                          GSThroughputMinimumKey,
+                          [NSNumber numberWithDouble: info->sum],
+                          GSThroughputTotalKey,
+                          [NSDate dateWithTimeIntervalSinceReferenceDate:
+                            base + my->last - 59],
+                          GSThroughputTimeKey,
+                          nil]];
+                    }
+                  info->cnt = 0;
+                  info->max = 0.0;
+                  info->min = MAXDURATION;
+                  info->sum = 0.0;
+                }
+              else
+                {
+                  CInfo		*info = &cseconds[1];
+
+                  if (my->notify == YES && my->last > 59)
+                    {
+                      [[NSNotificationCenter defaultCenter]
+                        postNotificationName: GSThroughputNotification
+                        object: self
+                        userInfo: [NSDictionary dictionaryWithObjectsAndKeys:
+                          [NSNumber numberWithUnsignedInt: info->cnt],
+                          GSThroughputCountKey,
+                          [NSDate dateWithTimeIntervalSinceReferenceDate:
+                            base + my->last - 59],
+                          GSThroughputTimeKey,
+                          nil]];
+                    }
+                  info->cnt = 0;
+                }
+            }
+          my->last++;
+        }
     }
 }
 
@@ -382,7 +498,15 @@ typedef struct {
 - (void) add: (unsigned)count
 {
   NSAssert(my->supportDurations == NO, @"configured for durations");
-  cseconds[my->second].cnt += count;
+  if (my->numberOfPeriods == 0)
+    {
+      cseconds[0].cnt += count; // Total
+      cseconds[1].cnt += count; // Current minute
+    }
+  else
+    {
+      cseconds[my->second].cnt += count;
+    }
 }
 
 - (void) add: (unsigned)count duration: (NSTimeInterval)length
@@ -392,56 +516,87 @@ typedef struct {
   if (count > 0)
     {
       NSTimeInterval	total = length;
-      DInfo		*info;
+      unsigned          from;
+      unsigned          to;
 
-      info = &dseconds[my->second];
       length /= count;
-      if (info->cnt == 0)
-	{
-	  info->cnt = count;
-	  info->min = length;
-	  info->max = length;
-	  info->sum = total;
-	}
+      if (my->numberOfPeriods == 0)
+        {
+          from = 0;     // total
+          to = 1;       // current minute
+        }
       else
-	{
-	  info->cnt += count;
-	  info->sum += total;
-	  if (length > info->max)
-	    {
-	      info->max = length;
-	    }
-	  if (length < info->min)
-	    {
-	      info->min = length;
-	    }
-	}
+        {
+          from = my->second;
+          to = from;
+        }
+
+      while (from <= to)
+        {
+          DInfo *info = &dseconds[from++];
+
+          if (info->cnt == 0)
+            {
+              info->cnt = count;
+              info->min = length;
+              info->max = length;
+              info->sum = total;
+            }
+          else
+            {
+              info->cnt += count;
+              info->sum += total;
+              if (length > info->max)
+                {
+                  info->max = length;
+                }
+              if (length < info->min)
+                {
+                  info->min = length;
+                }
+            }
+        }
     }
 }
 
 - (void) addDuration: (NSTimeInterval)length
 {
-  DInfo	*info;
+  unsigned      from;
+  unsigned      to;
 
   NSAssert(my->supportDurations == YES, @"not configured for durations");
-  info = &dseconds[my->second];
-  if (info->cnt++ == 0)
+  if (my->numberOfPeriods == 0)
     {
-      info->min = length;
-      info->max = length;
-      info->sum = length;
+      from = 0; // Total
+      to = 1;   // Current minute
     }
   else
     {
-      info->sum += length;
-      if (length > info->max)
-	{
-	  info->max = length;
-	}
-      if (length < info->min)
-	{
-	  info->min = length;
-	}
+      from = my->second;
+      to = from;
+    }
+  while (from <= to)
+    {
+      DInfo     *info = &dseconds[from++];
+
+      if (info->cnt++ == 0)
+        {
+          info->min = length;
+          info->max = length;
+          info->sum = length;
+        }
+      else
+        {
+          info->sum += length;
+          if (length > info->max)
+            {
+              info->max = length;
+            }
+          if (length < info->min)
+            {
+              info->min = length;
+            }
+        }
     }
 }
 
@@ -696,6 +851,14 @@ typedef struct {
     }
 }
 
+- (BOOL) enableNotifications: (BOOL)flag
+{
+  BOOL  old = my->notify;
+
+  my->notify = flag;
+  return old;
+}
+
 - (void) endDuration: (unsigned)count
 {
   if (my->started > 0.0)
@@ -717,6 +880,9 @@ typedef struct {
               forPeriods: (unsigned)numberOfPeriods
 		ofLength: (unsigned)minutesPerPeriod
 {
+  NSCalendarDate	*c;	
+  unsigned		i;
+
   _data = (Item*)NSZoneCalloc(NSDefaultMallocZone(), 1, sizeof(Item));
 
   /*
@@ -726,7 +892,14 @@ typedef struct {
   NSHashInsert(my->thread->instances, (void*)self);
 
   my->supportDurations = aFlag;
+  my->notify = NO;
   my->last = GSTickerTimeTick();
+
+  c = [[NSCalendarDate alloc] initWithTimeIntervalSinceReferenceDate:
+    GSTickerTimeLast()];
+
+  my->second = [c secondOfMinute];
+  i = [c hourOfDay] * 60 + [c minuteOfHour];
 
   if (numberOfPeriods < 1 || minutesPerPeriod < 1)
     {
@@ -735,46 +908,49 @@ typedef struct {
        */
       my->numberOfPeriods = 0;
       my->minutesPerPeriod = 0;
-      my->second = 0;
-      my->minute = 0;
+      my->minute = i;
       my->period = 0;
       if (my->supportDurations == YES)
         {
 	  DInfo	*ptr;
 
-	  ptr = (DInfo*)NSZoneCalloc(NSDefaultMallocZone(), 1, sizeof(DInfo));
+	  ptr = (DInfo*)NSZoneCalloc(NSDefaultMallocZone(), 2, sizeof(DInfo));
 	  my->seconds = ptr;
 	  my->minutes = 0;
 	  my->periods = 0;
 	  dseconds[0].tick = my->last;
+	  dseconds[0].max = 0;
 	  dseconds[0].min = MAXDURATION;
+	  dseconds[0].sum = 0;
+	  dseconds[0].cnt = 0;
+
+	  dseconds[1].tick = my->last;
+	  dseconds[1].max = 0;
+	  dseconds[1].min = 0;
+	  dseconds[1].sum = 0;
+	  dseconds[1].cnt = 0;
 	}
       else
         {
 	  CInfo	*ptr;
 
-	  ptr = (CInfo*)NSZoneCalloc(NSDefaultMallocZone(), 1, sizeof(CInfo));
+	  ptr = (CInfo*)NSZoneCalloc(NSDefaultMallocZone(), 2, sizeof(CInfo));
 	  my->seconds = ptr;
 	  my->minutes = 0;
 	  my->periods = 0;
 	  cseconds[0].tick = my->last;
+	  cseconds[0].cnt = 0;
+	  cseconds[1].tick = my->last;
+	  cseconds[1].cnt = 0;
 	}
     }
   else
     {
-      NSCalendarDate	*c;	
-      unsigned		i;
-
-      c = [[NSCalendarDate alloc] initWithTimeIntervalSinceReferenceDate:
-	GSTickerTimeLast()];
-
       my->numberOfPeriods = numberOfPeriods;
       my->minutesPerPeriod = minutesPerPeriod;
-      my->second = [c secondOfMinute];
-      i = [c hourOfDay] * 60 + [c minuteOfHour];
+
       my->minute = i % minutesPerPeriod;
       my->period = (i / minutesPerPeriod) % numberOfPeriods;
-      RELEASE(c);
 
       i = 60 + minutesPerPeriod + numberOfPeriods;
       if (my->supportDurations == YES)
@@ -815,6 +991,7 @@ typedef struct {
 	  cperiods[my->period].tick = my->last;
 	}
     }
+  RELEASE(c);
   return self;
 }
 

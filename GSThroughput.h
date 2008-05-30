@@ -1,5 +1,5 @@
 /** 
-   Copyright (C) 2005 Free Software Foundation, Inc.
+   Copyright (C) 2005-2008 Free Software Foundation, Inc.
    
    Written by:  Richard Frith-Macdonald <rfm@gnu.org>
    Date:	October 2005
@@ -29,6 +29,14 @@
 #import	<Foundation/NSObject.h>
 #import	<Foundation/NSArray.h>
 
+
+extern NSString * const GSThroughputNotification;
+extern NSString * const GSThroughputCountKey;
+extern NSString * const GSThroughputMaximumKey;
+extern NSString * const GSThroughputMinimumKey;
+extern NSString * const GSThroughputTimeKey;
+extern NSString * const GSThroughputTotalKey;
+
 /**
  * <p>The GSThroughput class is used maintain statistics about the number
  * of events or the duration of operations in your software.
@@ -47,6 +55,9 @@
  * <p>To dump a record of the gathered statistics, you may call the
  * -description method of an instance or the class +description method
  * to dump statistics for all instances in the current thread.
+ * </p>
+ * <p>To be notified of statistics at the end of each minute, you may call
+ * the -enableNotifications: method.
  * </p>
  */
 @interface	GSThroughput : NSObject
@@ -129,6 +140,28 @@
  * the maximum, minimum and average duration of events.
  */
 - (NSString*) description;
+
+/** Sets a flag to say whether the receiver will send GSThroughputNotification
+ * at the end of each minute to provide information about statistics.<br />
+ * The method returnes the previous setting. The initial setting is NO.<br />
+ * The notification object is the reciever, and the user info dictionary
+ * contains some or all of the following keys depending on how the receiver
+ * was configured:
+ * <deflist>
+ *   <term>GSThroughputCountKey</term>
+ *   <desc>The number of events recorded (unsigned integer number)</desc>
+ *   <term>GSThroughputMaximumKey</term>
+ *   <desc>The maximum event duration (double floating point number)</desc>
+ *   <term>GSThroughputMinimumKey</term>
+ *   <desc>The minimum event duration (double floating point number)
+ *   or -1.0 if no events occurred during the minute.</desc>
+ *   <term>GSThroughputTimeKey</term>
+ *   <desc>The time of the start of the minute (an NSDate)</desc>
+ *   <term>GSThroughputTotalKey</term>
+ *   <desc>The sum of event durations (double floating point number)</desc>
+ * </deflist>
+ */
+- (BOOL) enableNotifications: (BOOL)flag;
 
 /**
  * Ends duration recording for the current event started by a matching

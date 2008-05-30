@@ -1,3 +1,10 @@
+2008-05-30 Richard Frith-Macdonald  <rfm@gnu.org>
+
+	* GSThroughput.h:
+	* GSThroughput.m:
+	Add support for sending a notification of stats for the last minute
+	so that rates by the minute can be logged.
+
 2008-02-21 Richard Frith-Macdonald  <rfm@gnu.org>
 
 	* GSCache.h:
