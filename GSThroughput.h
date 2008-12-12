@@ -85,6 +85,7 @@ extern NSString * const GSThroughputTotalKey;
  * to call the +tick method in the current thread.<br />
  * Passing a value of NO for aFlag will turn off the timer for the current
  * thread.<br />
+ * For the timer to work, the thread's runloop must be running.<br />
  * Keeping the notion of the current time up to date is important for
  * instances configured to record stats broken down over a number of periods,
  * since the periodic breakdown must be adjusted each second.

@@ -1,3 +1,7 @@
+2008-12-12 Richard Frith-Macdonald  <rfm@gnu.org>
+
+	* GSSkipMutableArray.m: Fix uninitialised variable.
+
 2008-05-30 Richard Frith-Macdonald  <rfm@gnu.org>
 
 	* GSThroughput.h:

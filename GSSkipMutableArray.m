@@ -251,6 +251,7 @@ static Class	concreteClass = 0;
   p = l->header;
   k = l->level;
 
+  graph = [[NSMutableString alloc] initWithCapacity: 1024];
   [graph appendString:
     [NSString stringWithFormat: @"digraph %@ {\n", graphName]];
   [graph appendString: @"graph [rankdir = LR];\n"];
