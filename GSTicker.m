@@ -69,6 +69,7 @@ static NSDate		*startDate = nil;
   @public
   NSTimer		*theTimer;
   NSMutableArray	*observers;
+  unsigned		last;
 }
 @end
 
@@ -306,20 +307,27 @@ NSTimeInterval	GSTickerTimeNow()
 
       if ([tt->observers count] > 0)
         {
-          NSArray	*a = [tt->observers copy];
+          NSArray	*a;
+	  unsigned	tick;
 
           GSTickerTimeNow();
-          NS_DURING
-            {
-              [a makeObjectsPerformSelector: @selector(fire:)
-                                 withObject: tt->observers];
-            }
-          NS_HANDLER
-            {
-              NSLog(@"Problem firing ticker observers: %@", localException);
-            }
-          NS_ENDHANDLER
-          RELEASE(a);
+	  tick = GSTickerTimeTick();
+	  if (tick != tt->last)
+	    {
+	      tt->last = tick;
+	      a = [tt->observers copy];
+	      NS_DURING
+		{
+		  [a makeObjectsPerformSelector: @selector(fire:)
+				     withObject: tt->observers];
+		}
+	      NS_HANDLER
+		{
+		  NSLog(@"Problem firing ticker observers: %@", localException);
+		}
+	      NS_ENDHANDLER
+	      RELEASE(a);
+	    }
         }
 
       ti = GSTickerTimeNow();
