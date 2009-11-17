@@ -50,21 +50,6 @@ Performance_AGSDOC_FILES += \
 # Optional Java wrappers for the library
 JAVA_WRAPPER_NAME = Performance
 
-#
-# Assume that the use of the gnu runtime means we have the gnustep
-# base library and can use its extensions to build Performance stuff.
-#
-ifeq ($(OBJC_RUNTIME_LIB),gnu)
-APPLE=0
-else
-APPLE=1
-endif
-
-ifeq ($(APPLE),1)
-ADDITIONAL_OBJC_LIBS += -lgnustep-baseadd
-Performance_LIBRARIES_DEPEND_UPON = -lgnustep-baseadd
-endif
-
 Performance_HEADER_FILES_INSTALL_DIR = Performance
 
 -include GNUmakefile.preamble

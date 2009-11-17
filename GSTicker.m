@@ -28,11 +28,10 @@
 #import	<Foundation/NSArray.h>
 #import	<Foundation/NSDate.h>
 #import	<Foundation/NSDictionary.h>
+#import	<Foundation/NSException.h>
 #import	<Foundation/NSThread.h>
 #import	<Foundation/NSString.h>
 #import	<Foundation/NSTimer.h>
-
-#import	<GNUstepBase/GNUstep.h>
 
 #import	"GSTicker.h"
 
@@ -78,7 +77,8 @@ static NSDate		*startDate = nil;
 {
   [theTimer invalidate];
   theTimer = nil;
-  DESTROY(observers);
+  [observers release];
+  observers = nil;
   [super dealloc];
 }
 - (id) init
@@ -182,7 +182,7 @@ NSTimeInterval	GSTickerTimeNow()
       tt = [GSTickerThread new];
       [[[NSThread currentThread] threadDictionary]
 	setObject: tt forKey: @"GSTickerThread"];
-      RELEASE(tt);
+      [tt release];
     }
   count = [tt->observers count];
   while (count-- > 0)
@@ -198,7 +198,7 @@ NSTimeInterval	GSTickerTimeNow()
   to->observer = anObject;
   to->userInfo = userInfo;
   [tt->observers addObject: to];
-  RELEASE(to);
+  [to release];
 }
 
 + (NSDate*) start
@@ -326,7 +326,7 @@ NSTimeInterval	GSTickerTimeNow()
 		  NSLog(@"Problem firing ticker observers: %@", localException);
 		}
 	      NS_ENDHANDLER
-	      RELEASE(a);
+	      [a release];
 	    }
         }
 

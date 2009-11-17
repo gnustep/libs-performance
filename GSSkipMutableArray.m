@@ -27,8 +27,6 @@
 #import <Foundation/NSEnumerator.h>
 #import <Foundation/NSString.h>
 
-#import	<GNUstepBase/GNUstep.h>
-
 #import "GSSkipMutableArray.h"
 #import "GSIndexedSkipList.h"
 
@@ -112,7 +110,7 @@ static Class	concreteClass = 0;
   return l;
 }
 
-- (void) _raiseRangeExceptionWithIndex: (unsigned)index from: (SEL)sel
+- (void) _raiseRangeExceptionWithIndex: (NSUInteger)index from: (SEL)sel
 {
   NSDictionary *info;
   NSException  *exception;
@@ -136,7 +134,7 @@ static Class	concreteClass = 0;
   GSISLInitialize();
 }
 
-- (id) initWithObjects: (id *)objects count: (unsigned) count
+- (id) initWithObjects: (id *)objects count: (NSUInteger) count
 {
   int i;
   self = [super init];
@@ -147,7 +145,7 @@ static Class	concreteClass = 0;
   
   for (i = 0; i < count; i++)
     {
-      GSISLInsertItemAtIndex(l, RETAIN(objects[i]), i);
+      GSISLInsertItemAtIndex(l, [objects[i] retain], i);
     }
   
   return self;
@@ -171,7 +169,7 @@ static Class	concreteClass = 0;
   while (p != GSISLNil)
     {
       q = p->forward[0].next;
-      RELEASE(p->value);
+      [p->value release];
       NSZoneFree(l->zone,p);
       p = q;
     }
@@ -181,17 +179,17 @@ static Class	concreteClass = 0;
   [super dealloc];
 }
 
-- (void) insertObject: (id)object atIndex: (unsigned)index
+- (void) insertObject: (id)object atIndex: (NSUInteger)index
 {
   if (index > l->count)
     {
         [self _raiseRangeExceptionWithIndex: index from: _cmd];
     }
 
-  GSISLInsertItemAtIndex(l, RETAIN(object), index);
+  GSISLInsertItemAtIndex(l, [object retain], index);
 }
 
-- (id) objectAtIndex: (unsigned)index
+- (id) objectAtIndex: (NSUInteger)index
 {
   if (index >= l->count)
     {
@@ -201,29 +199,29 @@ static Class	concreteClass = 0;
   return GSISLItemAtIndex(l, index);
 }
 
-- (void) removeObjectAtIndex: (unsigned) index
+- (void) removeObjectAtIndex: (NSUInteger)index
 {
   if (index >= l->count)
     {
         [self _raiseRangeExceptionWithIndex: index from: _cmd];
     }
 
-  RELEASE(GSISLRemoveItemAtIndex(l, index)); 
+  [GSISLRemoveItemAtIndex(l, index) release]; 
 }
 
 - (void) addObject: (id)obj
 {
-  GSISLInsertItemAtIndex(l, RETAIN(obj), l->count);
+  GSISLInsertItemAtIndex(l, [obj retain], l->count);
 }
 
-- (unsigned) count
+- (NSUInteger) count
 {
   return l->count;
 }
 
-- (void) replaceObjectAtIndex: (unsigned)index withObject: (id)obj
+- (void) replaceObjectAtIndex: (NSUInteger)index withObject: (id)obj
 {
-  RELEASE(GSISLReplaceItemAtIndex(l, RETAIN(obj), index));
+  [GSISLReplaceItemAtIndex(l, [obj retain], index) release];
 }
 
 - (NSEnumerator*) objectEnumerator
@@ -233,7 +231,7 @@ static Class	concreteClass = 0;
   e = [GSConcreteSkipArrayEnumerator
     allocWithZone: NSDefaultMallocZone()];
   e = [e initWithArray: self];
-  return AUTORELEASE(e);
+  return [e autorelease];
 }
 
 /* returns an in an NSString suitable for running through graphviz,
@@ -242,7 +240,7 @@ static Class	concreteClass = 0;
 - (NSString *) _makeGraphOfInternalLayoutNamed: (NSString *)graphName
 {
   GSISLNode p;
-  unsigned k, i;
+  NSUInteger k, i;
   NSMutableDictionary *values;
   NSMutableArray *edges;
   NSMutableString *graph;
@@ -287,7 +285,7 @@ static Class	concreteClass = 0;
 		    p, k, p->forward[k].next,
 		    p->forward[k].next == GSISLNil ? 0 : k]];
 	      [values setObject: foo forKey: value];
-	      RELEASE(foo);
+	      [foo release];
 	    }
 	  else
 	    {
@@ -317,9 +315,9 @@ static Class	concreteClass = 0;
       [graph appendString: [edges objectAtIndex: i]];
     }
   [graph appendString: @"}\n"];
-  RELEASE(values);
-  RELEASE(edges);
-  return AUTORELEASE(graph);
+  [values release];
+  [edges release];
+  return [graph autorelease];
 }
 
 @end

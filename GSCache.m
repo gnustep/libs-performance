@@ -43,12 +43,10 @@
 #import	<Foundation/NSThread.h>
 #import	<Foundation/NSValue.h>
 
-#import	<GNUstepBase/GNUstep.h>
-
 #import	"GSCache.h"
 #import	"GSTicker.h"
 
-#if NeXT_RUNTIME
+#if !defined(GNUSTEP)
 #include <objc/objc-class.h>
 #endif
 
@@ -77,14 +75,14 @@
   GSCacheItem	*i;
 
   i = (GSCacheItem*)NSAllocateObject(self, 0, NSDefaultMallocZone());
-  i->object = RETAIN(anObject);
+  i->object = [anObject retain];
   i->key = [aKey copy];
   return i;
 }
 - (void) dealloc
 {
-  RELEASE(key);
-  RELEASE(object);
+  [key release];
+  [object release];
   [super dealloc];
 }
 @end
@@ -240,9 +238,9 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
       [self shrinkObjects: 0 andSize: 0];
       NSFreeMapTable(my->contents);
     }
-  RELEASE(my->exclude);
-  RELEASE(my->name);
-  RELEASE(my->lock);
+  [my->exclude release];
+  [my->name release];
+  [my->lock release];
   [super dealloc];
 }
 
@@ -530,7 +528,9 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 - (void) setName: (NSString*)name
 {
   [my->lock lock];
-  ASSIGN(my->name, name);
+  [name retain];
+  [my->name release];
+  my->name = name;
   [my->lock unlock];
 }
 
@@ -599,7 +599,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
       appendItem(item, &my->first);
       my->currentObjects += addObjects;
       my->currentSize += addSize;
-      RELEASE(item);
+      [item release];
     }
   [my->lock unlock];
 }
@@ -732,9 +732,9 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
       size += 3 * sizeof(void*) * count;
       if (count > 0)
         {
-	  CREATE_AUTORELEASE_POOL(pool);
-	  NSEnumerator	*enumerator = [self keyEnumerator];
-	  NSObject	*k;
+	  NSAutoreleasePool	*pool = [NSAutoreleasePool new];
+	  NSEnumerator		*enumerator = [self keyEnumerator];
+	  NSObject		*k;
 
 	  while ((k = [enumerator nextObject]) != nil)
 	    {
@@ -742,7 +742,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 
 	      size += [k sizeInBytes: exclude] + [o sizeInBytes: exclude];
 	    }
-	  RELEASE(pool);
+	  [pool release];
 	}
     }
   return size;
@@ -757,7 +757,11 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
       return 0;
     }
   [exclude addObject: self];
+#if !defined(GNUSTEP)
+  return class_getInstanceSize(isa);
+#else
   return isa->instance_size;
+#endif
 }
 @end
 
@@ -773,15 +777,15 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
       size += 3 * sizeof(void*) * count;
       if (count > 0)
         {
-	  CREATE_AUTORELEASE_POOL(pool);
-	  NSEnumerator	*enumerator = [self objectEnumerator];
-	  NSObject	*o;
+	  NSAutoreleasePool	*pool = [NSAutoreleasePool new];
+	  NSEnumerator		*enumerator = [self objectEnumerator];
+	  NSObject		*o;
 
 	  while ((o = [enumerator nextObject]) != nil)
 	    {
 	      size += [o sizeInBytes: exclude];
 	    }
-	  RELEASE(pool);
+	  [pool release];
 	}
     }
   return size;

@@ -41,8 +41,6 @@
 #import	<Foundation/NSThread.h>
 #import	<Foundation/NSValue.h>
 
-#import	<GNUstepBase/GNUstep.h>
-
 #import	"GSThroughput.h"
 #import	"GSTicker.h"
 
@@ -64,7 +62,7 @@ static NSTimeInterval	(*tiImp)(Class,SEL) = 0;
 typedef	struct {
   unsigned		cnt;	// Number of events.
   unsigned		tick;	// Start time
-} CInfo;
+} CountInfo;
 
 typedef	struct {
   unsigned		cnt;	// Number of events.
@@ -72,7 +70,7 @@ typedef	struct {
   NSTimeInterval	min;	// Shortest duration
   NSTimeInterval	sum;	// Total (sum of durations for event)
   unsigned		tick;	// Start time
-} DInfo;
+} DurationInfo;
 
 typedef struct {
   void			*seconds;
@@ -94,12 +92,12 @@ typedef struct {
 } Item;
 #define	my	((Item*)_data)
 
-#define	cseconds	((CInfo*)my->seconds)
-#define	cminutes	((CInfo*)my->minutes)
-#define	cperiods	((CInfo*)my->periods)
-#define	dseconds	((DInfo*)my->seconds)
-#define	dminutes	((DInfo*)my->minutes)
-#define	dperiods	((DInfo*)my->periods)
+#define	cseconds	((CountInfo*)my->seconds)
+#define	cminutes	((CountInfo*)my->minutes)
+#define	cperiods	((CountInfo*)my->periods)
+#define	dseconds	((DurationInfo*)my->seconds)
+#define	dminutes	((DurationInfo*)my->minutes)
+#define	dperiods	((DurationInfo*)my->periods)
 
 
 
@@ -163,7 +161,7 @@ typedef struct {
       t = [GSThroughputThread new];
       [[[NSThread currentThread] threadDictionary] setObject: t
        forKey: @"GSThroughput"];
-      RELEASE(t);
+      [t release];
     }
   return t;
 }
@@ -206,14 +204,14 @@ typedef struct {
 	{
 	  while (my->last < tick)
 	    {
-	      DInfo		*info;
+	      DurationInfo		*info;
 
 	      if (my->second++ == 59)
 		{
 		  info = &dminutes[my->minute];
 		  for (i = 0; i < 60; i++)
 		    {
-		      DInfo	*from = &dseconds[i];
+		      DurationInfo	*from = &dseconds[i];
 
 		      info->cnt += from->cnt;
 		      if (from->min < info->min)
@@ -258,7 +256,7 @@ typedef struct {
 		      info = &dperiods[my->period];
 		      for (i = 0; i < my->minutesPerPeriod; i++)
 			{
-			  DInfo	*from = &dminutes[i];
+			  DurationInfo	*from = &dminutes[i];
 
 			  info->cnt += from->cnt;
 			  if (from->min > 0.0 && from->min < info->min)
@@ -305,7 +303,7 @@ typedef struct {
 	{
 	  while (my->last < tick)
 	    {
-	      CInfo		*info;
+	      CountInfo		*info;
 
 	      if (my->second++ == 59)
 		{
@@ -365,7 +363,7 @@ typedef struct {
               my->second = 0;
               if (my->supportDurations == YES)
                 {
-                  DInfo		*info = &dseconds[1];
+                  DurationInfo		*info = &dseconds[1];
 
                   if (my->notify == YES && my->last > 59)
                     {
@@ -397,7 +395,7 @@ typedef struct {
                 }
               else
                 {
-                  CInfo		*info = &cseconds[1];
+                  CountInfo		*info = &cseconds[1];
 
                   if (my->notify == YES && my->last > 59)
                     {
@@ -537,7 +535,7 @@ typedef struct {
 
       while (from <= to)
         {
-          DInfo *info = &dseconds[from++];
+          DurationInfo *info = &dseconds[from++];
 
           if (info->cnt == 0)
             {
@@ -581,7 +579,7 @@ typedef struct {
     }
   while (from <= to)
     {
-      DInfo     *info = &dseconds[from++];
+      DurationInfo     *info = &dseconds[from++];
 
       if (info->cnt++ == 0)
         {
@@ -632,7 +630,7 @@ typedef struct {
 	{
 	  NSZoneFree(NSDefaultMallocZone(), my->seconds);
 	}
-      RELEASE(my->name);
+      [my->name release];
       if (my->thread != nil)
 	{
 	  NSHashRemove(my->thread->instances, (void*)self);
@@ -646,7 +644,7 @@ typedef struct {
 
 - (NSString*) description
 {
-  CREATE_AUTORELEASE_POOL(pool);
+  NSAutoreleasePool     *pool = [NSAutoreleasePool new];
   NSString		*n = my->name;
   NSMutableString	*m;
   unsigned		i;
@@ -666,7 +664,7 @@ typedef struct {
 	{
 	  if (my->supportDurations == YES)
 	    {
-	      DInfo	*info = &dseconds[0];
+	      DurationInfo	*info = &dseconds[0];
 
 	      [m appendFormat: @": cnt %u, max %g, min %g, avg %g",
 		info->cnt, info->max,
@@ -675,7 +673,7 @@ typedef struct {
 	    }
 	  else
 	    {
-	      CInfo	*info = &cseconds[0];
+	      CountInfo	*info = &cseconds[0];
 
 	      [m appendFormat: @": cnt %u", info->cnt];
 	    }
@@ -690,7 +688,7 @@ typedef struct {
 		  tick = 0;
 		  for (i = 0; i < my->second; i++)
 		    {
-		      DInfo		*info = &dseconds[i];
+		      DurationInfo		*info = &dseconds[i];
 		      NSTimeInterval	ti = info->tick + baseTime;
 
 		      if (info->tick != tick)
@@ -710,7 +708,7 @@ typedef struct {
 		  tick = 0;
 		  for (i = 0; i < my->minute; i++)
 		    {
-		      DInfo		*info = &dminutes[i];
+		      DurationInfo		*info = &dminutes[i];
 		      NSTimeInterval	ti = info->tick + baseTime;
 
 		      if (info->tick != tick)
@@ -732,7 +730,7 @@ typedef struct {
                    */
 		  for (i = my->period; i < my->numberOfPeriods; i++)
 		    {
-		      DInfo		*info = &dperiods[i];
+		      DurationInfo		*info = &dperiods[i];
 		      NSTimeInterval	ti = info->tick + baseTime;
 
 		      if (info->tick != tick)
@@ -748,7 +746,7 @@ typedef struct {
                    */
 		  for (i = 0; i < my->period; i++)
 		    {
-		      DInfo		*info = &dperiods[i];
+		      DurationInfo		*info = &dperiods[i];
 		      NSTimeInterval	ti = info->tick + baseTime;
 
 		      if (info->tick != tick)
@@ -770,7 +768,7 @@ typedef struct {
 		  tick = 0;
 		  for (i = 0; i < my->second; i++)
 		    {
-		      CInfo		*info = &cseconds[i];
+		      CountInfo		*info = &cseconds[i];
 		      NSTimeInterval	ti = info->tick + baseTime;
 
 		      if (info->tick != tick)
@@ -789,7 +787,7 @@ typedef struct {
 		  tick = 0;
 		  for (i = 0; i < my->minute; i++)
 		    {
-		      CInfo		*info = &cminutes[i];
+		      CountInfo		*info = &cminutes[i];
 		      NSTimeInterval	ti = info->tick + baseTime;
 
 		      if (info->tick != tick)
@@ -810,7 +808,7 @@ typedef struct {
                    */
 		  for (i = my->period; i < my->numberOfPeriods; i++)
                     {
-		      CInfo		*info = &cperiods[i];
+		      CountInfo		*info = &cperiods[i];
 		      NSTimeInterval	ti = info->tick + baseTime;
 
 		      if (info->tick != tick)
@@ -825,7 +823,7 @@ typedef struct {
                    */
 		  for (i = 0; i < my->period; i++)
 		    {
-		      CInfo		*info = &cperiods[i];
+		      CountInfo		*info = &cperiods[i];
 		      NSTimeInterval	ti = info->tick + baseTime;
 
 		      if (info->tick != tick)
@@ -841,8 +839,8 @@ typedef struct {
 	}
     }
 
-  DESTROY(pool);
-  return AUTORELEASE(m);
+  [pool release];
+  return [m autorelease];
 }
 
 - (void) endDuration
@@ -916,9 +914,10 @@ typedef struct {
       my->period = 0;
       if (my->supportDurations == YES)
         {
-	  DInfo	*ptr;
+	  DurationInfo	*ptr;
 
-	  ptr = (DInfo*)NSZoneCalloc(NSDefaultMallocZone(), 2, sizeof(DInfo));
+	  ptr = (DurationInfo*)NSZoneCalloc
+            (NSDefaultMallocZone(), 2, sizeof(DurationInfo));
 	  my->seconds = ptr;
 	  my->minutes = 0;
 	  my->periods = 0;
@@ -936,9 +935,10 @@ typedef struct {
 	}
       else
         {
-	  CInfo	*ptr;
+	  CountInfo	*ptr;
 
-	  ptr = (CInfo*)NSZoneCalloc(NSDefaultMallocZone(), 2, sizeof(CInfo));
+	  ptr = (CountInfo*)NSZoneCalloc
+            (NSDefaultMallocZone(), 2, sizeof(CountInfo));
 	  my->seconds = ptr;
 	  my->minutes = 0;
 	  my->periods = 0;
@@ -959,9 +959,10 @@ typedef struct {
       i = 60 + minutesPerPeriod + numberOfPeriods;
       if (my->supportDurations == YES)
 	{
-	  DInfo	*ptr;
+	  DurationInfo	*ptr;
 
-	  ptr = (DInfo*)NSZoneCalloc(NSDefaultMallocZone(), i, sizeof(DInfo));
+	  ptr = (DurationInfo*)NSZoneCalloc
+            (NSDefaultMallocZone(), i, sizeof(DurationInfo));
 	  my->seconds = ptr;
 	  my->minutes = ptr + 60;
 	  my->periods = ptr + 60 + minutesPerPeriod;
@@ -984,9 +985,10 @@ typedef struct {
 	}
       else
 	{
-	  CInfo	*ptr;
+	  CountInfo	*ptr;
 
-	  ptr = (CInfo*)NSZoneCalloc(NSDefaultMallocZone(), i, sizeof(CInfo));
+	  ptr = (CountInfo*)NSZoneCalloc
+            (NSDefaultMallocZone(), i, sizeof(CountInfo));
 	  my->seconds = ptr;
 	  my->minutes = ptr + 60;
 	  my->periods = ptr + 60 + minutesPerPeriod;
@@ -995,7 +997,7 @@ typedef struct {
 	  cperiods[my->period].tick = my->last;
 	}
     }
-  RELEASE(c);
+  [c release];
   return self;
 }
 
@@ -1006,7 +1008,9 @@ typedef struct {
 
 - (void) setName: (NSString*)name
 {
-  ASSIGN(my->name, name);
+  [name retain];
+  [my->name release];
+  my->name = name;
 }
 
 - (void) startDuration: (NSString*)name
