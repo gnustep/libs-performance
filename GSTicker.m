@@ -160,6 +160,7 @@ NSTimeInterval	GSTickerTimeNow()
 
 + (void) newSecond: (id)userInfo
 {
+  return;
 }
 
 + (NSDate*) now
@@ -254,6 +255,7 @@ NSTimeInterval	GSTickerTimeNow()
 
 - (void) newSecond: (id)userInfo
 {
+  return;
 }
 
 - (NSDate*) now
