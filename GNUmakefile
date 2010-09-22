@@ -36,6 +36,8 @@ Performance_INTERFACE_VERSION=0.3
 
 Performance_OBJC_FILES += \
 	GSCache.m \
+	GSLinkedList.m \
+	GSThreadPool.m \
 	GSThroughput.m \
 	GSTicker.m \
 	GSIndexedSkipList.m \
@@ -44,6 +46,8 @@ Performance_OBJC_FILES += \
 
 Performance_HEADER_FILES += \
 	GSCache.h \
+	GSLinkedList.h \
+	GSThreadPool.h \
 	GSThroughput.h \
 	GSTicker.h \
 	GSSkipMutableArray.h \
@@ -51,6 +55,8 @@ Performance_HEADER_FILES += \
 
 Performance_AGSDOC_FILES += \
 	GSCache.h \
+	GSLinkedList.h \
+	GSThreadPool.h \
 	GSThroughput.h \
 	GSTicker.h \
 	GSSkipMutableArray.h

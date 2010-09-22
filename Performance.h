@@ -25,6 +25,8 @@
    */ 
 
 #import "GSCache.h"
+#import "GSLinkedList.h"
+#import "GSThreadPool.h"
 #import "GSThroughput.h"
 #import "GSTicker.h"
 #import "GSSkipMutableArray.h"
