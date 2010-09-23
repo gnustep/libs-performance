@@ -1,3 +1,10 @@
+2010-09-23 Richard Frith-Macdonald  <rfm@gnu.org>
+
+	* performance/GSThreadPool.h:
+	* performance/GSThreadPool.m:
+	Track count of active threads and count of number of methods
+	performed in the thread pool.  Display via -description.
+
 2010-09-22 Richard Frith-Macdonald  <rfm@gnu.org>
 
 	* GSLinkedList.h:

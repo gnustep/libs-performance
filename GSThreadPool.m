@@ -93,6 +93,19 @@
   [super dealloc];
 }
 
+- (NSString*) description
+{
+  NSString	*result;
+
+  [poolLock lock];
+  result = [NSString stringWithFormat:
+    @"%@ queue: %u(%u) threads: %u(%u) active: %u processed: %u",
+    [super description], operationCount, maxOperations,
+    threadCount, maxThreads, activeCount, processed];
+  [poolLock unlock];
+  return result;
+}
+
 - (BOOL) drain: (NSDate*)before
 {
   BOOL	result = [self isEmpty];
@@ -220,8 +233,26 @@
     }
   else
     {
+      NSAutoreleasePool	*arp;
+
       [poolLock unlock];
-      [aReceiver performSelector: aSelector withObject: anArgument];
+
+      NS_DURING
+	{
+	  arp = [NSAutoreleasePool new];
+	  [aReceiver performSelector: aSelector withObject: anArgument];
+	  [arp release];
+	}
+      NS_HANDLER
+	{
+	  arp = [NSAutoreleasePool new];
+	  NSLog(@"[%@-%@] %@",
+	    NSStringFromClass([aReceiver class]),
+	    NSStringFromSelector(aSelector),
+	    localException);
+	  [arp release];
+	}
+      NS_ENDHANDLER
     }
 }
 
@@ -322,6 +353,7 @@
 	  idle = [link remove];
 	  [live insert: link];
 	  live = link;
+	  activeCount++;
 	  link->op = op;
 	  [link->lock lock];
 	  [link->lock unlockWithCondition: 1];
@@ -379,6 +411,7 @@
     {
       [link remove];
     }
+  activeCount--;
   if (threadCount > maxThreads)
     {
       threadCount--;
@@ -403,6 +436,7 @@
   BOOL		more = NO;
 
   [poolLock lock];
+  processed++;
   if (unusedCount < maxOperations)
     {
       if (nil != op->arg)

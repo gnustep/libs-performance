@@ -42,6 +42,7 @@
   BOOL		suspended;
   NSUInteger	maxThreads;
   NSUInteger	threadCount;
+  NSUInteger	activeCount;
   GSThreadLink	*idle;
   GSThreadLink	*live;
   NSUInteger	maxOperations;
@@ -50,6 +51,7 @@
   GSOperation	*lastOperation;
   NSUInteger	unusedCount;
   GSOperation	*unused;
+  NSUInteger	processed;
 }
 
 /** Waits until the pool of operations is empty or until the specified
@@ -91,7 +93,10 @@
  * You may add an object more than once, but that may result in the operation
  * being performed simultaneously in more than one thread.<br />
  * If the pool is configured with zero threads or zero operations,
- * this method will simply perform the operation immediately.
+ * this method will simply perform the operation immediately.<br />
+ * The operation will be performed in a context where there is an exception
+ * handler set to trap exceptions, and an autorelease pool to deal with
+ * autoreleased objects.
  */
 - (void) scheduleSelector: (SEL)aSelector
                onReceiver: (NSObject*)aReceiver
