@@ -260,6 +260,16 @@ GSLinkedListInsertAfter(GSListLink *link, GSLinkedList *list, GSListLink *at);
 extern void
 GSLinkedListInsertBefore(GSListLink *link, GSLinkedList *list, GSListLink *at);
 
+/** Moves the link to the head of the list if it is not already there.
+ */
+extern void
+GSLinkedListMoveToHead(GSListLink *link, GSLinkedList *list);
+
+/** Moves the link to the tail of the list if it is not already there.
+ */
+extern void
+GSLinkedListMoveToTail(GSListLink *link, GSLinkedList *list);
+
 /** Removes link from the list.<br />
  * Updates the head, tail and count variables of list.<br />
  * Does not release link.

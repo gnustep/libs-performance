@@ -282,88 +282,6 @@
 
 @end
 
-void
-GSLinkedListInsertBefore(GSListLink *link, GSLinkedList *list, GSListLink *at)
-{
-  if (nil == list->head)
-    {
-      list->head = list->tail = link;
-    }
-  else
-    {
-      link->previous = at->previous;
-      if (nil == link->previous)
-	{
-	  list->head = link;
-	}
-      else
-	{
-	  link->previous->next = link;
-	}
-      at->previous = link;
-      link->next = at;
-    }
-  link->owner = list;
-  list->count++;
-}
-
-void
-GSLinkedListInsertAfter(GSListLink *link, GSLinkedList *list, GSListLink *at)
-{
-  if (nil == list->head)
-    {
-      list->head = list->tail = link;
-    }
-  else
-    {
-      link->next = at->next;
-      if (nil == link->next)
-	{
-	  list->tail = link;
-	}
-      else
-	{
-	  link->next->previous = link;
-	}
-      at->next = link;
-      link->previous = at;
-    }
-  link->owner = list;
-  list->count++;
-}
-
-void
-GSLinkedListRemove(GSListLink *link, GSLinkedList *list)
-{
-  if (list->head == link)
-    {
-      list->head = link->next;
-      if (nil != list->head)
-	{
-          list->head->previous = nil;
-	}
-    }
-  else
-    {
-      link->previous->next = link->next;
-    }
-  if (list->tail == link)
-    {
-      list->tail = link->previous;
-      if (nil != list->tail)
-	{
-          list->tail->next = nil;
-	}
-    }
-  else
-    {
-      link->next->previous = link->previous;
-    }
-  link->next = link->previous = nil;
-  link->owner = nil;
-  list->count--;
-}
-
 GSListLink*
 GSLinkedListFindEqual(NSObject *object, GSLinkedList *list,
   GSListLink *from, BOOL back)
@@ -449,5 +367,129 @@ GSLinkedListFindIdentical(NSObject *object, GSLinkedList *list,
 	}
     }
   return nil;
+}
+
+void
+GSLinkedListInsertBefore(GSListLink *link, GSLinkedList *list, GSListLink *at)
+{
+  if (nil == list->head)
+    {
+      list->head = list->tail = link;
+    }
+  else
+    {
+      link->previous = at->previous;
+      if (nil == link->previous)
+	{
+	  list->head = link;
+	}
+      else
+	{
+	  link->previous->next = link;
+	}
+      at->previous = link;
+      link->next = at;
+    }
+  link->owner = list;
+  list->count++;
+}
+
+void
+GSLinkedListInsertAfter(GSListLink *link, GSLinkedList *list, GSListLink *at)
+{
+  if (nil == list->head)
+    {
+      list->head = list->tail = link;
+    }
+  else
+    {
+      link->next = at->next;
+      if (nil == link->next)
+	{
+	  list->tail = link;
+	}
+      else
+	{
+	  link->next->previous = link;
+	}
+      at->next = link;
+      link->previous = at;
+    }
+  link->owner = list;
+  list->count++;
+}
+
+void
+GSLinkedListRemove(GSListLink *link, GSLinkedList *list)
+{
+  if (list->head == link)
+    {
+      list->head = link->next;
+      if (nil != list->head)
+	{
+          list->head->previous = nil;
+	}
+    }
+  else
+    {
+      link->previous->next = link->next;
+    }
+  if (list->tail == link)
+    {
+      list->tail = link->previous;
+      if (nil != list->tail)
+	{
+          list->tail->next = nil;
+	}
+    }
+  else
+    {
+      link->next->previous = link->previous;
+    }
+  link->next = link->previous = nil;
+  link->owner = nil;
+  list->count--;
+}
+
+extern void
+GSLinkedListMoveToHead(GSListLink *link, GSLinkedList *list)
+{
+  if (link != list->head)
+    {
+      if (link == list->tail)
+	{
+	  list->tail = link->previous;
+	  list->tail->next = nil;
+	}
+      else
+	{
+	  link->next->previous = link->previous;
+	  link->previous->next = link->next;
+	}
+      link->next = list->head;
+      link->previous = nil;
+      list->head = link;
+    }
+}
+
+extern void
+GSLinkedListMoveToTail(GSListLink *link, GSLinkedList *list)
+{
+  if (link != list->tail)
+    {
+      if (link == list->head)
+	{
+	  list->head = link->next;
+	  list->head->previous = nil;
+	}
+      else
+	{
+	  link->next->previous = link->previous;
+	  link->previous->next = link->next;
+	}
+      link->next = nil;
+      link->previous = list->tail;
+      list->tail = link;
+    }
 }
 
