@@ -5,7 +5,7 @@
 
 @class	GSThreadPool;
 
-@interface	GSOperation : GSLinkedList
+@interface	GSOperation : GSListLink
 {
   @public
   SEL		sel;
@@ -20,7 +20,7 @@
 }
 @end
 
-@interface	GSThreadLink : GSLinkedList
+@interface	GSThreadLink : GSListLink
 {
   @public
   GSThreadPool		*pool;	// Not retained
@@ -28,6 +28,7 @@
   GSOperation		*op;
 }
 @end
+
 @implementation	GSThreadLink
 - (void) dealloc
 {
@@ -44,7 +45,7 @@
   return self;
 }
 @end
-;
+
 @interface	GSThreadPool (Internal)
 - (void) _any;
 - (void) _dead: (GSThreadLink*)link;
@@ -58,35 +59,33 @@
 
 - (void) dealloc
 {
+  GSThreadLink	*link;
+
   [poolLock lock];
-  while (nil != operations)
+  [operations release];
+  operations = nil;
+  [unused release];
+  unused = nil;
+  if (nil != idle)
     {
-      id	link = operations;
-
-      operations = [link remove];
-      [link release];
+      while (nil != (link = (GSThreadLink*)idle->head))
+	{
+	  GSLinkedListRemove(link, idle);
+	  [link->lock lock];
+	  [link->lock unlockWithCondition: 1];
+	}
+      [idle release];
+      idle = nil;
     }
-  while (nil != unused)
+  if (nil != live)
     {
-      id	link = operations;
-
-      unused = [link remove];
-      [link release];
-    }
-  while (nil != idle)
-    {
-      GSThreadLink	*link = idle;
-
-      idle = [link remove];
-      [link->lock lock];
-      [link->lock unlockWithCondition: 1];
-    }
-  while (nil != live)
-    {
-      GSThreadLink	*link = live;
-
-      live = [link remove];
-      link->pool = nil;
+      while (nil != (link = (GSThreadLink*)live->head))
+	{
+	  GSLinkedListRemove(link, live);
+	  link->pool = nil;
+	}
+      [live release];
+      live = nil;
     }
   [poolLock unlock];
   [poolLock release];
@@ -100,8 +99,8 @@
   [poolLock lock];
   result = [NSString stringWithFormat:
     @"%@ queue: %u(%u) threads: %u(%u) active: %u processed: %u",
-    [super description], operationCount, maxOperations,
-    threadCount, maxThreads, activeCount, processed];
+    [super description], operations->count, maxOperations,
+    idle->count + live->count, maxThreads, live->count, processed];
   [poolLock unlock];
   return result;
 }
@@ -123,15 +122,8 @@
   NSUInteger	counter;
 
   [poolLock lock];
-  counter = operationCount;
-  while (nil != operations)
-    {
-      id	o = operations;
-
-      operations = [o remove];
-      operationCount--;
-      [o release];
-    }
+  counter = operations->count;
+  [operations empty];
   [poolLock unlock];
   return counter;
 }
@@ -141,6 +133,10 @@
   if ((self = [super init]) != nil)
     {
       poolLock = [NSRecursiveLock new];
+      idle = [GSLinkedList new];
+      live = [GSLinkedList new];
+      operations = [GSLinkedList new];
+      unused = [GSLinkedList new];
       [self setOperations: 100];
       [self setThreads: 2];
     }
@@ -149,12 +145,12 @@
 
 - (BOOL) isEmpty
 {
-  return (nil == operations) ? YES : NO;
+  return (0 == operations->count) ? YES : NO;
 }
 
 - (BOOL) isIdle
 {
-  return (nil == live) ? YES : NO;
+  return (0 == live->count) ? YES : NO;
 }
 
 - (BOOL) isSuspended
@@ -201,33 +197,23 @@
 		  format: @"Nil receiver"];
     }
   [poolLock lock];
-  if (operationCount < maxOperations && maxThreads > 0)
+  if (operations->count < maxOperations && maxThreads > 0)
     {
-      GSOperation	*op = unused;
+      GSOperation	*op = (GSOperation*)unused->head;
 
       if (nil == op)
 	{
-	  op = [GSOperation new];	// Need a new one
+	  op = [GSOperation new];		// Need a new one
 	}
       else
 	{
-	  unused = [op remove];		// Re-use an old one
-	  unusedCount--;
+	  GSLinkedListRemove(op, unused);	// Re-use an old one
 	}
       [op setItem: aReceiver];
       op->sel = aSelector;
       op->arg = [anArgument retain];
 
-      if (nil == operations)
-	{
-	  operations = lastOperation = op;
-	}
-      else
-	{
-	  [lastOperation append: op];
-	}
-      lastOperation = op;
-      operationCount++;
+      GSLinkedListInsertAfter(op, operations, operations->tail);
       [self _any];
       [poolLock unlock];
     }
@@ -276,17 +262,16 @@
 	    }
 	  [poolLock lock];
 	}
-      while (maxThreads < threadCount && idle != nil)
+      while (maxThreads < idle->count + live->count && idle->count > 0)
 	{
-	  GSThreadLink	*link = idle;
+	  GSThreadLink	*link = (GSThreadLink*)idle->head;
 
 	  /* Remove thread link from the idle list, then start up the
 	   * thread using the condition lock ... the thread will see
 	   * that it has no operation to work with and will terminate
 	   * itsself and release the link.
 	   */
-	  idle = [idle remove];
-	  threadCount--;
+	  GSLinkedListRemove(link, idle);
 	  [link->lock lock];
 	  [link->lock unlockWithCondition: 1];
 	}
@@ -313,30 +298,27 @@
     {
       GSOperation	*op;
 
-      while (nil != (op = operations))
+      while (nil != (op = (GSOperation*)operations->head))
 	{
-	  GSThreadLink	*link = idle;
+	  GSThreadLink	*link = (GSThreadLink*)idle->head;
 
 	  if (nil == link)
 	    {
-	      if (maxThreads > threadCount)
+	      if (maxThreads > idle->count + live->count)
 		{
 		  NSThread	*thread;
 
 		  /* Create a new link, add it to the idle list, and start the
 		   * thread which will work withn it.
 		   */
-		  threadCount++;
 		  link = [GSThreadLink new];
 		  link->pool = self;
 		  thread = [[NSThread alloc] initWithTarget: self
 						   selector: @selector(_run:)
 						     object: link];
-		  [link release];	// Retained by thread
 		  [link setItem: thread];
 		  [thread release];	// Retained by link
-		  [idle insert: link];
-		  idle = link;
+		  GSLinkedListInsertAfter(link, idle, idle->tail);
 		  [thread start];
 		}
 	      else
@@ -344,16 +326,9 @@
 		  break;		// No idle thread to perform operation
 		}
 	    }
-	  operations = [op remove];
-	  operationCount--;
-	  if (nil == operations)
-	    {
-	      lastOperation = nil;
-	    }
-	  idle = [link remove];
-	  [live insert: link];
-	  live = link;
-	  activeCount++;
+	  GSLinkedListRemove(op, operations);
+	  GSLinkedListRemove(link, idle);
+	  GSLinkedListInsertAfter(link, live, live->tail);
 	  link->op = op;
 	  [link->lock lock];
 	  [link->lock unlockWithCondition: 1];
@@ -364,29 +339,9 @@
 - (void) _dead: (GSThreadLink*)link
 {
   [poolLock lock];
-  if (nil == link->next)
+  if (link->owner != nil)
     {
-      if (link == live)
-	{
-	  live = [link remove];
-	  threadCount--;
-	}
-      else if (link == idle)
-	{
-	  idle = [link remove];
-	  threadCount--;
-	}
-      else
-	{
-	  // Already dead ... don't change threadCount.
-	}
-    }
-  else
-    {
-      if (link == live) live = [link remove];
-      else if (link == idle) idle = [link remove];
-      else [link remove];
-      threadCount--;
+      GSLinkedListRemove(link, link->owner);
     }
   [poolLock unlock];
 }
@@ -399,28 +354,17 @@
   BOOL	madeIdle = YES;
 
   [poolLock lock];
-  if (link == live)
+  if (link->owner != nil) 
     {
-      live = [link remove];
+      GSLinkedListRemove(link, link->owner);
     }
-  else if (link == idle)
+  if (idle->count + live->count > maxThreads)
     {
-      idle = [link remove];
-    }
-  else
-    {
-      [link remove];
-    }
-  activeCount--;
-  if (threadCount > maxThreads)
-    {
-      threadCount--;
       madeIdle = NO;		// Made dead instead
     }
   else
     {
-      [idle insert: link];
-      idle = link;
+      GSLinkedListInsertAfter(link, idle, idle->tail);
     }
   [poolLock unlock];
   return madeIdle;
@@ -437,7 +381,7 @@
 
   [poolLock lock];
   processed++;
-  if (unusedCount < maxOperations)
+  if (unused->count < maxOperations)
     {
       if (nil != op->arg)
 	{
@@ -445,23 +389,16 @@
 	  op->arg = nil;
 	}
       [op setItem: nil];
-      [unused insert: op];
-      unused = op;
-      unusedCount++;
+      GSLinkedListInsertAfter(op, unused, unused->tail);
     }
   else
     {
       [op release];
     }
-  link->op = operations;
+  link->op = (GSOperation*)operations->head;
   if (nil != link->op)
     {
-      operations = [operations remove];
-      operationCount--;
-      if (nil == operations)
-	{
-	  lastOperation = nil;
-	}
+      GSLinkedListRemove(link->op, operations);
       more = YES;
     }
   [poolLock unlock];

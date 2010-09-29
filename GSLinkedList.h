@@ -24,107 +24,247 @@
    */
 #import <Foundation/NSObject.h>
 
-/** GSLinkedList provides simple doubly linked list functionality to
+@class GSLinkedList;
+
+/** GSListLink provides simple doubly linked list functionality to
  * avoid the need to constantly re-invent it (as the OpenStep/Cocoa
  * APIs do not provide this).  The emphasis is on speed of operation
- * so instance variables are directly accessible and functions are
- * provided to manipulate them, but you can/should avoid these direct
- * access features unless speed is really critical.<br /> 
- * A list is handled simply as a pointer to the link whose 'prev'
- * pointer is nil. <br />
- * While the item value of a link is retaned by the link, links in a
- * list are not retained, so you must manage retain/relase yourself.
+ * so instance variables are directly accessible and inline functions
+ * are provided to manipulate them (without error cehcking), but you
+ * can/should avoid these direct access features unless speed is
+ * really critical.<br /> 
+ * A list may either be 'normal' ... (where the head/tail ends of
+ * the list have a nil pointer to the previous/next link) or 'circular'
+ * in which case the list is not terminated. <br />
+ * The GSListLink item carries a minimal payload of a single item which
+ * is retained by the link.<br />
+ * The GSListLink owner is an optional pointer to an object which 'owns'
+ * the link ... a GSLinkedList instance may use this to check link
+ * ownership when manipulating links.
+ */
+@interface	GSListLink : NSObject
+{
+  @public
+  GSListLink	*next;		// Not retained
+  GSListLink	*previous;	// Not retained
+  GSLinkedList	*owner;		// Not retained
+  NSObject	*item;
+}
+ 
+/** Initialise the receiver as a link for a circular linked list.
+ */
+- (id) initCircular;
+
+/** Return the next item in the list containing the receiver,
+ * or nil if there are no more items.
+ */
+- (GSListLink*) next;
+
+/** Return the list which owns the receiver or nil if the receiver is
+ * not in a list.
+ */
+- (GSLinkedList*) owner;
+
+/** Return the previous item in the list containing the receiver,
+ * or nil if there are no more items.
+ */
+- (GSListLink*) previous;
+
+/** Set an item value by retaining it and releasing any previous value.
+ */
+- (void) setItem: (NSObject*)anItem;
+@end
+
+/** Inserts link after at in a circular list.<br />
+ * Arguments must not be nil and link must not be in a list
+ * (ie its next and previous pointers must point to itsself).
+ */
+static inline void
+GSLinkCircularInsertAfter(GSListLink *link, GSListLink *at)
+{
+  link->next = at->next;
+  link->previous = at;
+  link->next->previous = link;
+  link->previous->next = link;
+}
+
+/** Inserts link before at in a circular list.<br />
+ * Arguments must not be nil and link must not be in a list
+ * (ie its next and previous pointers must point to itsself).
+ */
+static inline void
+GSLinkCircularInsertBefore(GSListLink *link, GSListLink *at)
+{
+  link->next = at;
+  link->previous = at->previous;
+  link->next->previous = link;
+  link->previous->next = link;
+}
+
+/** Removes link from any list it is in.<br />
+ * The link argument must not be nil.
+ */
+static inline void
+GSLinkCircularRemove(GSListLink *link)
+{
+  link->next->previous = link->previous;
+  link->previous->next = link->next;
+  link->next = link->previous = link;
+}
+
+/** Inserts link after at in a normal list.<br />
+ * Arguments must not be nil and link must not be in a list
+ * (ie its next and previous pointers must both be nil).
+ */
+static inline void
+GSLinkInsertAfter(GSListLink *link, GSListLink *at)
+{
+  if (nil != at->next)
+    {
+      at->next->previous = link;
+    }
+  link->previous = at;
+  at->next = link;
+}
+
+/** Inserts link before at in a normal list.<br />
+ * Arguments must not be nil and link must not be in a list
+ * (ie its next and previous pointers must both be nil).
+ */
+static inline void
+GSLinkInsertBefore(GSListLink *link, GSListLink *at)
+{
+  if (nil != at->previous)
+    {
+      at->previous->next = link;
+    }
+  link->next = at;
+  at->previous = link;
+}
+
+/** Removes link from the list it is in.<br />
+ * The link argument must not be nil.
+ */
+static inline void
+GSLinkRemove(GSListLink *link)
+{
+  if (nil != link->next)
+    {
+      link->next->previous = link->previous;
+    }
+  if (nil != link->previous)
+    {
+      link->previous->next = link->next;
+    }
+  link->next = link->previous = nil;
+}
+
+
+/** GSLinkedList manages a list of GSListLink objects.
  */
 @interface	GSLinkedList : NSObject
 {
   @public
-  GSLinkedList	*next;	// Not retained
-  GSLinkedList	*prev;	// Not retained
-  NSObject	*item;
+  GSListLink	*head;		// First link in the list.
+  GSListLink	*tail;		// Last link in the list.
+  NSUInteger	count;		// Number of links in the list.
 }
 
-/** Appends other at the end of the linked list contining the receiver.
+/** Appends link at the end of the linked list managed by the receiver.<br />
+ * Retains the link.
  */
-- (void) append: (GSLinkedList*)other;
+- (void) append: (GSListLink*)link;
 
-/** Searches the linked list containing the receiver from the
- * receiver onwards, returning the link containing object or nil
+/** Returns the number of links in the list.
+ */
+- (NSUInteger) count;
+
+/** Remove all links from the list and release them all.
+ */
+- (void) empty;
+
+/** Searches the linked list returning the link containing object or nil
  * if it is not found.<br />
- * The comparison is performed using the -isEqual: method of object.<br />
- * This method will <em>not</em> find links containins nil items.
+ * The comparison is performed using the [NSObject-isEqual:] method
+ * of object.<br />
+ * If start is nil then the whole list is searched.<br />
+ * This method will <em>not</em> find links containing nil items.
  */
-- (id) findEqual: (NSObject*)object;
+- (GSListLink*) findEqual: (NSObject*)object
+		     from: (GSListLink*)start
+		     back: (BOOL)aFlag;
 
-/** Searches the linked list containing the receiver, from the receiver
- * onwards, returning the link containing object or nil if it is not found.
+/** Searches the linked list returning the link containing object or nil
+ * if it is not found.<br />
+ * If start is nil then the whole list is searched.<br />
  * A direct pointer comparison is used to determine equality.
  */
-- (id) findIdentical: (NSObject*)object;
+- (GSListLink*) findIdentical: (NSObject*)object
+			 from: (GSListLink*)start
+			 back: (BOOL)aFlag;
 
 /** Returns the first link in the list.
  */
-- (id) head;
+- (GSListLink*) head;
 
-/** Inserts other immediately before the receiver.
+/** Inserts other immediately after the receiver.<br />
+ * Retains the link.
  */
-- (void) insert: (GSLinkedList*)other;
+- (void) insert: (GSListLink*)link after: (GSListLink*)at;
 
-/** Returns the item in the link represented by the receiver.<br />
- * The item may be nil.
+/** Inserts other immediately before the receiver.<br />
+ * Retains the link.
  */
-- (NSObject*) item;
+- (void) insert: (GSListLink*)link before: (GSListLink*)at;
 
-/** Returns the next link in the list, or nil if the receiver is at the tail.
+/** Removes the link from the receiver.<br />
+ * releases the link.
  */
-- (id) next;
-
-/** Returns the previous link in the list, or nil if the receiver is at the
- * head.
- */
-- (id) previous;
-
-/** Removes the receiver from the linked list containing it.<br />
- * Returns the link which was next after the receiver.
- */
-- (id) remove;
-
-/** Replaces any existing item in the receiver with the supplied object.<br />
- * The item may be nil.
- */
-- (void) setItem: (NSObject*)object;
+- (void) removeLink: (GSListLink*)link;
 
 /** Returns the last link in the list.
  */
-- (id) tail;
+- (GSListLink*) tail;
 
 @end
 
-/** Appends link at the end of the list.
+/** Searches from list to the end looking for the first link containing
+ * object (as determined by using object's [NSObject-isEqual:] method).<br />
+ * If from is nil the list is search from head or tail as appropriate
+ * to the direction in which it is searched.
  */
-extern void
-GSLinkedListAppend(GSLinkedList *link, GSLinkedList *list);
+extern GSListLink*
+GSLinkedListFindEqual(NSObject *object, GSLinkedList *list,
+  GSListLink *from, BOOL back);
 
 /** Searches from list to the end looking for the first link containing
- * object (as determiend by using object's -isEqual: method).
+ * object (as determined by direct pointer comparison).<br />
+ * If from is nil the list is search from head or tail as appropriate
+ * to the direction in which it is searched.
  */
-extern id
-GSLinkedListFindEqual(NSObject *object, GSLinkedList *list);
+extern GSListLink*
+GSLinkedListFindIdentical(NSObject *object, GSLinkedList *list,
+  GSListLink *from, BOOL back);
 
-/** Searches from list to the end looking for the first link containing
- * object (as determiend by direct pointer comparison).
- */
-extern id
-GSLinkedListFindIdentical(NSObject *object, GSLinkedList *list);
-
-/** Inserts link immediately before at.
+/** Inserts link immediately after at.<br />
+ * Updates the head, tail and count variables of list.<br />
+ * Does not retain link.
  */
 extern void
-GSLinkedListInsert(GSLinkedList *link, GSLinkedList *at);
+GSLinkedListInsertAfter(GSListLink *link, GSLinkedList *list, GSListLink *at);
 
-/** Removes link from it list and returns the next item in the list
- * or nil if there is no next item.
+/** Inserts link immediately before at.<br />
+ * Updates the head, tail and count variables of list.<br />
+ * Does not retain link.
  */
-extern id
-GSLinkedListRemove(GSLinkedList *link);
+extern void
+GSLinkedListInsertBefore(GSListLink *link, GSLinkedList *list, GSListLink *at);
+
+/** Removes link from the list.<br />
+ * Updates the head, tail and count variables of list.<br />
+ * Does not release link.
+ */
+extern void
+GSLinkedListRemove(GSListLink *link, GSLinkedList *list);
 
 #endif

@@ -24,8 +24,7 @@
    */
 #import <Foundation/NSObject.h>
 
-@class	GSOperation;
-@class	GSThreadLink;
+@class	GSLinkedList;
 @class	NSLock;
 
 /** This class provides a thread pool for performing methods
@@ -41,16 +40,11 @@
   BOOL		shutdown;
   BOOL		suspended;
   NSUInteger	maxThreads;
-  NSUInteger	threadCount;
-  NSUInteger	activeCount;
-  GSThreadLink	*idle;
-  GSThreadLink	*live;
+  GSLinkedList	*idle;
+  GSLinkedList	*live;
   NSUInteger	maxOperations;
-  NSUInteger	operationCount;
-  GSOperation	*operations;
-  GSOperation	*lastOperation;
-  NSUInteger	unusedCount;
-  GSOperation	*unused;
+  GSLinkedList	*operations;
+  GSLinkedList	*unused;
   NSUInteger	processed;
 }
 

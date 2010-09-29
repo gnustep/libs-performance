@@ -23,186 +23,430 @@
 #import <Foundation/NSException.h>
 #import "GSLinkedList.h"
 
-@implementation	GSLinkedList
-- (void) append: (GSLinkedList*)other
-{
-  if (nil == other)
-    {
-      [NSException raise: NSInvalidArgumentException
-	format: @"[%@-%@] nil argument",
-	NSStringFromClass([self class]), NSStringFromSelector(_cmd)];
-    }
-  if (other->next || other->prev)
-    {
-      [NSException raise: NSInvalidArgumentException
-	format: @"[%@-%@] other link is still in a list",
-	NSStringFromClass([self class]), NSStringFromSelector(_cmd)];
-    }
-  GSLinkedListAppend(other, self);
-}
+@implementation	GSListLink
 
 - (void) dealloc
 {
-  if (next || prev)
-    {
-      [NSException raise: NSInternalInconsistencyException
-	format: @"[%@-%@] receiver is still in a list",
-	NSStringFromClass([self class]), NSStringFromSelector(_cmd)];
-    }
+  NSAssert(nil != owner, NSInternalInconsistencyException);
   [item release];
   [super dealloc];
 }
 
-- (id) findEqual: (NSObject*)object;
+- (id) initCircular
 {
-  return GSLinkedListFindEqual(object, self);
-}
-
-- (id) findIdentical: (NSObject*)object;
-{
-  return GSLinkedListFindIdentical(object, self);
-}
-
-- (id) head
-{
-  GSLinkedList	*link = self;
-
-  while (nil != link->prev)
+  if ((self = [super init]) != nil)
     {
-      link = link->prev;
+      next = previous = self;
     }
-  return link;
+  return self;
 }
 
-- (void) insert: (GSLinkedList*)other
+- (id) item
 {
-  if (nil == other)
+  return item;
+}
+
+- (GSListLink*) next
+{
+  if (next == self)
+    {
+      return nil;
+    }
+  return next;
+}
+
+- (GSLinkedList*) owner
+{
+  return owner;
+}
+
+- (GSListLink*) previous
+{
+  if (previous == self)
+    {
+      return nil;
+    }
+  return previous;
+}
+
+- (void) setItem: (NSObject*)anItem
+{
+  id	o = item;
+
+  item = [anItem retain];
+  [o release];
+}
+
+@end
+
+
+@implementation	GSLinkedList
+- (void) append: (GSListLink*)link
+{
+  if (nil == link)
     {
       [NSException raise: NSInvalidArgumentException
 	format: @"[%@-%@] nil argument",
 	NSStringFromClass([self class]), NSStringFromSelector(_cmd)];
     }
-  if (other->next || other->prev)
+  if (self == link->owner)
+    {
+      if (link != tail)
+	{
+	  GSLinkedListRemove(link, self);
+	  GSLinkedListInsertAfter(link, self, tail);
+	}
+    }
+  else
+    {
+      if (nil != link->owner || nil != link->next || nil != link->previous)
+	{
+	  [NSException raise: NSInvalidArgumentException
+	    format: @"[%@-%@] other link is still in a list",
+	    NSStringFromClass([self class]), NSStringFromSelector(_cmd)];
+	}
+      GSLinkedListInsertAfter(link, self, tail);
+      [link retain];
+    }
+}
+
+- (NSUInteger) count
+{
+  return count;
+}
+
+- (void) dealloc
+{
+  count = 0;
+  tail = nil;
+  while (nil != head)
+    {
+      GSListLink	*link = head;
+
+      head = link->next;
+      head->next = head->previous = nil;
+      head->owner = nil;
+      [head release];
+    }
+  [super dealloc];
+}
+
+- (void) empty
+{
+  GSListLink	*link;
+
+  while (nil != (link = head))
+    {
+      head = link->next;
+      link->owner = nil;
+      link->next = link->previous = nil;
+      [link release];
+    }
+  tail = nil;
+  count = 0;
+}
+
+- (GSListLink*) findEqual: (NSObject*)object
+		     from: (GSListLink*)start
+		     back: (BOOL)aFlag
+{
+  if (nil != start && start->owner != self)
     {
       [NSException raise: NSInvalidArgumentException
-	format: @"[%@-%@] other link is still in a list",
+	format: @"[%@-%@] start link is not in this list",
 	NSStringFromClass([self class]), NSStringFromSelector(_cmd)];
     }
-  GSLinkedListInsert(other, self);
+  return GSLinkedListFindEqual(object, self, start, aFlag);
 }
 
-- (NSObject*) item
+- (GSListLink*) findIdentical: (NSObject*)object
+			 from: (GSListLink*)start
+			 back: (BOOL)aFlag
 {
-  return item;
-}
-
-- (id) next
-{
-  return next;
-}
-
-- (id) previous
-{
-  return prev;
-}
-
-- (id) remove
-{
-  return GSLinkedListRemove(self);
-}
-
-- (void) setItem: (NSObject*)object
-{
-  id	o = item;
-
-  item = [object retain];
-  [o release];
-}
-
-- (id) tail
-{
-  GSLinkedList	*link = self;
-
-  while (nil != link->next)
+  if (nil != start && start->owner != self)
     {
-      link = link->next;
+      [NSException raise: NSInvalidArgumentException
+	format: @"[%@-%@] start link is not in this list",
+	NSStringFromClass([self class]), NSStringFromSelector(_cmd)];
     }
-  return link;
+  return GSLinkedListFindIdentical(object, self, start, aFlag);
+}
+
+- (GSListLink*) head
+{
+  return head;
+}
+
+- (void) insert: (GSListLink*)link after: (GSListLink*)at
+{
+  if (nil == link)
+    {
+      [NSException raise: NSInvalidArgumentException
+	format: @"[%@-%@] nil link argument",
+	NSStringFromClass([self class]), NSStringFromSelector(_cmd)];
+    }
+  if (nil == at)
+    {
+      at = tail;
+    }
+  if (at->owner != self)
+    {
+      [NSException raise: NSInvalidArgumentException
+	format: @"[%@-%@] 'at' link is not in this list",
+	NSStringFromClass([self class]), NSStringFromSelector(_cmd)];
+    }
+  if (at == link)
+    {
+      return;
+    }
+  if (link->owner == self)
+    {
+      GSLinkedListRemove(link, self);
+      GSLinkedListInsertAfter(link, self, at);
+    }
+  else
+    {
+      if (nil != link->owner || nil != link->next || nil != link->previous)
+	{
+	  [NSException raise: NSInvalidArgumentException
+	    format: @"[%@-%@] other link is still in a list",
+	    NSStringFromClass([self class]), NSStringFromSelector(_cmd)];
+	}
+      GSLinkedListInsertAfter(link, self, at);
+      [link retain];
+    }
+}
+
+- (void) insert: (GSListLink*)link before: (GSListLink*)at
+{
+  if (nil == link)
+    {
+      [NSException raise: NSInvalidArgumentException
+	format: @"[%@-%@] nil link argument",
+	NSStringFromClass([self class]), NSStringFromSelector(_cmd)];
+    }
+  if (nil == at)
+    {
+      at = head;
+    }
+  if (at->owner != self)
+    {
+      [NSException raise: NSInvalidArgumentException
+	format: @"[%@-%@] 'at' link is not in this list",
+	NSStringFromClass([self class]), NSStringFromSelector(_cmd)];
+    }
+  if (at == link)
+    {
+      return;
+    }
+  if (link->owner == self)
+    {
+      GSLinkedListRemove(link, self);
+      GSLinkedListInsertBefore(link, self, at);
+    }
+  else
+    {
+      if (nil != link->owner || nil != link->next || nil != link->previous)
+	{
+	  [NSException raise: NSInvalidArgumentException
+	    format: @"[%@-%@] other link is still in a list",
+	    NSStringFromClass([self class]), NSStringFromSelector(_cmd)];
+	}
+      GSLinkedListInsertBefore(link, self, at);
+      [link retain];
+    }
+}
+
+- (void) removeLink: (GSListLink*)link
+{
+  if (nil == link)
+    {
+      [NSException raise: NSInvalidArgumentException
+	format: @"[%@-%@] nil link argument",
+	NSStringFromClass([self class]), NSStringFromSelector(_cmd)];
+    }
+  if (link->owner != self)
+    {
+      [NSException raise: NSInvalidArgumentException
+	format: @"[%@-%@] link is not in this list",
+	NSStringFromClass([self class]), NSStringFromSelector(_cmd)];
+    }
+  GSLinkedListRemove(link, self);
+  [link release];
+}
+
+- (GSListLink*) tail
+{
+  return tail;
 }
 
 @end
 
 void
-GSLinkedListAppend(GSLinkedList *link, GSLinkedList *list)
+GSLinkedListInsertBefore(GSListLink *link, GSLinkedList *list, GSListLink *at)
 {
-  while (nil != list->next)
+  if (nil == list->head)
     {
-      list = list->next;
+      list->head = list->tail = link;
     }
-  link->prev = list;
-  list->next = link;
+  else
+    {
+      link->previous = at->previous;
+      if (nil == link->previous)
+	{
+	  list->head = link;
+	}
+      else
+	{
+	  link->previous->next = link;
+	}
+      at->previous = link;
+      link->next = at;
+    }
+  link->owner = list;
+  list->count++;
 }
 
 void
-GSLinkedListInsert(GSLinkedList *link, GSLinkedList *at)
+GSLinkedListInsertAfter(GSListLink *link, GSLinkedList *list, GSListLink *at)
 {
-  link->next = at;
-  if (nil != at->prev)
+  if (nil == list->head)
     {
-      at->prev->next = link;
-      link->prev = at->prev;
+      list->head = list->tail = link;
     }
-  at->prev = link;
+  else
+    {
+      link->next = at->next;
+      if (nil == link->next)
+	{
+	  list->tail = link;
+	}
+      else
+	{
+	  link->next->previous = link;
+	}
+      at->next = link;
+      link->previous = at;
+    }
+  link->owner = list;
+  list->count++;
 }
 
-id
-GSLinkedListRemove(GSLinkedList *link)
+void
+GSLinkedListRemove(GSListLink *link, GSLinkedList *list)
 {
-  GSLinkedList	*next = link->next;
-
-  if (nil != link->next)
+  if (list->head == link)
     {
-      link->next->prev = link->prev;
+      list->head = link->next;
+      if (nil != list->head)
+	{
+          list->head->previous = nil;
+	}
     }
-  if (nil != link->prev)
+  else
     {
-      link->prev->next = link->next;
+      link->previous->next = link->next;
     }
-  link->next = nil;
-  link->prev = nil;
-  return next;
+  if (list->tail == link)
+    {
+      list->tail = link->previous;
+      if (nil != list->tail)
+	{
+          list->tail->next = nil;
+	}
+    }
+  else
+    {
+      link->next->previous = link->previous;
+    }
+  link->next = link->previous = nil;
+  link->owner = nil;
+  list->count--;
 }
 
-id
-GSLinkedListFindEqual(NSObject *object, GSLinkedList *list)
+GSListLink*
+GSLinkedListFindEqual(NSObject *object, GSLinkedList *list,
+  GSListLink *from, BOOL back)
 {
+  if (nil == from)
+    {
+      if (YES == back)
+	{
+	  from = list->tail;
+	}
+      else
+	{
+	  from = list->head;
+	}
+    }
   if (nil != object)
     {
       BOOL	(*imp)(id, SEL, id);
 
       imp = (BOOL(*)(id,SEL,id))[object methodForSelector: @selector(isEqual:)];
-      while (nil != list)
+      if (YES == back)
 	{
-	  if (YES == (*imp)(object, @selector(isEqual:), list->item))
+	  while (nil != from)
 	    {
-	      return list;
+	      if (YES == (*imp)(object, @selector(isEqual:), from->item))
+		{
+		  return from;
+		}
+	      from = from->previous;
 	    }
-	  list = list->next;
+	}
+      else
+	{
+	  while (nil != from)
+	    {
+	      if (YES == (*imp)(object, @selector(isEqual:), from->item))
+		{
+		  return from;
+		}
+	      from = from->next;
+	    }
 	}
     }
   return nil;
 }
 
-id
-GSLinkedListFindIdentical(NSObject *object, GSLinkedList *list)
+
+GSListLink*
+GSLinkedListFindIdentical(NSObject *object, GSLinkedList *list,
+  GSListLink *from, BOOL back)
 {
-  while (nil != list)
+  if (nil == from)
     {
-      if (object == list->item)
+      if (YES == back)
 	{
-	  return list;
+	  from = list->tail;
 	}
-      list = list->next;
+      else
+	{
+	  from = list->head;
+	}
+    }
+  if (YES == back)
+    {
+      while (nil != from)
+	{
+	  if (object == from->item)
+	    {
+	      return from;
+	    }
+	  from = from->previous;
+	}
+    }
+  else
+    {
+      while (nil != from)
+	{
+	  if (object == from->item)
+	    {
+	      return from;
+	    }
+	  from = from->next;
+	}
     }
   return nil;
 }
