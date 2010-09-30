@@ -27,7 +27,7 @@
 
 - (void) dealloc
 {
-  NSAssert(nil != owner, NSInternalInconsistencyException);
+  NSAssert(nil == owner, NSInternalInconsistencyException);
   [item release];
   [super dealloc];
 }
