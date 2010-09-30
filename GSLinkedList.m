@@ -468,6 +468,7 @@ GSLinkedListMoveToHead(GSListLink *link, GSLinkedList *list)
 	}
       link->next = list->head;
       link->previous = nil;
+      list->head->previous = link;
       list->head = link;
     }
 }
@@ -489,6 +490,7 @@ GSLinkedListMoveToTail(GSListLink *link, GSLinkedList *list)
 	}
       link->next = nil;
       link->previous = list->tail;
+      list->tail->next = link;
       list->tail = link;
     }
 }
