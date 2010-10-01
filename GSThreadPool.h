@@ -48,6 +48,14 @@
   NSUInteger	processed;
 }
 
+/** Returns an instance intended for sharing between sections of code which
+ * wish to make use of threading by performing operations in other threads,
+ * but which don't mind operations being interleaved with those belonging to
+ * oither sections of code.<br />
+ * Always returns the same instance whenever the method is called.
+ */
++ (GSThreadPool*) sharedPool;
+
 /** Waits until the pool of operations is empty or until the specified
  * timestamp.  Returns YES if the pool was emptied, NO otherwise.
  */

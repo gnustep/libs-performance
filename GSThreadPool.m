@@ -57,10 +57,31 @@
 
 @implementation	GSThreadPool
 
+static GSThreadPool	*shared = nil;
+
++ (void) initialize
+{
+  if ([GSThreadPool class] == self)
+    {
+      shared = [self new];
+    }
+}
+
++ (GSThreadPool*) sharedPool
+{
+  return shared;
+}
+
 - (void) dealloc
 {
   GSThreadLink	*link;
 
+  if (self == shared)
+    {
+      [self retain];
+      [NSException raise: NSInternalInconsistencyException
+	format: @"[GSThreadPool-dealloc] attempt to deallocate shared pool"];
+    }
   [poolLock lock];
   [operations release];
   operations = nil;
