@@ -61,7 +61,7 @@ static GSThreadPool	*shared = nil;
 
 + (void) initialize
 {
-  if ([GSThreadPool class] == self)
+  if ([GSThreadPool class] == self && nil == shared)
     {
       shared = [self new];
     }

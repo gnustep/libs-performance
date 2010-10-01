@@ -36,6 +36,7 @@ Performance_INTERFACE_VERSION=0.3
 
 Performance_OBJC_FILES += \
 	GSCache.m \
+	GSIOThreadPool.m \
 	GSLinkedList.m \
 	GSThreadPool.m \
 	GSThroughput.m \
@@ -46,6 +47,7 @@ Performance_OBJC_FILES += \
 
 Performance_HEADER_FILES += \
 	GSCache.h \
+	GSIOThreadPool.h \
 	GSLinkedList.h \
 	GSThreadPool.h \
 	GSThroughput.h \
@@ -55,6 +57,7 @@ Performance_HEADER_FILES += \
 
 Performance_AGSDOC_FILES += \
 	GSCache.h \
+	GSIOThreadPool.h \
 	GSLinkedList.h \
 	GSThreadPool.h \
 	GSThroughput.h \

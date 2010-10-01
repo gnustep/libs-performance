@@ -25,6 +25,7 @@
    */ 
 
 #import "GSCache.h"
+#import "GSIOThreadPool.h"
 #import "GSLinkedList.h"
 #import "GSThreadPool.h"
 #import "GSThroughput.h"
