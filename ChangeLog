@@ -1,3 +1,10 @@
+2010-11-10 Riccardo Mottola
+
+	* GSLinkedList.h
+	* GSSkipMutableArray.m
+	* GSIOThreadPool.h
+	Mac 10.4 compatibility definitions
+
 2010-10-01 Richard Frith-Macdonald  <rfm@gnu.org>
 
 	* GSIOThreadPool.h:
