@@ -25,7 +25,7 @@
 #import <Foundation/NSObject.h>
 
 #if !defined (GNUSTEP) &&  (MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_4)
-#define NSUInteger unsigned int
+typedef unsigned int NSUInteger;
 #endif
 
 @class GSLinkedList;

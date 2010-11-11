@@ -27,6 +27,7 @@
 #import <Foundation/NSRunLoop.h>
 #import <Foundation/NSThread.h>
 #import <Foundation/NSTimer.h>
+#import <Foundation/NSException.h>
 #import	"GSIOThreadPool.h"
 
 @interface	GSIOThread : NSThread

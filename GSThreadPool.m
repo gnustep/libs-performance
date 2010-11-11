@@ -1,7 +1,9 @@
 #include "GSLinkedList.h"
 #include "GSThreadPool.h"
+#include <Foundation/NSAutoreleasePool.h>
 #include <Foundation/NSLock.h>
 #include <Foundation/NSThread.h>
+#include <Foundation/NSException.h>
 
 @class	GSThreadPool;
 

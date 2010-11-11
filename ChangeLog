@@ -2,6 +2,14 @@
 
 	* GSCache.m
 	use always class_getInstanceSize() on GNUSTEP for all runtimes and define a compatibility macro for old macs
+
+	* GSThreadPool.h
+	* GSLinkedList.h
+	* GSThreadPool.m
+	* GSSkipMutableArray.m
+	* GSIOThreadPool.h
+	* GSIOThreadPool.m
+	Complete includes and use typedef instead of #define
 	
 2010-11-11 Richard Frith-Macdonald  <rfm@gnu.org>
 
