@@ -1,3 +1,8 @@
+2010-11-11 Riccardo Mottola
+
+	* GSCache.m
+	use always class_getInstanceSize() on GNUSTEP for all runtimes and define a compatibility macro for old macs
+	
 2010-11-11 Richard Frith-Macdonald  <rfm@gnu.org>
 
 	* GSCache.m: Try to get defines right to get instance size depending

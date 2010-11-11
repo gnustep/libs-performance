@@ -48,6 +48,9 @@
 
 #if !defined(GNUSTEP)
 #include <objc/objc-class.h>
+#if (MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_4)
+#define class_getInstanceSize(isa)  ((struct objc_class *)isa)->instance_size
+#endif
 #endif
 
 @interface	GSCache (Threading)
@@ -757,11 +760,8 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
       return 0;
     }
   [exclude addObject: self];
-#if defined(__OBJC2__) || defined(GNUSTEP)
-  return class_getInstanceSize(isa);
-#else
-  return ((struct objc_class *)isa)->instance_size;
-#endif
+
+  return class_getInstanceSize(isa); 
 }
 @end
 
