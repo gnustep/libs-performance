@@ -757,10 +757,10 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
       return 0;
     }
   [exclude addObject: self];
-#if !defined(GNUSTEP)
+#if defined(__OBJC2__) || defined(GNUSTEP)
   return class_getInstanceSize(isa);
 #else
-  return isa->instance_size;
+  return ((struct objc_class *)isa)->instance_size;
 #endif
 }
 @end
