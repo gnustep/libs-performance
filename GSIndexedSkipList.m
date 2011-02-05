@@ -28,9 +28,11 @@
 #include <string.h>
 #include "GSIndexedSkipList.h"
 
+/* This no longer seems to be needed/correct
 #if	defined(__MINGW32__)
-#include <cstdlib.h>	/* declares rand() */
+#include <cstdlib.h>	// declares rand()
 #endif
+ */
 
 #define PrettyErr(x) do { fprintf(stderr, "%s:%i: %s\n",__FILE__, __LINE__, x); exit(EXIT_FAILURE); } while (0)
 
