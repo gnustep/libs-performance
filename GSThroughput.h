@@ -27,8 +27,9 @@
 #define	INCLUDED_GSThroughput_H
 
 #import	<Foundation/NSObject.h>
-#import	<Foundation/NSArray.h>
 
+@class	NSArray;
+@class	NSString;
 
 extern NSString * const GSThroughputNotification;
 extern NSString * const GSThroughputCountKey;

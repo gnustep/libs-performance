@@ -23,9 +23,9 @@
    Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111 USA.
    */
 #import <Foundation/NSObject.h>
-#import <Foundation/NSDate.h>
 
 @class	GSLinkedList;
+@class	NSDate;
 @class	NSLock;
 
 /** This class provides a thread pool for performing methods
