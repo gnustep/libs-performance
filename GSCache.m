@@ -817,7 +817,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 
   if (size > 0)
     {
-      size += [content sizeInBytes: exclude]; + [headers sizeInBytes: exclude];
+      size += [content sizeInBytes: exclude] + [headers sizeInBytes: exclude];
     }
   return size;
 }
