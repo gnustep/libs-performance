@@ -281,15 +281,18 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 
 - (id) init
 {
-  if ([NSThread isMultiThreaded] == YES)
+  if (nil != (self = [super init]))
     {
-      [self _createLock];
+      if ([NSThread isMultiThreaded] == YES)
+	{
+	  [self _createLock];
+	}
+      my->contents = NSCreateMapTable(NSObjectMapKeyCallBacks,
+	NSObjectMapValueCallBacks, 0);
+      [allCachesLock lock];
+      NSHashInsert(allCaches, (void*)self);
+      [allCachesLock unlock];
     }
-  my->contents = NSCreateMapTable(NSObjectMapKeyCallBacks,
-    NSObjectMapValueCallBacks, 0);
-  [allCachesLock lock];
-  NSHashInsert(allCaches, (void*)self);
-  [allCachesLock unlock];
   return self;
 }
 

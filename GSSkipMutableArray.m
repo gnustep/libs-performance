@@ -250,9 +250,6 @@ static Class	concreteClass = 0;
   NSMutableString *graph;
   NSArray *tmp;
   
-  p = l->header;
-  k = l->level;
-
   graph = [[NSMutableString alloc] initWithCapacity: 1024];
   [graph appendString:
     [NSString stringWithFormat: @"digraph %@ {\n", graphName]];

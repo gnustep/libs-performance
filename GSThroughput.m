@@ -140,7 +140,10 @@ typedef struct {
 
 - (id) init
 {
-  instances = NSCreateHashTable(NSNonRetainedObjectHashCallBacks, 0);
+  if (nil != (self = [super init]))
+    {
+      instances = NSCreateHashTable(NSNonRetainedObjectHashCallBacks, 0);
+    }
   return self;
 }
 
@@ -882,122 +885,125 @@ typedef struct {
               forPeriods: (unsigned)numberOfPeriods
 		ofLength: (unsigned)minutesPerPeriod
 {
-  NSCalendarDate	*c;	
-  unsigned		i;
-
-  _data = (Item*)NSZoneCalloc(NSDefaultMallocZone(), 1, sizeof(Item));
-
-  /*
-   * Add this instance to the current thread.
-   */
-  my->thread = [[self class] _threadInfo];
-  NSHashInsert(my->thread->instances, (void*)self);
-
-  my->supportDurations = aFlag;
-  my->notify = NO;
-  my->last = GSTickerTimeTick();
-
-  c = [[NSCalendarDate alloc] initWithTimeIntervalSinceReferenceDate:
-    GSTickerTimeLast()];
-
-  my->second = [c secondOfMinute];
-  i = [c hourOfDay] * 60 + [c minuteOfHour];
-
-  if (numberOfPeriods < 1 || minutesPerPeriod < 1)
+  if (nil != (self = [super init]))
     {
-      /* If we are not using periods of N minutes, we must just be keeping
-       * a running total recorded second by second.
+      NSCalendarDate	*c;	
+      unsigned		i;
+
+      _data = (Item*)NSZoneCalloc(NSDefaultMallocZone(), 1, sizeof(Item));
+
+      /*
+       * Add this instance to the current thread.
        */
-      my->numberOfPeriods = 0;
-      my->minutesPerPeriod = 0;
-      my->minute = i;
-      my->period = 0;
-      if (my->supportDurations == YES)
-        {
-	  DurationInfo	*ptr;
+      my->thread = [[self class] _threadInfo];
+      NSHashInsert(my->thread->instances, (void*)self);
 
-	  ptr = (DurationInfo*)NSZoneCalloc
-            (NSDefaultMallocZone(), 2, sizeof(DurationInfo));
-	  my->seconds = ptr;
-	  my->minutes = 0;
-	  my->periods = 0;
-	  dseconds[0].tick = my->last;
-	  dseconds[0].max = 0;
-	  dseconds[0].min = MAXDURATION;
-	  dseconds[0].sum = 0;
-	  dseconds[0].cnt = 0;
+      my->supportDurations = aFlag;
+      my->notify = NO;
+      my->last = GSTickerTimeTick();
 
-	  dseconds[1].tick = my->last;
-	  dseconds[1].max = 0;
-	  dseconds[1].min = 0;
-	  dseconds[1].sum = 0;
-	  dseconds[1].cnt = 0;
-	}
-      else
-        {
-	  CountInfo	*ptr;
+      c = [[NSCalendarDate alloc] initWithTimeIntervalSinceReferenceDate:
+	GSTickerTimeLast()];
 
-	  ptr = (CountInfo*)NSZoneCalloc
-            (NSDefaultMallocZone(), 2, sizeof(CountInfo));
-	  my->seconds = ptr;
-	  my->minutes = 0;
-	  my->periods = 0;
-	  cseconds[0].tick = my->last;
-	  cseconds[0].cnt = 0;
-	  cseconds[1].tick = my->last;
-	  cseconds[1].cnt = 0;
-	}
-    }
-  else
-    {
-      my->numberOfPeriods = numberOfPeriods;
-      my->minutesPerPeriod = minutesPerPeriod;
+      my->second = [c secondOfMinute];
+      i = [c hourOfDay] * 60 + [c minuteOfHour];
 
-      my->minute = i % minutesPerPeriod;
-      my->period = (i / minutesPerPeriod) % numberOfPeriods;
-
-      i = 60 + minutesPerPeriod + numberOfPeriods;
-      if (my->supportDurations == YES)
+      if (numberOfPeriods < 1 || minutesPerPeriod < 1)
 	{
-	  DurationInfo	*ptr;
+	  /* If we are not using periods of N minutes, we must just be keeping
+	   * a running total recorded second by second.
+	   */
+	  my->numberOfPeriods = 0;
+	  my->minutesPerPeriod = 0;
+	  my->minute = i;
+	  my->period = 0;
+	  if (my->supportDurations == YES)
+	    {
+	      DurationInfo	*ptr;
 
-	  ptr = (DurationInfo*)NSZoneCalloc
-            (NSDefaultMallocZone(), i, sizeof(DurationInfo));
-	  my->seconds = ptr;
-	  my->minutes = ptr + 60;
-	  my->periods = ptr + 60 + minutesPerPeriod;
-	  dseconds[my->second].tick = my->last;
-	  dminutes[my->minute].tick = my->last;
-	  dperiods[my->period].tick = my->last;
+	      ptr = (DurationInfo*)NSZoneCalloc
+		(NSDefaultMallocZone(), 2, sizeof(DurationInfo));
+	      my->seconds = ptr;
+	      my->minutes = 0;
+	      my->periods = 0;
+	      dseconds[0].tick = my->last;
+	      dseconds[0].max = 0;
+	      dseconds[0].min = MAXDURATION;
+	      dseconds[0].sum = 0;
+	      dseconds[0].cnt = 0;
 
-	  for (i = 0; i < my->numberOfPeriods; i++)
-	    {
-	      dperiods[i].min = MAXDURATION;
+	      dseconds[1].tick = my->last;
+	      dseconds[1].max = 0;
+	      dseconds[1].min = 0;
+	      dseconds[1].sum = 0;
+	      dseconds[1].cnt = 0;
 	    }
-	  for (i = 0; i < my->minutesPerPeriod; i++)
+	  else
 	    {
-	      dminutes[i].min = MAXDURATION;
-	    }
-	  for (i = 0; i < 60; i++)
-	    {
-	      dseconds[i].min = MAXDURATION;
+	      CountInfo	*ptr;
+
+	      ptr = (CountInfo*)NSZoneCalloc
+		(NSDefaultMallocZone(), 2, sizeof(CountInfo));
+	      my->seconds = ptr;
+	      my->minutes = 0;
+	      my->periods = 0;
+	      cseconds[0].tick = my->last;
+	      cseconds[0].cnt = 0;
+	      cseconds[1].tick = my->last;
+	      cseconds[1].cnt = 0;
 	    }
 	}
       else
 	{
-	  CountInfo	*ptr;
+	  my->numberOfPeriods = numberOfPeriods;
+	  my->minutesPerPeriod = minutesPerPeriod;
 
-	  ptr = (CountInfo*)NSZoneCalloc
-            (NSDefaultMallocZone(), i, sizeof(CountInfo));
-	  my->seconds = ptr;
-	  my->minutes = ptr + 60;
-	  my->periods = ptr + 60 + minutesPerPeriod;
-	  cseconds[my->second].tick = my->last;
-	  cminutes[my->minute].tick = my->last;
-	  cperiods[my->period].tick = my->last;
+	  my->minute = i % minutesPerPeriod;
+	  my->period = (i / minutesPerPeriod) % numberOfPeriods;
+
+	  i = 60 + minutesPerPeriod + numberOfPeriods;
+	  if (my->supportDurations == YES)
+	    {
+	      DurationInfo	*ptr;
+
+	      ptr = (DurationInfo*)NSZoneCalloc
+		(NSDefaultMallocZone(), i, sizeof(DurationInfo));
+	      my->seconds = ptr;
+	      my->minutes = ptr + 60;
+	      my->periods = ptr + 60 + minutesPerPeriod;
+	      dseconds[my->second].tick = my->last;
+	      dminutes[my->minute].tick = my->last;
+	      dperiods[my->period].tick = my->last;
+
+	      for (i = 0; i < my->numberOfPeriods; i++)
+		{
+		  dperiods[i].min = MAXDURATION;
+		}
+	      for (i = 0; i < my->minutesPerPeriod; i++)
+		{
+		  dminutes[i].min = MAXDURATION;
+		}
+	      for (i = 0; i < 60; i++)
+		{
+		  dseconds[i].min = MAXDURATION;
+		}
+	    }
+	  else
+	    {
+	      CountInfo	*ptr;
+
+	      ptr = (CountInfo*)NSZoneCalloc
+		(NSDefaultMallocZone(), i, sizeof(CountInfo));
+	      my->seconds = ptr;
+	      my->minutes = ptr + 60;
+	      my->periods = ptr + 60 + minutesPerPeriod;
+	      cseconds[my->second].tick = my->last;
+	      cminutes[my->minute].tick = my->last;
+	      cperiods[my->period].tick = my->last;
+	    }
 	}
+      [c release];
     }
-  [c release];
   return self;
 }
 

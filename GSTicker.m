@@ -83,14 +83,17 @@ static NSDate		*startDate = nil;
 }
 - (id) init
 {
-  NSTimeInterval	ti = GSTickerTimeNow();
+  if (nil != (self = [super init]))
+    {
+      NSTimeInterval	ti = GSTickerTimeNow();
 
-  observers = [NSMutableArray new];
-  theTimer = [NSTimer scheduledTimerWithTimeInterval: ti - (int)ti
-					      target: [GSTicker class]
-					    selector: @selector(_tick:)
-					    userInfo: self
-					     repeats: NO];
+      observers = [NSMutableArray new];
+      theTimer = [NSTimer scheduledTimerWithTimeInterval: ti - (int)ti
+						  target: [GSTicker class]
+						selector: @selector(_tick:)
+						userInfo: self
+						 repeats: NO];
+    }
   return self;
 }
 @end
