@@ -139,7 +139,7 @@ static GSThreadPool	*shared = nil;
 #if !defined (GNUSTEP) && (MAC_OS_X_VERSION_MAX_ALLOWED<=MAC_OS_X_VERSION_10_4)
       NSDate	*when;
 
-      when = [NSDate alloc] initWithTimeIntervalSinceNow: 0.1];
+      when = [[NSDate alloc] initWithTimeIntervalSinceNow: 0.1];
       [NSThread sleepUntilDate: when];
       [when release];
 #else
