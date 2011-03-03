@@ -1,9 +1,11 @@
-#include "GSLinkedList.h"
-#include "GSThreadPool.h"
-#include <Foundation/NSAutoreleasePool.h>
-#include <Foundation/NSLock.h>
-#include <Foundation/NSThread.h>
-#include <Foundation/NSException.h>
+#import "GSLinkedList.h"
+#import "GSThreadPool.h"
+#import <Foundation/NSAutoreleasePool.h>
+#import <Foundation/NSDate.h>
+#import <Foundation/NSLock.h>
+#import <Foundation/NSThread.h>
+#import <Foundation/NSString.h>
+#import <Foundation/NSException.h>
 
 @class	GSThreadPool;
 

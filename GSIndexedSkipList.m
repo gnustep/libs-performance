@@ -26,7 +26,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#include "GSIndexedSkipList.h"
+#import "GSIndexedSkipList.h"
 
 /* This no longer seems to be needed/correct
 #if	defined(__MINGW32__)

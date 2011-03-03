@@ -811,7 +811,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 
 #if	defined(GNUSTEP_BASE_LIBRARY)
 
-#include	<GNUstepBase/GSMime.h>
+#import	<GNUstepBase/GSMime.h>
 
 @implementation	GSMimeDocument (GSCacheSizeInBytes)
 - (unsigned) sizeInBytes: (NSMutableSet*)exclude
