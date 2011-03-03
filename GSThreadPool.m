@@ -136,7 +136,15 @@ static GSThreadPool	*shared = nil;
 
   while (NO == result && [before timeIntervalSinceNow] > 0.0)
     {
+#if !defined (GNUSTEP) && (MAC_OS_X_VERSION_MAX_ALLOWED<=MAC_OS_X_VERSION_10_4)
+      NSDate	*when;
+
+      when = [NSDate alloc] initWithTimeIntervalSinceNow: 0.1];
+      [NSThread sleepUntilDate: when];
+      [when release];
+#else
       [NSThread sleepForTimeInterval: 0.1];
+#endif
       result = [self isEmpty];
     }
   return result;
@@ -334,17 +342,42 @@ static GSThreadPool	*shared = nil;
 		  NSThread	*thread;
 
 		  /* Create a new link, add it to the idle list, and start the
-		   * thread which will work withn it.
+		   * thread which will work with it.
 		   */
 		  link = [GSThreadLink new];
 		  link->pool = self;
+		  GSLinkedListInsertAfter(link, idle, idle->tail);
+
+#if !defined (GNUSTEP) && (MAC_OS_X_VERSION_MAX_ALLOWED<=MAC_OS_X_VERSION_10_4)
+
+		  /* With the old thread API we can't get an NSThread object
+		   * until after the thread has started ... so we start the
+		   * thread and then wait for the new thread to have set the
+		   * link item up properly.
+		   */
+		  [NSThread detachNewThreadSelector: @selector(_run:)
+					   toTarget: self
+				         withObject: link];
+		  while (nil == link->item)
+		    {
+		      NSDate	*when;
+
+		      when = [[NSDate alloc]
+			initWithTimeIntervalSinceNow: 0.001];
+		      [NSThread sleepUntilDate: when];
+		      [when release];
+		    }
+#else
+		  /* New thread API ... create thread object, set it in the
+		   * link, then start the thread.
+		   */
 		  thread = [[NSThread alloc] initWithTarget: self
 						   selector: @selector(_run:)
 						     object: link];
 		  [link setItem: thread];
-		  [thread release];	// Retained by link
-		  GSLinkedListInsertAfter(link, idle, idle->tail);
 		  [thread start];
+		  [thread release];	// Retained by link
+#endif
 		}
 	      else
 		{
@@ -433,6 +466,14 @@ static GSThreadPool	*shared = nil;
 - (void) _run: (GSThreadLink*)link
 {
   NSAutoreleasePool	*arp;
+
+#if !defined (GNUSTEP) && (MAC_OS_X_VERSION_MAX_ALLOWED<=MAC_OS_X_VERSION_10_4)
+  /* With the older thread API we must set up the link item *after* the
+   * thread starts.  With the new API this is not needed as we cans set
+   * things up and then start the thread.
+   */
+  [link setItem: [NSThread currentThread]];
+#endif
 
   for (;;)
     {
