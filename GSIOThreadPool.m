@@ -50,6 +50,7 @@
   [NSThread exit];
 }
 
+#if defined(GNUSTEP) || (MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_4)
 - (id) init
 {
   self = [super initWithTarget: self selector: @selector(run) object: nil];
@@ -59,6 +60,7 @@
     }
   return self;
 }
+#endif
 
 /* Run the thread's main runloop until terminated.
  */
@@ -170,6 +172,7 @@ best(NSMutableArray *a)
 
 - (void) dealloc
 {
+#if defined(GNUSTEP) || (MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_4)
   GSIOThread	*thread;
   NSDate	*when = [NSDate dateWithTimeIntervalSinceNow: timeout];
 
@@ -185,16 +188,23 @@ best(NSMutableArray *a)
   [threads release];
   [poolLock unlock];
   [poolLock release];
+#endif
   [super dealloc];
 }
 
 - (id) init
 {
+#if defined(GNUSTEP) || (MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_4)
   if ((self = [super init]) != nil)
     {
       poolLock = [NSLock new];
       threads = [NSMutableArray new];
     }
+#else
+  [self release];
+  NSLog(@"WARNING, your OSX system is too old to use GSIOthreadPool");
+  return nil;
+#endif
   return self;
 }
 

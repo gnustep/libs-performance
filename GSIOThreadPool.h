@@ -36,7 +36,10 @@ typedef unsigned int NSUInteger;
  * Operations are performed on these threads using the standard
  * -performSelector:onThread:withObject:waitUntilDone: method ... the
  * pool is simply used to keep track of allocation of threads so that
- * you can share jobs between them.
+ * you can share jobs between them.<br />
+ * NB. The threading API in OSX 10.4 and earlier is incapable of supporting
+ * this functionality ... in that case this class cannot be instantiated
+ * and initialised.
  */
 @interface	GSIOThreadPool : NSObject
 {
@@ -54,7 +57,7 @@ typedef unsigned int NSUInteger;
  */
 + (GSIOThreadPool*) sharedPool;
 
-/** Seects a thread from the pool to be used for some job.
+/** Selects a thread from the pool to be used for some job.
  */
 - (NSThread*) acquireThread;
 
@@ -68,7 +71,7 @@ typedef unsigned int NSUInteger;
 
 /** Specify the maximum number of threads in the pool (the actual number
  * used may be lower than this value).<br />
- * Default is 2.<br />
+ * Default is 0 (no thread pooling in use).<br />
  * The pool creates threads on demand up to the specified limit (or a lower
  * limit if dictated by system resources) but will not destroy idle threads
  * unless the limit is subsequently lowered.<br />
