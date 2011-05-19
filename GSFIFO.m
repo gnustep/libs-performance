@@ -41,6 +41,11 @@
   [super dealloc];
 }
 
+- (NSUInteger) count
+{
+  return (NSUInteger)(_head - _tail);
+}
+
 - (NSString*) description
 {
   return [NSString stringWithFormat:
@@ -192,6 +197,64 @@
   _items[_head % _capacity] = item;
   _head++;
   [putLock unlock];
+}
+
+- (id) tryGet
+{
+  id	obj;
+  
+  if (nil == getLock)
+    {
+      if (_head > _tail)
+	{
+	  obj = _items[_tail % _capacity];
+	  _tail++;
+	  return obj;
+	}
+      emptyCount++;
+    }
+  else
+    {
+      [getLock lock];
+      if (_head > _tail)
+	{
+	  obj = _items[_tail % _capacity];
+	  _tail++;
+	  [getLock unlock];
+	  return obj;
+	}
+      emptyCount++;
+      [getLock unlock];
+    }
+  return nil;
+}
+
+- (BOOL) tryPut: (id)item
+{
+  if (nil == putLock)
+    {
+      if (_head - _tail < _capacity)
+	{
+	  _items[_head % _capacity] = item;
+	  _head++;
+	  return YES;
+	}
+      fullCount++;
+    }
+  else
+    {
+      [putLock lock];
+      if (_head - _tail < _capacity)
+	{
+	  _items[_head % _capacity] = item;
+	  _head++;
+	  [putLock unlock];
+	  return YES;
+	}
+      fullCount++;
+      [putLock unlock];
+    }
+  return NO;
 }
 
 @end

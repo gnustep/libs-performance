@@ -65,11 +65,11 @@
 @public
 /* While the following instance variables are nominally public, they are in
  * fact only intended to be used by the provided inline functions ... you
- * should not acces them direcdtly in your own code.
+ * should not access them directly in your own code.
  */
+  volatile uint64_t	_head;
+  volatile uint64_t	_tail;
   id		*_items;
-  uint64_t	_head;
-  uint64_t	_tail;
   uint32_t	_capacity;
 @private
   uint16_t	granularity;
@@ -80,6 +80,10 @@
   NSLock	*putLock;
   NSString	*name;
 }
+
+/** Returns the approximate number of objects in the FIFO.
+ */
+- (NSUInteger) count;
 
 /** Gets the next object from the FIFO, blocking if necessary until an
  * object is available.  Raises an exception if the FIFO is configured
@@ -115,14 +119,25 @@
  * with a timeout and it is exceeded.
  */
 - (void) put: (id)item;
+
+/** Checks the FIFO and returns the first available object or nil if the
+ * FIFO is empty.
+ */
+- (id) tryGet;
+
+/** Attempts to put an item into the FIFO, returning YES on success or NO
+ * if the FIFO is full.
+ */
+- (BOOL) tryPut: (id)item;
 @end
 
 /** Function to efficiently get an item from a fast FIFO.<br />
+ * Returns nil if the FIFO is empty.<br />
  * Warning ... only for use if the FIFO is NOT configured for multiple
  * consumers.
  */
 static inline id
-GSGetFastFIFO(GSFIFO *receiver)
+GSGetFastNonBlockingFIFO(GSFIFO *receiver)
 {
   if (receiver->_head > receiver->_tail)
     {
@@ -132,23 +147,56 @@ GSGetFastFIFO(GSFIFO *receiver)
       receiver->_tail++;
       return object;
     }
-  return [receiver get];
+  return nil;
+}
+
+/** Function to efficiently get an item from a fast FIFO, blocking if
+ * necessary until an object is available or the timeout occurs.<br />
+ * Warning ... only for use if the FIFO is NOT configured for multiple
+ * consumers.
+ */
+static inline id
+GSGetFastFIFO(GSFIFO *receiver)
+{
+  id	object = GSGetFastNonBlockingFIFO(receiver);
+
+  if (nil == object)
+    {
+      object = [receiver get];
+    }
+  return object;
 }
 
 /** Function to efficiently put an item to a fast FIFO.<br />
+ * Returns YES on success, NO on failure (FIFO is full).<br />
+ * Warning ... only for use if the FIFO is NOT configured for multiple
+ * producers.
+ */
+static inline BOOL
+GSPutFastNonBlockingFIFO(GSFIFO *receiver, id item)
+{
+  if (receiver->_head - receiver->_tail < receiver->_capacity)
+    {
+      receiver->_items[receiver->_head % receiver->_capacity] = item;
+      receiver->_head++;
+      return YES;
+    }
+  return NO;
+}
+
+/** Function to efficiently put an item to a fast FIFO, blocking if
+ * necessary untile there is space in the FIFO or until the timeout
+ * occurs.<br />
  * Warning ... only for use if the FIFO is NOT configured for multiple
  * producers.
  */
 static inline void
 GSPutFastFIFO(GSFIFO *receiver, id item)
 {
-  if (receiver->_head - receiver->_tail < receiver->_capacity)
+  if (NO == GSPutFastNonBlockingFIFO(receiver, item))
     {
-      receiver->_items[receiver->_head % receiver->_capacity] = item;
-      receiver->_head++;
-      return;
+      [receiver put: item];
     }
-  [receiver put: item];
 }
 
 #endif

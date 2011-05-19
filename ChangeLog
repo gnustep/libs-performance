@@ -1,3 +1,10 @@
+2011-05-19 Richard Frith-Macdonald  <rfm@gnu.org>
+
+	* GNUmakefile: Add FIFO
+	* Performance.h: Add FIFO
+	* GSFIFO.h: Add a FIFO class
+	* GSFIFO.m: Add a FIFO class
+
 2011-03-08 Richard Frith-Macdonald  <rfm@gnu.org>
 
 	* GNUmakefile: Bump version number for next release.
