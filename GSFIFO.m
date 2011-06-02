@@ -57,9 +57,9 @@
     (unsigned long long)fullCount];
 }
 
-- (id) get
+- (void*) get
 {
-  id			obj;
+  void			*item;
   NSTimeInterval	sum;
   uint32_t		old;
   uint32_t		fib;
@@ -68,9 +68,9 @@
     {
       if (_head > _tail)
 	{
-	  obj = _items[_tail % _capacity];
+	  item = _items[_tail % _capacity];
 	  _tail++;
-	  return obj;
+	  return item;
 	}
       emptyCount++;
     }
@@ -79,10 +79,10 @@
       [getLock lock];
       if (_head > _tail)
 	{
-	  obj = _items[_tail % _capacity];
+	  item = _items[_tail % _capacity];
 	  _tail++;
 	  [getLock unlock];
-	  return obj;
+	  return item;
 	}
       emptyCount++;
     }
@@ -112,10 +112,10 @@
       [NSThread sleepForTimeInterval: dly];
       sum += dly;
     }
-  obj = _items[_tail % _capacity];
+  item = _items[_tail % _capacity];
   _tail++;
   [getLock unlock];
-  return obj;
+  return item;
 }
 
 - (id) initWithCapacity: (uint32_t)c
@@ -133,14 +133,14 @@
   _capacity = c;
   granularity = g;
   timeout = t;
-  _items = (id*)NSZoneMalloc(NSDefaultMallocZone(), sizeof(id) * c);
+  _items = (void*)NSZoneMalloc(NSDefaultMallocZone(), sizeof(void*) * c);
   if (YES == mp) putLock = [NSLock new];
   if (YES == mc) getLock = [NSLock new];
   name = [n copy];
   return self;
 }
 
-- (void) put: (id)item
+- (void) put: (void*)item
 {
   NSTimeInterval	sum;
   uint32_t		old;
@@ -199,17 +199,17 @@
   [putLock unlock];
 }
 
-- (id) tryGet
+- (void*) tryGet
 {
-  id	obj;
+  void	*item;
   
   if (nil == getLock)
     {
       if (_head > _tail)
 	{
-	  obj = _items[_tail % _capacity];
+	  item = _items[_tail % _capacity];
 	  _tail++;
-	  return obj;
+	  return item;
 	}
       emptyCount++;
     }
@@ -218,18 +218,18 @@
       [getLock lock];
       if (_head > _tail)
 	{
-	  obj = _items[_tail % _capacity];
+	  item = _items[_tail % _capacity];
 	  _tail++;
 	  [getLock unlock];
-	  return obj;
+	  return item;
 	}
       emptyCount++;
       [getLock unlock];
     }
-  return nil;
+  return NULL;
 }
 
-- (BOOL) tryPut: (id)item
+- (BOOL) tryPut: (void*)item
 {
   if (nil == putLock)
     {

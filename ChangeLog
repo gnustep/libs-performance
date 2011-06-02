@@ -1,3 +1,10 @@
+2011-06-02 Richard Frith-Macdonald  <rfm@gnu.org>
+
+	* GSFIFO.h:
+	* GSFIFO.m:
+	Make FIFO items be void* rather than id since we never send them
+	any messages anyway.
+
 2011-05-19 Richard Frith-Macdonald  <rfm@gnu.org>
 
 	* GNUmakefile: Add FIFO

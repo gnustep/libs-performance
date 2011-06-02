@@ -29,7 +29,7 @@
 
 
 /** GSFIFO manages a first-in-first-out queue of items.<br />
- * Items in the queue ae <em>NOT</em> retained ... memory management
+ * Items in the queue ae <em>NOT</em> retained objects ... memory management
  * is not the job of this class and it is not intended to be treated
  * as a 'collection', rather its role is intended to be that of an
  * inter-thread coordination mechanism.<br />
@@ -69,7 +69,7 @@
  */
   volatile uint64_t	_head;
   volatile uint64_t	_tail;
-  id		*_items;
+  void		**_items;
   uint32_t	_capacity;
 @private
   uint16_t	granularity;
@@ -81,15 +81,15 @@
   NSString	*name;
 }
 
-/** Returns the approximate number of objects in the FIFO.
+/** Returns the approximate number of items in the FIFO.
  */
 - (NSUInteger) count;
 
-/** Gets the next object from the FIFO, blocking if necessary until an
- * object is available.  Raises an exception if the FIFO is configured
+/** Gets the next item from the FIFO, blocking if necessary until an
+ * item is available.  Raises an exception if the FIFO is configured
  * with a timeout and it is exceeded.
  */
-- (id) get;
+- (void*) get;
 
 /** Initialises the receiver with the specified capacity (buffer size).<br />
  * If the granularity value is non-zero, it is treated as the maximum time
@@ -98,10 +98,10 @@
  * If the timeout value is non-zero, it is treated as the total time in
  * milliseconds for which a -get or -put: operation may block, and a
  * longer delay will cause those methods to raise an exception.<br />
- * If the multiProducer flag is YES, the FIFI is configured to support
+ * If the multiProducer flag is YES, the FIFO is configured to support
  * multiple producer threads (ie more than one thread using the -put:
  * method) by using of locking while adding items to the FIFO.<br />
- * If the multiConsumer flag is YES, the FIFI is configured to support
+ * If the multiConsumer flag is YES, the FIFO is configured to support
  * multiple consumer threads (ie more than one thread using the -get
  * method) by using of locking while removng items from the FIFO.<br />
  * The name string is simply used to identify the receiver when printing
@@ -114,57 +114,57 @@
 	  multiConsumer: (BOOL)mc
 		   name: (NSString*)n;
 
-/** Adds an object to the FIFO, blocking if necessary until there is
+/** Adds an item to the FIFO, blocking if necessary until there is
  * space in the buffer.  Raises an exception if the FIFO is configured
  * with a timeout and it is exceeded.
  */
-- (void) put: (id)item;
+- (void) put: (void*)item;
 
-/** Checks the FIFO and returns the first available object or nil if the
+/** Checks the FIFO and returns the first available item or NULL if the
  * FIFO is empty.
  */
-- (id) tryGet;
+- (void*) tryGet;
 
 /** Attempts to put an item into the FIFO, returning YES on success or NO
  * if the FIFO is full.
  */
-- (BOOL) tryPut: (id)item;
+- (BOOL) tryPut: (void*)item;
 @end
 
 /** Function to efficiently get an item from a fast FIFO.<br />
- * Returns nil if the FIFO is empty.<br />
+ * Returns NULL if the FIFO is empty.<br />
  * Warning ... only for use if the FIFO is NOT configured for multiple
  * consumers.
  */
-static inline id
+static inline void*
 GSGetFastNonBlockingFIFO(GSFIFO *receiver)
 {
   if (receiver->_head > receiver->_tail)
     {
-      id	object;
+      void	*item;
 
-      object = receiver->_items[receiver->_tail % receiver->_capacity];
+      item = receiver->_items[receiver->_tail % receiver->_capacity];
       receiver->_tail++;
-      return object;
+      return item;
     }
-  return nil;
+  return NULL;
 }
 
 /** Function to efficiently get an item from a fast FIFO, blocking if
- * necessary until an object is available or the timeout occurs.<br />
+ * necessary until an item is available or the timeout occurs.<br />
  * Warning ... only for use if the FIFO is NOT configured for multiple
  * consumers.
  */
-static inline id
+static inline void*
 GSGetFastFIFO(GSFIFO *receiver)
 {
-  id	object = GSGetFastNonBlockingFIFO(receiver);
+  void	*item = GSGetFastNonBlockingFIFO(receiver);
 
-  if (nil == object)
+  if (0 == item)
     {
-      object = [receiver get];
+      item = [receiver get];
     }
-  return object;
+  return item;
 }
 
 /** Function to efficiently put an item to a fast FIFO.<br />
@@ -173,7 +173,7 @@ GSGetFastFIFO(GSFIFO *receiver)
  * producers.
  */
 static inline BOOL
-GSPutFastNonBlockingFIFO(GSFIFO *receiver, id item)
+GSPutFastNonBlockingFIFO(GSFIFO *receiver, void *item)
 {
   if (receiver->_head - receiver->_tail < receiver->_capacity)
     {
@@ -191,7 +191,7 @@ GSPutFastNonBlockingFIFO(GSFIFO *receiver, id item)
  * producers.
  */
 static inline void
-GSPutFastFIFO(GSFIFO *receiver, id item)
+GSPutFastFIFO(GSFIFO *receiver, void *item)
 {
   if (NO == GSPutFastNonBlockingFIFO(receiver, item))
     {
