@@ -1,3 +1,8 @@
+2011-06-03 Richard Frith-Macdonald  <rfm@gnu.org>
+
+	* GSTicker.m: Thread safety fixes ... make date storage volatile and
+	ensure that only one thread gets to set the base timestamp.
+
 2011-06-02 Richard Frith-Macdonald  <rfm@gnu.org>
 
 	* GSFIFO.h:

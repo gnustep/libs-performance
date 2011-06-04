@@ -36,12 +36,12 @@
 #import	"GSTicker.h"
 
 static Class		NSDateClass = 0;
+static NSDate		*startDate = nil;
 static SEL		tiSel = 0;
 static NSTimeInterval	(*tiImp)(Class,SEL) = 0;
 
-static NSTimeInterval	baseTime = 0;
-static NSTimeInterval	lastTime = 0;
-static NSDate		*startDate = nil;
+static volatile NSTimeInterval	baseTime = 0;
+static volatile NSTimeInterval	lastTime = 0;
 
 @interface	GSTickerObservation : NSObject
 {
@@ -111,7 +111,7 @@ inline NSTimeInterval	GSTickerTimeStart()
 {
   if (baseTime == 0)
     {
-      return GSTickerTimeNow();
+      [GSTicker class];
     }
   return baseTime;
 }
@@ -128,12 +128,7 @@ NSTimeInterval	GSTickerTimeNow()
 {
   if (baseTime == 0)
     {
-      NSDateClass = [NSDate class];
-      tiSel = @selector(timeIntervalSinceReferenceDate);
-      tiImp
-	= (NSTimeInterval (*)(Class,SEL))[NSDateClass methodForSelector: tiSel];
-      baseTime = lastTime = (*tiImp)(NSDateClass, tiSel);
-      return baseTime;
+      [GSTicker class];
     }
   else
     {
@@ -149,11 +144,25 @@ NSTimeInterval	GSTickerTimeNow()
 	  baseTime -= (lastTime - now);
 	}
       lastTime = now;
-      return lastTime;
     }
+  return lastTime;
 }
 
 @implementation	GSTicker
+
++ (void) initialize
+{
+  if (0 == baseTime)
+    {
+      NSDateClass = [NSDate class];
+      tiSel = @selector(timeIntervalSinceReferenceDate);
+      tiImp
+	= (NSTimeInterval (*)(Class,SEL))[NSDateClass methodForSelector: tiSel];
+      baseTime = lastTime = (*tiImp)(NSDateClass, tiSel);
+      startDate = [[NSDateClass alloc]
+        initWithTimeIntervalSinceReferenceDate: baseTime];
+    }
+}
 
 + (NSDate*) last
 {
@@ -269,12 +278,6 @@ NSTimeInterval	GSTickerTimeNow()
 
 - (NSDate*) start
 {
-  if (startDate == nil)
-    {
-      startDate = [NSDateClass alloc];
-      startDate = [startDate initWithTimeIntervalSinceReferenceDate:
-	GSTickerTimeStart()];
-    }
   return startDate;
 }
 

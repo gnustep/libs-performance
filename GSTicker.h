@@ -41,7 +41,7 @@ extern NSTimeInterval GSTickerTimeLast();
 extern NSTimeInterval	GSTickerTimeNow();
 
 /**
- * This returns the timestamp from which GSTickerTimeNow() was first called.
+ * This returns the timestamp from which GSTicker was first used.
  */
 extern NSTimeInterval	GSTickerTimeStart();
 

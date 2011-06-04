@@ -44,7 +44,9 @@ extern NSString * const GSThroughputTotalKey;
  * </p>
  * <p>For performance reasons, the class avoids locking and you must ensure
  * that an instance of the class is only ever used by a single thread
- * (the one in which it was created).
+ * (the one in which it was created).  You are responsible for ensuring
+ * that a run loop runs in each thread in which you use an instance, so that
+ * stats can be updated for that thread every second.
  * </p>
  * <p>You create an instance of the class for each event/operation that you
  * are interested in monitoring, and you call the -add: or -addDuration:
@@ -55,10 +57,13 @@ extern NSString * const GSThroughputTotalKey;
  * </p>
  * <p>To dump a record of the gathered statistics, you may call the
  * -description method of an instance or the class +description method
- * to dump statistics for all instances in the current thread.
+ * to dump statistics for all instances in the current thread.<br />
+ * If you need to gather a record for all the threads you use, you must
+ * generate a dump in each thread and combine the results.
  * </p>
  * <p>To be notified of statistics at the end of each minute, you may call
- * the -enableNotifications: method.
+ * the -enableNotifications: method for an instance.  The notifications are
+ * generated in the thread that instance belongs to.
  * </p>
  */
 @interface	GSThroughput : NSObject
@@ -67,7 +72,8 @@ extern NSString * const GSThroughputTotalKey;
 }
 
 /**
- * Return all the current throughput measuring objects in the current thread...
+ * Return all the current throughput measuring objects in the current thread.
+ * NB. This does not return instances from other threads.
  */
 + (NSArray*) allInstances;
 
