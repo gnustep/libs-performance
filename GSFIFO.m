@@ -29,6 +29,105 @@
 
 @implementation	GSFIFO
 
+- (void*) _cooperatingGetShouldBlock: (BOOL)block
+{
+  void	*item;
+  BOOL	wasFull = NO;
+  BOOL	isEmpty = NO;
+
+  if (NO == block)
+    {
+      if (NO == [getLock tryLockWhenCondition: 1])
+	{
+	  return 0;
+	}
+    }
+  else if (0 == timeout)
+    {
+      [getLock lockWhenCondition: 1];
+    }
+  else
+    {
+      NSDate	*d;
+
+      d = [[NSDate alloc] initWithTimeIntervalSinceNow: 1000.0 * timeout];
+      if (NO == [getLock lockWhenCondition: 1 beforeDate: d])
+	{
+	  [d release];
+	  [NSException raise: NSGenericException
+		      format: @"Timeout waiting for new data in FIFO"];
+	}
+      [d release];
+    }
+
+  if (_head - _tail == _capacity)
+    {
+      wasFull = YES;
+    }
+  item = _items[_tail % _capacity];
+  _tail++;
+  if (_head - _tail == 0)
+    {
+      isEmpty = YES;
+    }
+  if (YES == wasFull)
+    {
+      [putLock lock];
+      [putLock unlockWithCondition: 1];
+    }
+  [getLock unlockWithCondition: isEmpty ? 0 : 1];
+  return item;
+}
+
+- (BOOL) _cooperatingPut: (void*)item shouldBlock: (BOOL)block
+{
+  BOOL	wasEmpty = NO;
+  BOOL	isFull = NO;
+
+  if (NO == block)
+    {
+      if (NO == [putLock tryLockWhenCondition: 1])
+	{
+	  return NO;
+	}
+    }
+  else if (0 == timeout)
+    {
+      [putLock lockWhenCondition: 1];
+    }
+  else
+    {
+      NSDate	*d;
+
+      d = [[NSDate alloc] initWithTimeIntervalSinceNow: 1000.0 * timeout];
+      if (NO == [putLock lockWhenCondition: 1 beforeDate: d])
+	{
+	  [d release];
+	  [NSException raise: NSGenericException
+		      format: @"Timeout waiting for space in FIFO"];
+	}
+      [d release];
+    }
+
+  if (_head - _tail == 0)
+    {
+      wasEmpty = YES;
+    }
+  _items[_head % _capacity] = item;
+  _head++;
+  if (_head - _tail == _capacity)
+    {
+      isFull = YES;
+    }
+  if (YES == wasEmpty)
+    {
+      [getLock lock];
+      [getLock unlockWithCondition: 1];
+    }
+  [putLock unlockWithCondition: isFull ? 0 : 1];
+  return YES;
+}
+
 - (void) dealloc
 {
   [name release];
@@ -74,6 +173,10 @@
 	}
       emptyCount++;
     }
+  else if (nil != putLock)
+    {
+      return [self _cooperatingGetShouldBlock: YES];
+    }
   else
     {
       [getLock lock];
@@ -99,7 +202,7 @@
 	{
 	  [getLock unlock];
 	  [NSException raise: NSGenericException
-		      format: @"Timout waiting for new data in FIFO"];
+		      format: @"Timeout waiting for new data in FIFO"];
 	}
       tmp = fib + old;
       old = fib;
@@ -134,8 +237,8 @@
   granularity = g;
   timeout = t;
   _items = (void*)NSZoneMalloc(NSDefaultMallocZone(), sizeof(void*) * c);
-  if (YES == mp) putLock = [NSLock new];
-  if (YES == mc) getLock = [NSLock new];
+  if (YES == mp) putLock = [[NSConditionLock alloc] initWithCondition: 1];
+  if (YES == mc) getLock = [[NSConditionLock alloc] initWithCondition: 0];
   name = [n copy];
   return self;
 }
@@ -155,6 +258,10 @@
 	  return;
 	}
       fullCount++;
+    }
+  else if (nil != getLock)
+    {
+      [self _cooperatingPut: item shouldBlock: YES];
     }
   else
     {
@@ -181,7 +288,7 @@
 	{
 	  [putLock unlock];
 	  [NSException raise: NSGenericException
-		      format: @"Timout waiting for space in FIFO"];
+		      format: @"Timeout waiting for space in FIFO"];
 	}
       tmp = fib + old;
       old = fib;
@@ -213,6 +320,10 @@
 	}
       emptyCount++;
     }
+  else if (nil != putLock)
+    {
+      return [self _cooperatingGetShouldBlock: NO];
+    }
   else
     {
       [getLock lock];
@@ -240,6 +351,10 @@
 	  return YES;
 	}
       fullCount++;
+    }
+  else if (nil != getLock)
+    {
+      return [self _cooperatingPut: item shouldBlock: NO];
     }
   else
     {

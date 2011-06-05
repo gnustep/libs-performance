@@ -24,7 +24,7 @@
    */
 #import <Foundation/NSObject.h>
 
-@class NSLock;
+@class NSConditionLock;
 @class NSString;
 
 
@@ -42,12 +42,12 @@
  * each stage.<br />
  * Where there is a single consumer thread, a fast lock-fre algorthm is
  * used to get items from the FIFO, similarly, where there is a single
- * producer thread a the addition of items to the FIFO can be lock-free.<br />
+ * producer thread the addition of items to the FIFO can be lock-free.<br />
  * To minimise the overheads of using the FIFO, we provide inline functions
  * to support the addition of items in the single producer thread case and to
  * support the removal of items in the single consumer thread case.  When
  * operting that way, the overhead of using the FIFO is only a few CPU cycles
- * and it becomes reasonable to split sequentional procesing into a long
+ * and it becomes reasonable to split sequentional processing into a long
  * series of small operations each handled by a separate thread (making
  * effective use of a multi-cpu machine).<br />
  * The FIFO may also be useful where you don't have a strictly sequential
@@ -58,7 +58,12 @@
  * and multiple consumers.  In these rarer cases, some locking is required
  * and the use of the inline functions is not allowed (you must call the
  * -get method wherever you have multiple consumer threads, and must call
- * the -put: method wherever you have multiple producer threads).
+ * the -put: method wherever you have multiple producer threads).<br />
+ * Where both multiple producers and multiple consumers are configured,
+ * there are two locks used to coordinate access to the FIFO, and the
+ * addition of an item to an empty FIFO or removal of an item from a full
+ * FIFO signals any blocked threads to cmplete their access to the FIFO
+ * immediately.
  */
 @interface	GSFIFO : NSObject
 {
@@ -69,16 +74,16 @@
  */
   volatile uint64_t	_head;
   volatile uint64_t	_tail;
-  void		**_items;
-  uint32_t	_capacity;
+  void			**_items;
+  uint32_t		_capacity;
 @private
-  uint16_t	granularity;
-  uint16_t	timeout;
-  uint64_t	fullCount;
-  uint64_t	emptyCount;
-  NSLock	*getLock;
-  NSLock	*putLock;
-  NSString	*name;
+  uint16_t		granularity;
+  uint16_t		timeout;
+  uint64_t		fullCount;
+  uint64_t		emptyCount;
+  NSConditionLock	*getLock;
+  NSConditionLock	*putLock;
+  NSString		*name;
 }
 
 /** Returns the approximate number of items in the FIFO.
@@ -103,7 +108,12 @@
  * method) by using of locking while adding items to the FIFO.<br />
  * If the multiConsumer flag is YES, the FIFO is configured to support
  * multiple consumer threads (ie more than one thread using the -get
- * method) by using of locking while removng items from the FIFO.<br />
+ * method) by using of locking while removing items from the FIFO.<br />
+ * If both multiConsumer and multiProducer are set, cooperative use of
+ * locking by put and get methods means that no retries are required
+ * and the granularity is ignored (a -put: to an empty FIFO allows any
+ * blocked -get to proceed, and a -get from a full FIFO allows any
+ * blocked -put: to proceed immediately).<br />
  * The name string is simply used to identify the receiver when printing
  * diagnostics.
  */
