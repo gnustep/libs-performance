@@ -64,6 +64,7 @@
   GSCacheItem	*next;
   GSCacheItem	*prev;
   unsigned	life;
+  unsigned	warn;
   unsigned	when;
   unsigned	size;
   id	        key;
@@ -98,6 +99,8 @@ static NSLock		*allCachesLock = nil;
 
 typedef struct {
   id		delegate;
+  void		(*refresh)(id, SEL, id, id, unsigned, unsigned);
+  BOOL		(*replace)(id, SEL, id, id, unsigned, unsigned);
   unsigned	currentObjects;
   unsigned	currentSize;
   unsigned	lifetime;
@@ -339,15 +342,26 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
     {
       BOOL	keep = NO;
 
-      if (my->delegate != nil)
+      if (0 != my->replace)
 	{
 	  GSCacheItem	*orig = [item retain];
 
 	  [my->lock unlock];
-	  keep = [my->delegate shouldKeepItem: item->object
-				      withKey: aKey
-				     lifetime: item->life
-					after: when - item->when];
+	  NS_DURING
+	    {
+	      keep = (*(my->replace))(my->delegate,
+		@selector(shouldKeepItem:withKey:lifetime:after:),
+		item->object,
+		aKey,
+		item->life,
+		when - item->when);
+	    }
+	  NS_HANDLER
+	    {
+	      [my->lock unlock];
+	      [localException raise];
+	    }
+	  NS_ENDHANDLER
 	  [my->lock lock];
 	  if (keep == YES)
 	    {
@@ -364,6 +378,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 		   */
 		  my->misses++;
 		  [my->lock unlock];
+		  [orig release];
 		  return nil;
 		}
 	      else if (orig == current)
@@ -372,6 +387,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 		   * update its expiry time.
 		   */
 		  item->when = when + item->life;
+		  item->warn = when + item->life / 2;
 		}
 	      else
 		{
@@ -396,6 +412,52 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 	  my->misses++;
 	  [my->lock unlock];
 	  return nil;	// Lifetime expired.
+	}
+    }
+  else if (item->warn > 0 && item->warn < when)
+    {
+      item->warn = 0;	// Don't warn again.
+      if (0 != my->refresh)
+	{
+	  GSCacheItem	*orig = [item retain];
+	  GSCacheItem	*current;
+
+	  [my->lock unlock];
+	  NS_DURING
+	    {
+	      (*(my->refresh))(my->delegate,
+		@selector(mayRefreshItem:withKey:lifetime:after:),
+		item->object,
+		aKey,
+		item->life,
+		when - item->when);
+	    }
+	  NS_HANDLER
+	    {
+	      [my->lock unlock];
+	      [localException raise];
+	    }
+	  NS_ENDHANDLER
+	  [my->lock lock];
+
+	  /* Refetch in case delegate changed it.
+	   */
+	  current = (GSCacheItem*)NSMapGet(my->contents, aKey);
+	  if (current == nil)
+	    {
+	      /* Delegate must have deleted the item!
+	       * So we count this as a miss.
+	       */
+	      my->misses++;
+	      [my->lock unlock];
+	      [orig release];
+	      return nil;
+	    }
+	  else
+	    {
+	      item = current;
+	    }
+	  [orig release];
 	}
     }
 
@@ -461,7 +523,31 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 
 - (void) setDelegate: (id)anObject
 {
+  [my->lock lock];
   my->delegate = anObject;
+  if ([my->delegate respondsToSelector:
+    @selector(shouldKeepItem:withKey:lifetime:after:)])
+    {
+      my->replace = (BOOL (*)(id,SEL,id,id,unsigned,unsigned))
+	[my->delegate methodForSelector:
+	@selector(shouldKeepItem:withKey:lifetime:after:)];
+    }
+  else
+    {
+      my->replace = 0;
+    }
+  if ([my->delegate respondsToSelector:
+    @selector(mayRefreshItem:withKey:lifetime:after:)])
+    {
+      my->refresh = (void (*)(id,SEL,id,id,unsigned,unsigned))
+	[my->delegate methodForSelector:
+	@selector(mayRefreshItem:withKey:lifetime:after:)];
+    }
+  else
+    {
+      my->refresh = 0;
+    }
+  [my->lock unlock];
 }
 
 - (void) setLifetime: (unsigned)max
@@ -597,7 +683,10 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
       item = [GSCacheItem newWithObject: anObject forKey: aKey];
       if (lifetime > 0)
 	{
-	  item->when = GSTickerTimeTick() + lifetime;
+	  unsigned	tick = GSTickerTimeTick();
+
+	  item->when = tick + lifetime;
+	  item->warn = tick + lifetime / 2;
 	}
       item->life = lifetime;
       item->size = addSize;

@@ -132,8 +132,9 @@
 /**
  * Sets the delegate for the receiver.<br />
  * The delegate object is not retained.<br />
- * If a delegate it set, it must implement the methods in the
- * (GSCacheDelegate) protocol.
+ * If a delegate it set, it will be sent the messages in the
+ * (GSCacheDelegate) protocol (if it implements them ... which
+ * it does not need to do).
  */
 - (void) setDelegate: (id)anObject;
 
@@ -213,10 +214,28 @@
 
 /**
  * This protocol defines the messages which may be sent to a delegate
- * of a GSCache object.
+ * of a GSCache object.  The messages are only sent if the delegate
+ * actually implements them, so a delegate does not need to actually
+ * conform to the protocol.
  */
 @protocol	GSCacheDelegate
 
+/**
+ * Alerts the delegate to the fact that anObject, which was cached
+ * using aKey and will expire delay seconds in the future has been
+ * looked up now, and needs to be refreshed if it is not to expire
+ * from the cache.<br />
+ * This is called the first time an attempt is made to access the
+ * cached value for aKey and the object is found in the cache but
+ * more than half its lifetime has expired.<br />
+ * The delegate method (if implemented) may replace the item in the
+ * cache immediately, or do it later asynchronously, or may simply
+ * take no action.
+ */
+- (void) mayRefreshItem: (id)anObject
+		withKey: (id)aKey
+	       lifetime: (unsigned)lifetime
+		  after: (unsigned)delay;
 /**
  * Asks the delegate to decide whether anObject, which was cached
  * using aKey and expired delay seconds ago should still be retained

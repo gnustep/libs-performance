@@ -1,3 +1,13 @@
+2011-06-06 Richard Frith-Macdonald  <rfm@gnu.org>
+
+	* GSCache.h:
+	* GSCache.m:
+	Add a new method to let the delegate know when a cache hit has
+	occurred on an item which is nearning the end of its lifetime ...
+	providing an opportunity for the delegate to refresh the cache
+	before the actual expiry.
+	Also fix minor memory leak.
+
 2011-06-05 Richard Frith-Macdonald  <rfm@gnu.org>
 
 	* GSFIFO.h:
