@@ -58,7 +58,7 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
   else
     {
       uint32_t	min = 0;
-      uint32_t	pos = (max - min) / 2;
+      uint32_t	pos = max / 2;
 
       while (max > min)
 	{
@@ -133,7 +133,6 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 	    }
 	  [d release];
 	  ENDGET
-          ti = NOW - ti;
 	}
     }
   else
