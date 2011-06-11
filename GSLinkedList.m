@@ -444,7 +444,7 @@ GSLinkedListRemove(GSListLink *link, GSLinkedList *list)
           list->tail->next = nil;
 	}
     }
-  else
+  else if (nil != link->next)
     {
       link->next->previous = link->previous;
     }
