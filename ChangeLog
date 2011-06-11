@@ -1,3 +1,10 @@
+2011-06-11 Richard Frith-Macdonald  <rfm@gnu.org>
+
+	* GSFIFO.h:
+	* GSFIFO.m:
+	Add the ability to monitor statistics on how long the FIFO blocks
+	on put and get operations.
+
 2011-06-06 Richard Frith-Macdonald  <rfm@gnu.org>
 
 	* GSCache.h:

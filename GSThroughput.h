@@ -53,7 +53,7 @@ extern NSString * const GSThroughputTotalKey;
  * method to record events.<br />
  * For duration logging, you may also use the -startDuration: and
  * -endDuration methods to handle adding of the amount of time taken between
- * the tweo calls.
+ * the two calls.
  * </p>
  * <p>To dump a record of the gathered statistics, you may call the
  * -description method of an instance or the class +description method

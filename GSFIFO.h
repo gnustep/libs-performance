@@ -24,7 +24,9 @@
    */
 #import <Foundation/NSObject.h>
 
+@class NSArray;
 @class NSConditionLock;
+@class NSNumber;
 @class NSString;
 
 
@@ -74,16 +76,26 @@
  */
   volatile uint64_t	_head;
   volatile uint64_t	_tail;
+  uint64_t		_getTryFailure;
+  uint64_t		_getTrySuccess;
+  uint64_t		_putTryFailure;
+  uint64_t		_putTrySuccess;
   void			**_items;
   uint32_t		_capacity;
 @private
+  uint32_t		boundsCount;
   uint16_t		granularity;
   uint16_t		timeout;
-  uint64_t		fullCount;
-  uint64_t		emptyCount;
+  uint64_t		fullCount;		// Total waits for full FIFO
+  uint64_t		emptyCount;		// Total waits for empty FIFO
   NSConditionLock	*getLock;
   NSConditionLock	*putLock;
   NSString		*name;
+  NSTimeInterval	getWaitTotal;		// Total time waiting for gets
+  NSTimeInterval	putWaitTotal;		// Total time waiting for puts
+  NSTimeInterval	*waitBoundaries;	// Stats boundaries
+  uint64_t		*getWaitCounts;		// Waits for gets by time
+  uint64_t		*putWaitCounts;		// Waits for puts by time
 }
 
 /** Returns the approximate number of items in the FIFO.
@@ -114,6 +126,12 @@
  * and the granularity is ignored (a -put: to an empty FIFO allows any
  * blocked -get to proceed, and a -get from a full FIFO allows any
  * blocked -put: to proceed immediately).<br />
+ * The boundaries array is an ordered list of NSNumber objects containing
+ * time intervals found boundaries of bands into which to categorise wait
+ * time stats.  Any wait whose duration is less than the interval specified
+ * in the Nth element is counted in the stat's for the Nth band.
+ * If this is nil, a default set of bundaries is used.  If it is an empty
+ * array then no time based stats are recorded.<br />
  * The name string is simply used to identify the receiver when printing
  * diagnostics.
  */
@@ -122,6 +140,7 @@
 		timeout: (uint16_t)t
 	  multiProducer: (BOOL)mp
 	  multiConsumer: (BOOL)mc
+	     boundaries: (NSArray*)a
 		   name: (NSString*)n;
 
 /** Adds an item to the FIFO, blocking if necessary until there is
@@ -129,6 +148,18 @@
  * with a timeout and it is exceeded.
  */
 - (void) put: (void*)item;
+
+/** Return statistics on get operations for the receiver.<br />
+ * NB. If the recever is not configured for multiple consumers,
+ * this method may only be called from the single consumer thread.
+ */
+- (NSString*) statsGet;
+
+/** Return statistics on put operations for the receiver.<br />
+ * NB. If the recever is not configured for multiple producers,
+ * this method may only be called from the single producer thread.
+ */
+- (NSString*) statsPut;
 
 /** Checks the FIFO and returns the first available item or NULL if the
  * FIFO is empty.
@@ -155,8 +186,10 @@ GSGetFastNonBlockingFIFO(GSFIFO *receiver)
 
       item = receiver->_items[receiver->_tail % receiver->_capacity];
       receiver->_tail++;
+      receiver->_getTrySuccess++;
       return item;
     }
+  receiver->_getTryFailure++;
   return NULL;
 }
 
@@ -189,8 +222,10 @@ GSPutFastNonBlockingFIFO(GSFIFO *receiver, void *item)
     {
       receiver->_items[receiver->_head % receiver->_capacity] = item;
       receiver->_head++;
+      receiver->_putTrySuccess++;
       return YES;
     }
+  receiver->_putTryFailure++;
   return NO;
 }
 
