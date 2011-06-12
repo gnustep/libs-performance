@@ -28,6 +28,7 @@
 @class NSConditionLock;
 @class NSNumber;
 @class NSString;
+@class NSThread;
 
 
 /** GSFIFO manages a first-in-first-out queue of items.<br />
@@ -96,7 +97,17 @@
   NSTimeInterval	*waitBoundaries;	// Stats boundaries
   uint64_t		*getWaitCounts;		// Waits for gets by time
   uint64_t		*putWaitCounts;		// Waits for puts by time
+  NSThread		*getThread;		// Single consumer thread
+  NSThread		*putThread;		// Single consumer thread
 }
+
+/** Return statistics for all current GSFIFO instances.<br />
+ * Statistics for FIFOs which are configued to be lock-free are empty
+ * (listing the name only) except where we can safely obtain get or put
+ * stats because the FIFOs consumer/producer thread is the same as the
+ * current thread.
+ */
++ (NSString*) stats;
 
 /** Returns the approximate number of items in the FIFO.
  */
@@ -117,7 +128,8 @@
  */
 - (void*) get;
 
-/** Initialises the receiver with the specified capacity (buffer size).<br />
+/** <init/>
+ * Initialises the receiver with the specified capacity (buffer size).<br />
  * If the granularity value is non-zero, it is treated as the maximum time
  * in milliseconds for which a -get or -put: operation will pause between
  * successive attempts.<br />
@@ -141,8 +153,8 @@
  * in the Nth element is counted in the stat's for the Nth band.
  * If this is nil, a default set of bundaries is used.  If it is an empty
  * array then no time based stats are recorded.<br />
- * The name string is simply used to identify the receiver when printing
- * diagnostics.
+ * The name string is a unique identifier for the receiver and is used when
+ * printing diagnostics and statistics.
  */
 - (id) initWithCapacity: (uint32_t)c
 	    granularity: (uint16_t)g
@@ -150,6 +162,12 @@
 	  multiProducer: (BOOL)mp
 	  multiConsumer: (BOOL)mc
 	     boundaries: (NSArray*)a
+		   name: (NSString*)n;
+
+/** Initialises the receiver as a multi-producer, multi-consumer FIFO with
+ * no timeout and with default stats gathering enabled.
+ */
+- (id) initWithCapacity: (uint32_t)c
 		   name: (NSString*)n;
 
 /** Writes up to count items from buf into the FIFO.
@@ -166,6 +184,10 @@
  * Implemented using -put:count:shouldBlock:
  */
 - (void) put: (void*)item;
+
+/** Return any available statistics for the receiver.<br />
+ */
+- (NSString*) stats;
 
 /** Return statistics on get operations for the receiver.<br />
  * NB. If the recever is not configured for multiple consumers,

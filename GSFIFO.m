@@ -24,6 +24,7 @@
 #import <Foundation/NSArray.h>
 #import <Foundation/NSDate.h>
 #import <Foundation/NSLock.h>
+#import <Foundation/NSMapTable.h>
 #import <Foundation/NSString.h>
 #import <Foundation/NSThread.h>
 #import <Foundation/NSValue.h>
@@ -31,6 +32,8 @@
 
 @implementation	GSFIFO
 
+static NSLock		*classLock = nil;
+static NSMapTable	*allFIFOs = nil;
 static NSArray		*defaultBoundaries = nil;
 static Class		NSDateClass = 0;
 static SEL		tiSel = 0;
@@ -80,6 +83,9 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 {
   if (nil == defaultBoundaries)
     {
+      classLock = [NSLock new];
+      allFIFOs = NSCreateMapTable(NSObjectMapKeyCallBacks,
+	NSNonRetainedObjectMapValueCallBacks, 0);
       defaultBoundaries = [[NSArray alloc] initWithObjects:
 	[NSNumber numberWithDouble: 0.1],
 	[NSNumber numberWithDouble: 0.2],
@@ -96,6 +102,24 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
       tiImp
 	= (NSTimeInterval (*)(Class,SEL))[NSDateClass methodForSelector: tiSel];
     }
+}
+
++ (NSString*) stats
+{
+  NSMutableString	*m = [NSMutableString stringWithCapacity: 1024];
+  NSString		*k;
+  GSFIFO		*f;
+  NSMapEnumerator	e;
+
+  [classLock lock];
+  e = NSEnumerateMapTable(allFIFOs);
+  while (NSNextMapEnumeratorPair(&e, (void**)&k, (void**)&f) != 0)
+    {
+      [m appendString: [f stats]];
+    }
+  NSEndMapTableEnumeration(&e);
+  [classLock unlock];
+  return m;
 }
 
 - (unsigned) _cooperatingGet: (void**)buf
@@ -232,6 +256,13 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 
 - (void) dealloc
 {
+  [classLock lock];
+  if (NSMapGet(allFIFOs, name) == self)
+    {
+      NSMapRemove(allFIFOs, name);
+    }
+  [classLock unlock];
+
   [name release];
   [getLock release];
   [putLock release];
@@ -282,6 +313,10 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 
   if (nil == getLock)
     {
+      if (nil == getThread)
+	{
+	  getThread = [NSThread currentThread];
+	}
       if (_head > _tail)
 	{
 	  for (index = 0; index < count && _head > _tail; index++)
@@ -434,7 +469,29 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 	  l = t;
 	}
     }
+  [classLock lock];
+  if (nil != NSMapGet(allFIFOs, n))
+    {
+      [classLock lock];
+      [self release];
+      [NSException raise: NSInvalidArgumentException
+		  format: @"GSFIFO ... name (%@) already in use", n];
+    }
+  NSMapInsert(allFIFOs, name, self);
+  [classLock unlock];
   return self;
+}
+
+- (id) initWithCapacity: (uint32_t)c
+		   name: (NSString*)n
+{
+  return [self initWithCapacity: c
+		    granularity: 0
+			timeout: 0
+		  multiProducer: YES
+		  multiConsumer: YES
+		     boundaries: nil
+			   name: n];
 }
 
 - (unsigned) put: (void**)buf count: (unsigned)count shouldBlock: (BOOL)block
@@ -451,6 +508,10 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
     }
   if (nil == putLock)
     {
+      if (nil == putThread)
+	{
+	  putThread = [NSThread currentThread];
+	}
       if (_head - _tail < _capacity)
 	{
 	  for (index = 0; index < count && _head - _tail < _capacity; index++)
@@ -537,20 +598,12 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
   [self put: &item count: 1 shouldBlock: YES];
 }
 
-- (NSString*) statsGet
+- (void) _getStats: (NSMutableString*)s
 {
-  NSMutableString	*s = [NSMutableString stringWithCapacity: 100];
-
-  if (nil != getLock)
-    {
-      [getLock lock];
-    }
-  [s appendFormat: @"%@ (%@) empty:%llu failures:%llu successes:%llu\n",
-    [super description], name,
+  [s appendFormat: @"  empty:%llu failures:%llu successes:%llu\n",
     (unsigned long long)emptyCount,
     (unsigned long long)_getTryFailure,
     (unsigned long long)_getTrySuccess];
-
   if (boundsCount > 0)
     {
       unsigned	i;
@@ -563,34 +616,20 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 	? getWaitTotal / _getTryFailure : 0.0];
       for (i = 0; i < boundsCount; i++)
 	{
-          [s appendFormat: @"  up to %g: %llu\n",
+          [s appendFormat: @"    up to %g: %llu\n",
 	    waitBoundaries[i], getWaitCounts[i]];
 	}
-      [s appendFormat: @"  above %g: %llu\n",
+      [s appendFormat: @"    above %g: %llu\n",
 	waitBoundaries[boundsCount-1], getWaitCounts[boundsCount]];
     }
-  if (nil != getLock)
-    {
-      [getLock unlockWithCondition: [getLock condition]];
-    }
-
-  return s;
 }
 
-- (NSString*) statsPut
+- (void) _putStats: (NSMutableString*)s
 {
-  NSMutableString	*s = [NSMutableString stringWithCapacity: 100];
-
-  if (nil != putLock)
-    {
-      [putLock lock];
-    }
-  [s appendFormat: @"%@ (%@) empty:%llu failures:%llu successes:%llu",
-    [super description], name,
+  [s appendFormat: @"  full:%llu failures:%llu successes:%llu\n",
     (unsigned long long)fullCount,
     (unsigned long long)_putTryFailure,
     (unsigned long long)_putTrySuccess];
-
   if (boundsCount > 0)
     {
       unsigned	i;
@@ -603,17 +642,91 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 	? putWaitTotal / _putTryFailure : 0.0];
       for (i = 0; i < boundsCount; i++)
 	{
-          [s appendFormat: @"  up to %g: %llu\n",
+          [s appendFormat: @"    up to %g: %llu\n",
 	    waitBoundaries[i], putWaitCounts[i]];
 	}
-      [s appendFormat: @"  above %g: %llu\n",
+      [s appendFormat: @"    above %g: %llu\n",
 	waitBoundaries[boundsCount-1], putWaitCounts[boundsCount]];
     }
+}
 
-  if (nil != putLock)
+- (NSString*) stats
+{
+  NSMutableString	*s = [NSMutableString stringWithCapacity: 100];
+
+  [s appendFormat: @"%@ (%@)\n", [super description], name];
+  if (nil != getLock || [NSThread currentThread] == getThread)
     {
+      [getLock lock];
+      [self _getStats: s];
+      [getLock unlockWithCondition: [getLock condition]];
+    }
+  if (nil != putLock || [NSThread currentThread] == putThread)
+    {
+      [putLock lock];
+      [self _putStats: s];
       [putLock unlockWithCondition: [putLock condition]];
     }
+  return s;
+}
+
+- (NSString*) statsGet
+{
+  NSMutableString	*s = [NSMutableString stringWithCapacity: 100];
+
+  if (nil == getLock)
+    {
+      if ([NSThread currentThread] != getThread)
+	{
+	  if (nil == getThread)
+	    {
+	      getThread = [NSThread currentThread];
+	    }
+	  else
+	    {
+	      [NSException raise: NSInternalInconsistencyException
+			  format: @"[%@-%@] called from wrong thread for %@",
+		NSStringFromClass([self class]), NSStringFromSelector(_cmd),
+		name];
+	    }
+	}
+    }
+
+  [getLock lock];
+  [s appendFormat: @"%@ (%@)\n", [super description], name];
+  [self _getStats: s];
+  [getLock unlockWithCondition: [getLock condition]];
+
+  return s;
+}
+
+- (NSString*) statsPut
+{
+  NSMutableString	*s = [NSMutableString stringWithCapacity: 100];
+
+  if (nil == putLock)
+    {
+      if ([NSThread currentThread] != putThread)
+	{
+	  if (nil == putThread)
+	    {
+	      putThread = [NSThread currentThread];
+	    }
+	  else
+	    {
+	      [NSException raise: NSInternalInconsistencyException
+			  format: @"[%@-%@] called from wrong thread for %@",
+		NSStringFromClass([self class]), NSStringFromSelector(_cmd),
+		name];
+	    }
+	}
+    }
+
+  [putLock lock];
+  [s appendFormat: @"%@ (%@)\n", [super description], name];
+  [self _putStats: s];
+  [putLock unlockWithCondition: [putLock condition]];
+
   return s;
 }
 

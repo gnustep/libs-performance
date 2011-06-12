@@ -4,6 +4,8 @@
 	* GSFIFO.m:
 	Add the ability to monitor statistics on how long the FIFO blocks
 	on put and get operations.
+	Add methods to get/put multiple items.
+	Add method to get stats for all FIFOs.
 
 2011-06-06 Richard Frith-Macdonald  <rfm@gnu.org>
 
