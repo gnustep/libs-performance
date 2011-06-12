@@ -98,10 +98,12 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
     }
 }
 
-- (void*) _cooperatingGetShouldBlock: (BOOL)block
+- (unsigned) _cooperatingGet: (void**)buf
+		       count: (unsigned)count
+		 shouldBlock: (BOOL)block
 {
   NSTimeInterval	ti;
-  void			*item;
+  unsigned		index;
   BOOL			wasFull = NO;
   BOOL			isEmpty = NO;
 
@@ -144,8 +146,11 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
     {
       wasFull = YES;
     }
-  item = _items[_tail % _capacity];
-  _tail++;
+  for (index = 0; index < count && (_head - _tail) != 0; index++)
+    {
+      buf[index] = _items[_tail % _capacity];
+      _tail++;
+    }
   if (_head - _tail == 0)
     {
       isEmpty = YES;
@@ -156,12 +161,15 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
       [putLock unlockWithCondition: 1];
     }
   [getLock unlockWithCondition: isEmpty ? 0 : 1];
-  return item;
+  return index;
 }
 
-- (BOOL) _cooperatingPut: (void*)item shouldBlock: (BOOL)block
+- (unsigned) _cooperatingPut: (void**)buf
+		       count: (unsigned)count
+		 shouldBlock: (BOOL)block
 {
   NSTimeInterval	ti;
+  unsigned		index;
   BOOL			wasEmpty = NO;
   BOOL			isFull = NO;
 
@@ -170,7 +178,7 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
       _putTryFailure++;
       if (NO == block)
 	{
-	  return NO;
+	  return 0;
 	}
 
       START
@@ -204,8 +212,11 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
     {
       wasEmpty = YES;
     }
-  _items[_head % _capacity] = item;
-  _head++;
+  for (index = 0; index < count && (_head - _tail < _capacity); index++)
+    {
+      _items[_head % _capacity] = buf[index];
+      _head++;
+    }
   if (_head - _tail == _capacity)
     {
       isFull = YES;
@@ -216,7 +227,7 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
       [getLock unlockWithCondition: 1];
     }
   [putLock unlockWithCondition: isFull ? 0 : 1];
-  return YES;
+  return index;
 }
 
 - (void) dealloc
@@ -259,43 +270,60 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
     (unsigned long long)fullCount];
 }
 
-- (void*) get
+- (unsigned) get: (void**)buf count: (unsigned)count shouldBlock: (BOOL)block
 {
-  void			*item;
+  unsigned		index;
   NSTimeInterval	ti;
   NSTimeInterval	sum;
   uint32_t		old;
   uint32_t		fib;
   
+  if (0 == count) return 0;
+
   if (nil == getLock)
     {
       if (_head > _tail)
 	{
-	  item = _items[_tail % _capacity];
-	  _tail++;
-	  _getTrySuccess++;
-	  return item;
+	  for (index = 0; index < count && _head > _tail; index++)
+	    {
+	      buf[index] = _items[_tail % _capacity];
+	      _tail++;
+	      _getTrySuccess++;
+	    }
+	  return index;
 	}
       _getTryFailure++;
       emptyCount++;
+      if (NO == block)
+	{
+	  return 0;
+	}
     }
   else if (nil != putLock)
     {
-      return [self _cooperatingGetShouldBlock: YES];
+      return [self _cooperatingGet: buf count: count shouldBlock: block];
     }
   else
     {
       [getLock lock];
       if (_head > _tail)
 	{
-	  item = _items[_tail % _capacity];
-	  _tail++;
-	  _getTrySuccess++;
+	  for (index = 0; index < count && _head > _tail; index++)
+	    {
+	      buf[index] = _items[_tail % _capacity];
+	      _tail++;
+	      _getTrySuccess++;
+	    }
 	  [getLock unlock];
-	  return item;
+	  return index;
 	}
       _getTryFailure++;
       emptyCount++;
+      if (NO == block)
+	{
+	  [getLock unlock];
+	  return 0;
+	}
     }
 
   START
@@ -325,10 +353,21 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
       [NSThread sleepForTimeInterval: dly];
       sum += dly;
     }
-  item = _items[_tail % _capacity];
-  _tail++;
   ENDGET
+  for (index = 0; index < count && _head > _tail; index++)
+    {
+      buf[index] = _items[_tail % _capacity];
+      _tail++;
+    }
   [getLock unlock];
+  return index;
+}
+
+- (void*) get
+{
+  void	*item = 0;
+
+  [self get: &item count: 1 shouldBlock: YES];
   return item;
 }
 
@@ -398,43 +437,62 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
   return self;
 }
 
-- (void) put: (void*)item
+- (unsigned) put: (void**)buf count: (unsigned)count shouldBlock: (BOOL)block
 {
   NSTimeInterval	sum;
+  unsigned		index;
   NSTimeInterval	ti = 0.0;
   uint32_t		old;
   uint32_t		fib;
 
+  if (0 == count)
+    {
+      return 0;
+    }
   if (nil == putLock)
     {
       if (_head - _tail < _capacity)
 	{
-	  _items[_head % _capacity] = item;
-	  _head++;
+	  for (index = 0; index < count && _head - _tail < _capacity; index++)
+	    {
+	      _items[_head % _capacity] = buf[index];
+	      _head++;
+	    }
 	  _putTrySuccess++;
-	  return;
+	  return index;
 	}
       _putTryFailure++;
       fullCount++;
+      if (NO == block)
+	{
+	  return 0;
+	}
     }
   else if (nil != getLock)
     {
-      [self _cooperatingPut: item shouldBlock: YES];
-      return;
+      return [self _cooperatingPut: buf count: count shouldBlock: block];
     }
   else
     {
       [putLock lock];
       if (_head - _tail < _capacity)
 	{
-	  _items[_head % _capacity] = item;
-	  _head++;
+	  for (index = 0; index < count && _head - _tail < _capacity; index++)
+	    {
+	      _items[_head % _capacity] = buf[index];
+	      _head++;
+	    }
 	  _putTrySuccess++;
 	  [putLock unlock];
-	  return;
+	  return index;
 	}
       _putTryFailure++;
       fullCount++;
+      if (NO == block)
+	{
+	  [putLock unlock];
+	  return 0;
+	}
     }
 
   START
@@ -464,10 +522,19 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
       [NSThread sleepForTimeInterval: dly];
       sum += dly;
     }
-  _items[_head % _capacity] = item;
-  _head++;
   ENDPUT
+  for (index = 0; index < count && _head - _tail < _capacity; index++)
+    {
+      _items[_head % _capacity] = buf[index];
+      _head++;
+    }
   [putLock unlock];
+  return index;
+}
+
+- (void) put: (void*)item
+{
+  [self put: &item count: 1 shouldBlock: YES];
 }
 
 - (NSString*) statsGet
@@ -552,74 +619,17 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 
 - (void*) tryGet
 {
-  void	*item;
+  void	*item = nil;
   
-  if (nil == getLock)
-    {
-      if (_head > _tail)
-	{
-	  item = _items[_tail % _capacity];
-	  _tail++;
-	  _getTrySuccess++;
-	  return item;
-	}
-      _getTryFailure++;
-      emptyCount++;
-    }
-  else if (nil != putLock)
-    {
-      return [self _cooperatingGetShouldBlock: NO];
-    }
-  else
-    {
-      [getLock lock];
-      if (_head > _tail)
-	{
-	  item = _items[_tail % _capacity];
-	  _tail++;
-	  _getTrySuccess++;
-	  [getLock unlock];
-	  return item;
-	}
-      _getTryFailure++;
-      emptyCount++;
-      [getLock unlock];
-    }
-  return NULL;
+  [self get: &item count: 1 shouldBlock: NO];
+  return item;
 }
 
 - (BOOL) tryPut: (void*)item
 {
-  if (nil == putLock)
+  if (1 == [self put: &item count: 1 shouldBlock: NO])
     {
-      if (_head - _tail < _capacity)
-	{
-	  _items[_head % _capacity] = item;
-	  _head++;
-	  _putTrySuccess++;
-	  return YES;
-	}
-      _putTryFailure++;
-      fullCount++;
-    }
-  else if (nil != getLock)
-    {
-      return [self _cooperatingPut: item shouldBlock: NO];
-    }
-  else
-    {
-      [putLock lock];
-      if (_head - _tail < _capacity)
-	{
-	  _items[_head % _capacity] = item;
-	  _head++;
-	  _putTrySuccess++;
-	  [putLock unlock];
-	  return YES;
-	}
-      _putTryFailure++;
-      fullCount++;
-      [putLock unlock];
+      return YES;
     }
   return NO;
 }

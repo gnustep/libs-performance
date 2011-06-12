@@ -102,9 +102,18 @@
  */
 - (NSUInteger) count;
 
+/** Reads up to count items from the FIFO into buf.
+ * If block is YES, this blocks if necessary until at least one item
+ * is available, and raises an exception if the FIFO is configured
+ * with a timeout and it is exceeded.<br />
+ * Returns the number of items actually read.
+ */
+- (unsigned) get: (void**)buf  count: (unsigned)count  shouldBlock: (BOOL)block;
+
 /** Gets the next item from the FIFO, blocking if necessary until an
  * item is available.  Raises an exception if the FIFO is configured
- * with a timeout and it is exceeded.
+ * with a timeout and it is exceeded.<br />
+ * Implemented using -get:count:shouldBlock:
  */
 - (void*) get;
 
@@ -143,9 +152,18 @@
 	     boundaries: (NSArray*)a
 		   name: (NSString*)n;
 
+/** Writes up to count items from buf into the FIFO.
+ * If block is YES, this blocks if necessary until at least one item
+ * can be written, and raises an exception if the FIFO is configured
+ * with a timeout and it is exceeded.<br />
+ * Returns the number of items actually written.
+ */
+- (unsigned) put: (void**)buf  count: (unsigned)count  shouldBlock: (BOOL)block;
+
 /** Adds an item to the FIFO, blocking if necessary until there is
  * space in the buffer.  Raises an exception if the FIFO is configured
- * with a timeout and it is exceeded.
+ * with a timeout and it is exceeded.br />
+ * Implemented using -put:count:shouldBlock:
  */
 - (void) put: (void*)item;
 
@@ -162,12 +180,14 @@
 - (NSString*) statsPut;
 
 /** Checks the FIFO and returns the first available item or NULL if the
- * FIFO is empty.
+ * FIFO is empty.<br />
+ * Implemented using -get:count:shouldBlock:
  */
 - (void*) tryGet;
 
 /** Attempts to put an item into the FIFO, returning YES on success or NO
- * if the FIFO is full.
+ * if the FIFO is full.<br />
+ * Implemented using -put:count:shouldBlock:
  */
 - (BOOL) tryPut: (void*)item;
 @end
