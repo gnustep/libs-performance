@@ -377,8 +377,8 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 	  [NSException raise: NSInvalidArgumentException
 		      format: @"Bad boundaries"];
 	}
-      waitBoundaries[boundsCount] = l;
       c = boundsCount;
+      waitBoundaries[--c] = l;
       while (c-- > 0)
 	{
 	  NSTimeInterval	t;
