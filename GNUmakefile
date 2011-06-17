@@ -22,6 +22,7 @@ include $(GNUSTEP_MAKEFILES)/common.make
 
 PACKAGE_NAME = Performance
 PACKAGE_VERSION = 0.3.0
+Performance_INTERFACE_VERSION=0.3
 SVN_BASE_URL = svn+ssh://svn.gna.org/svn/gnustep/libs
 SVN_MODULE_NAME = performance
 
@@ -31,8 +32,6 @@ TEST_TOOL_NAME=
 
 LIBRARY_NAME=Performance
 DOCUMENT_NAME=Performance
-
-Performance_INTERFACE_VERSION=0.3
 
 Performance_OBJC_FILES += \
 	GSCache.m \
