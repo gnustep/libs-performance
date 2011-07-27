@@ -472,7 +472,7 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
   [classLock lock];
   if (nil != NSMapGet(allFIFOs, n))
     {
-      [classLock lock];
+      [classLock unlock];
       [self release];
       [NSException raise: NSInvalidArgumentException
 		  format: @"GSFIFO ... name (%@) already in use", n];
