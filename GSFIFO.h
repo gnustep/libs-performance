@@ -32,41 +32,31 @@
 
 
 /** GSFIFO manages a first-in-first-out queue of items.<br />
- * Items in the queue ae <em>NOT</em> retained objects ... memory management
+ * Items in the queue are <em>NOT</em> retained objects ... memory management
  * is not the job of this class and it is not intended to be treated
  * as a 'collection', rather its role is intended to be that of an
  * inter-thread coordination mechanism.<br />
  * Instances of the GSFIFO class are intended to support the producer-consumer
  * model of processing.  The ideal example is that of a production line,
- * where you have a stream of items to be processed and while that procesing
+ * where you have a stream of items to be processed and while that processing
  * can be broken down into separate stages, they must be done in a particular
  * order.  The FIFO is used as the link betwen those stages, ensuring that
  * the required ordering is maintained even when separate threads handle
  * each stage.<br />
- * Where there is a single consumer thread, a fast lock-fre algorthm is
- * used to get items from the FIFO, similarly, where there is a single
- * producer thread the addition of items to the FIFO can be lock-free.<br />
+ * Where there is a single producer and a single consumer thread, a fast
+ * lock-free algorthm is used to get/pu items from the FIFO.<br />
  * To minimise the overheads of using the FIFO, we provide inline functions
  * to support the addition of items in the single producer thread case and to
  * support the removal of items in the single consumer thread case.  When
- * operting that way, the overhead of using the FIFO is only a few CPU cycles
+ * operating that way, the overhead of using the FIFO is only a few CPU cycles
  * and it becomes reasonable to split sequentional processing into a long
  * series of small operations each handled by a separate thread (making
  * effective use of a multi-cpu machine).<br />
  * The FIFO may also be useful where you don't have a strictly sequential
  * process to manage, but some parts need to be sequential ... in these
- * cases it may make sense to have either a single producer thread adding
- * to the FIFO and multiple consumers removing from it, or have a single
- * consumer with multiple producers or (rarely) have both multiple producers
- * and multiple consumers.  In these rarer cases, some locking is required
- * and the use of the inline functions is not allowed (you must call the
- * -get method wherever you have multiple consumer threads, and must call
- * the -put: method wherever you have multiple producer threads).<br />
- * Where both multiple producers and multiple consumers are configured,
- * there are two locks used to coordinate access to the FIFO, and the
- * addition of an item to an empty FIFO or removal of an item from a full
- * FIFO signals any blocked threads to cmplete their access to the FIFO
- * immediately.
+ * cases it may make sense to have multiple consumers and/or producers.
+ * In these cases, some locking is required and the use of the inline
+ * functions is not allowed (you must call the -get and -put: methods.<br />
  */
 @interface	GSFIFO : NSObject
 {
@@ -136,17 +126,8 @@
  * If the timeout value is non-zero, it is treated as the total time in
  * milliseconds for which a -get or -put: operation may block, and a
  * longer delay will cause those methods to raise an exception.<br />
- * If the multiProducer flag is YES, the FIFO is configured to support
- * multiple producer threads (ie more than one thread using the -put:
- * method) by using of locking while adding items to the FIFO.<br />
- * If the multiConsumer flag is YES, the FIFO is configured to support
- * multiple consumer threads (ie more than one thread using the -get
- * method) by using of locking while removing items from the FIFO.<br />
- * If both multiConsumer and multiProducer are set, cooperative use of
- * locking by put and get methods means that no retries are required
- * and the granularity is ignored (a -put: to an empty FIFO allows any
- * blocked -get to proceed, and a -get from a full FIFO allows any
- * blocked -put: to proceed immediately).<br />
+ * If the multiProducer or multiConsumer flag is YES, the FIFO is
+ * configured to support multiple producer/consumer threads using locking.<br />
  * The boundaries array is an ordered list of NSNumber objects containing
  * time intervals found boundaries of bands into which to categorise wait
  * time stats.  Any wait whose duration is less than the interval specified
