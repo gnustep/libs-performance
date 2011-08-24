@@ -128,21 +128,26 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 {
   NSTimeInterval	ti;
   unsigned		index;
-  BOOL			wasFull = NO;
-  BOOL			isEmpty = NO;
+  BOOL			wasFull;
 
-  if (NO == [getLock tryLockWhenCondition: 1])
+  [condition lock];
+  if (_head - _tail == 0)
     {
+      emptyCount++;
       _getTryFailure++;
       if (NO == block)
 	{
+	  [condition unlock];
 	  return 0;
 	}
 
       START
       if (0 == timeout)
 	{
-	  [getLock lockWhenCondition: 1];
+	  while (_head - _tail == 0)
+	    {
+	      [condition wait];
+	    }
 	}
       else
 	{
@@ -150,12 +155,17 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 
 	  d = [[NSDateClass alloc]
 	    initWithTimeIntervalSinceNow: 1000.0 * timeout];
-	  if (NO == [getLock lockWhenCondition: 1 beforeDate: d])
+	  while (_head - _tail == 0)
 	    {
-	      [d release];
-	      ENDGET
-	      [NSException raise: NSGenericException
-			  format: @"Timeout waiting for new data in FIFO"];
+	      if (NO == [condition waitUntilDate: d])
+		{
+		  [d release];
+		  ENDGET
+		  [condition broadcast];
+		  [condition unlock];
+		  [NSException raise: NSGenericException
+			      format: @"Timeout waiting for new data in FIFO"];
+		}
 	    }
 	  [d release];
 	  ENDGET
@@ -170,18 +180,20 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
     {
       wasFull = YES;
     }
+  else
+    {
+      wasFull = NO;
+    }
   for (index = 0; index < count && (_head - _tail) != 0; index++)
     {
       buf[index] = _items[_tail % _capacity];
       _tail++;
     }
-  if (_head - _tail == 0)
+  if (YES == wasFull)
     {
-      isEmpty = YES;
+      [condition broadcast];
     }
-  [getLock unlockWithCondition: isEmpty ? 0 : 1];
-  [putLock lock];
-  [putLock unlockWithCondition: (_head - _tail < _capacity)  ? 1 : 0];
+  [condition unlock];
 
   return index;
 }
@@ -192,22 +204,26 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 {
   NSTimeInterval	ti;
   unsigned		index;
-  BOOL			wasEmpty = NO;
-  BOOL			isFull = NO;
+  BOOL			wasEmpty;
 
-  if (NO == [putLock tryLockWhenCondition: 1])
+  [condition lock];
+  if (_head - _tail == _capacity)
     {
       _putTryFailure++;
+      fullCount++;
       if (NO == block)
 	{
-	  [getLock unlock];
+	  [condition unlock];
 	  return 0;
 	}
 
       START
       if (0 == timeout)
 	{
-	  [putLock lockWhenCondition: 1];
+	  while (_head - _tail == _capacity)
+	    {
+	      [condition wait];
+	    }
 	}
       else
 	{
@@ -215,13 +231,17 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 
 	  d = [[NSDateClass alloc]
 	    initWithTimeIntervalSinceNow: 1000.0 * timeout];
-	  if (NO == [putLock lockWhenCondition: 1 beforeDate: d])
+	  while (_head - _tail == _capacity)
 	    {
-	      [d release];
-	      ENDPUT
-	      [getLock unlock];
-	      [NSException raise: NSGenericException
-			  format: @"Timeout waiting for space in FIFO"];
+	      if (NO == [condition waitUntilDate: d])
+		{
+		  [d release];
+		  ENDPUT
+		  [condition broadcast];
+		  [condition unlock];
+		  [NSException raise: NSGenericException
+			      format: @"Timeout waiting for space in FIFO"];
+		}
 	    }
 	  [d release];
 	}
@@ -236,18 +256,20 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
     {
       wasEmpty = YES;
     }
+  else
+    {
+      wasEmpty = NO;
+    }
   for (index = 0; index < count && (_head - _tail < _capacity); index++)
     {
       _items[_head % _capacity] = buf[index];
       _head++;
     }
-  if (_head - _tail == _capacity)
+  if (YES == wasEmpty)
     {
-      isFull = YES;
+      [condition broadcast];
     }
-  [putLock unlockWithCondition: isFull ? 0 : 1];
-  [getLock lock];
-  [getLock unlockWithCondition: (_head - _tail > 0) ? 1 : 0];
+  [condition unlock];
   return index;
 }
 
@@ -261,8 +283,7 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
   [classLock unlock];
 
   [name release];
-  [getLock release];
-  [putLock release];
+  [condition release];
   if (0 != _items)
     {
       NSZoneFree(NSDefaultMallocZone(), _items);
@@ -308,7 +329,7 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
   
   if (0 == count) return 0;
 
-  if (nil != getLock)
+  if (nil != condition)
     {
       return [self _cooperatingGet: buf count: count shouldBlock: block];
     }
@@ -346,7 +367,6 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
       if (timeout > 0 && sum * 1000 > timeout)
 	{
 	  ENDGET
-	  [getLock unlock];
 	  [NSException raise: NSGenericException
 		      format: @"Timeout waiting for new data in FIFO"];
 	}
@@ -367,7 +387,6 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
       buf[index] = _items[_tail % _capacity];
       _tail++;
     }
-  [getLock unlock];
   return index;
 }
 
@@ -399,8 +418,7 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
   _items = (void*)NSAllocateCollectable(c * sizeof(void*), NSScannedOption);
   if (YES == mp || YES == mc)
     {
-      putLock = [[NSConditionLock alloc] initWithCondition: 1];
-      getLock = [[NSConditionLock alloc] initWithCondition: 0];
+      condition = [NSCondition new];
     }
   name = [n copy];
   if (nil == a)
@@ -484,7 +502,7 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
       return 0;
     }
 
-  if (nil != putLock)
+  if (nil != condition)
     {
       return [self _cooperatingPut: buf count: count shouldBlock: block];
     }
@@ -522,7 +540,6 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
       if (timeout > 0 && sum * 1000 > timeout)
 	{
 	  ENDPUT
-	  [putLock unlock];
 	  [NSException raise: NSGenericException
 		      format: @"Timeout waiting for space in FIFO"];
 	}
@@ -543,7 +560,6 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
       _items[_head % _capacity] = buf[index];
       _head++;
     }
-  [putLock unlock];
   return index;
 }
 
@@ -610,17 +626,17 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
   NSMutableString	*s = [NSMutableString stringWithCapacity: 100];
 
   [s appendFormat: @"%@ (%@)\n", [super description], name];
-  if (nil != getLock || [NSThread currentThread] == getThread)
+  if (nil != condition || [NSThread currentThread] == getThread)
     {
-      [getLock lock];
+      [condition lock];
       [self _getStats: s];
-      [getLock unlockWithCondition: [getLock condition]];
+      [condition unlock];
     }
-  if (nil != putLock || [NSThread currentThread] == putThread)
+  if (nil != condition || [NSThread currentThread] == putThread)
     {
-      [putLock lock];
+      [condition lock];
       [self _putStats: s];
-      [putLock unlockWithCondition: [putLock condition]];
+      [condition unlock];
     }
   return s;
 }
@@ -629,7 +645,7 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 {
   NSMutableString	*s = [NSMutableString stringWithCapacity: 100];
 
-  if (nil == getLock)
+  if (nil == condition)
     {
       if ([NSThread currentThread] != getThread)
 	{
@@ -647,10 +663,10 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 	}
     }
 
-  [getLock lock];
+  [condition lock];
   [s appendFormat: @"%@ (%@)\n", [super description], name];
   [self _getStats: s];
-  [getLock unlockWithCondition: [getLock condition]];
+  [condition unlock];
 
   return s;
 }
@@ -659,7 +675,7 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 {
   NSMutableString	*s = [NSMutableString stringWithCapacity: 100];
 
-  if (nil == putLock)
+  if (nil == condition)
     {
       if ([NSThread currentThread] != putThread)
 	{
@@ -677,10 +693,10 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 	}
     }
 
-  [putLock lock];
+  [condition lock];
   [s appendFormat: @"%@ (%@)\n", [super description], name];
   [self _putStats: s];
-  [putLock unlockWithCondition: [putLock condition]];
+  [condition unlock];
 
   return s;
 }

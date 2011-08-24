@@ -25,7 +25,7 @@
 #import <Foundation/NSObject.h>
 
 @class NSArray;
-@class NSConditionLock;
+@class NSCondition;
 @class NSNumber;
 @class NSString;
 @class NSThread;
@@ -79,8 +79,7 @@
   uint16_t		timeout;
   uint64_t		fullCount;		// Total waits for full FIFO
   uint64_t		emptyCount;		// Total waits for empty FIFO
-  NSConditionLock	*getLock;
-  NSConditionLock	*putLock;
+  NSCondition		*condition;
   NSString		*name;
   NSTimeInterval	getWaitTotal;		// Total time waiting for gets
   NSTimeInterval	putWaitTotal;		// Total time waiting for puts

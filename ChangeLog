@@ -1,3 +1,9 @@
+2011-08-24 Richard Frith-Macdonald  <rfm@gnu.org>
+
+	* GSFIFO.h:
+	* GSFIFO.m:
+	Use NSCondition to support multiple producer/consumer on FIFO.
+	
 2011-06-11 Richard Frith-Macdonald  <rfm@gnu.org>
 
 	* GSFIFO.h:
