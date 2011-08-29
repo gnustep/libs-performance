@@ -1,3 +1,7 @@
+2011-08-29 Richard Frith-Macdonald  <rfm@gnu.org>
+
+	* GSCache.m: Try to fool clang/llvm to avoid useless warning/error.
+
 2011-08-24 Richard Frith-Macdonald  <rfm@gnu.org>
 
 	* GSFIFO.h:

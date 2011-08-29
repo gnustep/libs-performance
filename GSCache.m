@@ -96,6 +96,7 @@
 
 static NSHashTable	*allCaches = 0;
 static NSLock		*allCachesLock = nil;
+static int		itemOffset = 0;
 
 typedef struct {
   id		delegate;
@@ -114,7 +115,7 @@ typedef struct {
   NSMutableSet	*exclude;
   NSRecursiveLock	*lock;
 } Item;
-#define	my	((Item*)&self[1])
+#define	my	((Item*)((void*)self + itemOffset))
 
 /*
  * Add item to linked list starting at *first
@@ -201,6 +202,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 {
   if (allCaches == 0)
     {
+      itemOffset = class_getInstanceSize(self);
       allCaches
 	= NSCreateHashTable(NSNonRetainedObjectHashCallBacks, 0);
       if ([NSThread isMultiThreaded] == YES)
