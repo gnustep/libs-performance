@@ -37,7 +37,6 @@
 #import	<Foundation/NSHashTable.h>
 #import	<Foundation/NSAutoreleasePool.h>
 #import	<Foundation/NSDebug.h>
-#import	<Foundation/NSTimer.h>
 #import	<Foundation/NSThread.h>
 #import	<Foundation/NSValue.h>
 
@@ -104,7 +103,6 @@ typedef struct {
 @interface	GSThroughputThread : NSObject
 {
   @public
-  NSTimer		*theTimer;
   NSHashTable		*instances;
 }
 @end

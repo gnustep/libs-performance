@@ -39,7 +39,6 @@
 #import	<Foundation/NSNotification.h>
 #import	<Foundation/NSSet.h>
 #import	<Foundation/NSString.h>
-#import	<Foundation/NSTimer.h>
 #import	<Foundation/NSThread.h>
 #import	<Foundation/NSValue.h>
 
