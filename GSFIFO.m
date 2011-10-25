@@ -657,7 +657,11 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 {
   NSMutableString	*s = [NSMutableString stringWithCapacity: 100];
 
-  [s appendFormat: @"%@ (%@)\n", [super description], name];
+  [s appendFormat: @"%@ (%@) capacity:%llu lockless:%c\n",
+    [super description], name,
+    (unsigned long long)_capacity,
+    ((nil == condition) ? 'Y' : 'N')];
+
   if (nil != condition || [NSThread currentThread] == getThread)
     {
       [condition lock];
