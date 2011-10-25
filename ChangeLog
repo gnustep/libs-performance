@@ -1,3 +1,11 @@
+2011-10-25 Richard Frith-Macdonald  <rfm@gnu.org>
+
+	* GSFIFO.h:
+	* GSFIFO.m:
+	Add new method to create a named FIFO and configure it from the
+	defaults system.
+	* GNUmakefile: bump version to 0.3.2
+
 2011-08-29 Richard Frith-Macdonald  <rfm@gnu.org>
 
 	* GSCache.m: Try to fool clang/llvm to avoid useless warning/error.

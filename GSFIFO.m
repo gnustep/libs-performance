@@ -27,6 +27,7 @@
 #import <Foundation/NSMapTable.h>
 #import <Foundation/NSString.h>
 #import <Foundation/NSThread.h>
+#import <Foundation/NSUserDefaults.h>
 #import <Foundation/NSValue.h>
 #import <Foundation/NSZone.h>
 
@@ -407,7 +408,7 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 	     boundaries: (NSArray*)a
 		   name: (NSString*)n
 {
-  if (c < 1)
+  if (c < 1 || c > 1000000)
     {
       [self release];
       return nil;
@@ -480,13 +481,42 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 - (id) initWithCapacity: (uint32_t)c
 		   name: (NSString*)n
 {
+  NSUserDefaults	*defs = [NSUserDefaults standardUserDefaults];
+  NSString		*key;
+  uint16_t		g;
+  uint16_t		t;
+  BOOL			mc;
+  BOOL			mp;
+  NSArray		*b;
+
+  key = [NSString stringWithFormat: @"GSFIFOCapacity%@", n];
+  if ([defs integerForKey: key] > 0)
+    {
+      c = [defs integerForKey: key];
+    }
+  key = [NSString stringWithFormat: @"GSFIFOGranularity%@", n];
+  g = [defs integerForKey: key];
+  key = [NSString stringWithFormat: @"GSFIFOTimeout%@", n];
+  t = [defs integerForKey: key];
+  key = [NSString stringWithFormat: @"GSFIFOSingleConsumer%@", n];
+  mc = (YES == [defs boolForKey: key]) ? NO : YES;
+  key = [NSString stringWithFormat: @"GSFIFOSingleProducer%@", n];
+  mp = (YES == [defs boolForKey: key]) ? NO : YES;
+  key = [NSString stringWithFormat: @"GSFIFOBoundaries%@", n];
+  b = [defs arrayForKey: key];
+
   return [self initWithCapacity: c
-		    granularity: 0
-			timeout: 0
-		  multiProducer: YES
-		  multiConsumer: YES
-		     boundaries: nil
+		    granularity: g
+			timeout: t
+		  multiProducer: mp
+		  multiConsumer: mc
+		     boundaries: b
 			   name: n];
+}
+
+- (id) initWithName: (NSString*)n
+{
+  return [self initWithCapacity: 10000 name: n];
 }
 
 - (unsigned) put: (void**)buf count: (unsigned)count shouldBlock: (BOOL)block

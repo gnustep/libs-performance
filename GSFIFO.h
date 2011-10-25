@@ -57,6 +57,9 @@
  * cases it may make sense to have multiple consumers and/or producers.
  * In these cases, some locking is required and the use of the inline
  * functions is not allowed (you must call the -get and -put: methods.<br />
+ * It is recommended that you create FIFOs using the -initWithName: method
+ * so that you can easily use the NSUserDefaults system to adjust their
+ * configurations to tests/tweak performance.
  */
 @interface	GSFIFO : NSObject
 {
@@ -119,6 +122,8 @@
 
 /** <init/>
  * Initialises the receiver with the specified capacity (buffer size).<br />
+ * The capacity must lie in the range from one to a million, othewrwise
+ * the receiver is deallocated and this method returns nil.<br />
  * If the granularity value is non-zero, it is treated as the maximum time
  * in milliseconds for which a -get or -put: operation will pause between
  * successive attempts.<br />
@@ -134,7 +139,8 @@
  * If this is nil, a default set of bundaries is used.  If it is an empty
  * array then no time based stats are recorded.<br />
  * The name string is a unique identifier for the receiver and is used when
- * printing diagnostics and statistics.
+ * printing diagnostics and statistics.  If an instance with the same name
+ * already exists, the receiveris deallocated and an exception is raised.
  */
 - (id) initWithCapacity: (uint32_t)c
 	    granularity: (uint16_t)g
@@ -145,10 +151,25 @@
 		   name: (NSString*)n;
 
 /** Initialises the receiver as a multi-producer, multi-consumer FIFO with
- * no timeout and with default stats gathering enabled.
+ * no timeout and with default stats gathering enabled.<br />
+ * However, these values (including the supplied capacity) may be overridden
+ * as specified in -initWithName:
  */
 - (id) initWithCapacity: (uint32_t)c
 		   name: (NSString*)n;
+
+/** Initialises the receiver using the specified name and obtaining other
+ * details from the NSUserDefaults system using defaults keys where 'NNN'
+ * is the supplied name.<br />
+ * The GSFIFOCapacityNNN default specifies the capacity for the FIFO, and
+ * if missing a capacity of 1000 is assumed.<br />
+ * The GSFIFOGranularityNNN integer is zero by default.<br />
+ * The GSFIFOTimeoutNNN integer is zero by default.<br />
+ * The GSFIFOSingleConsumerNNN boolean is NO by default.<br />
+ * The GSFIFOSingleProducerNNN boolean is NO by default.<br />
+ * The GSFIFOBoundariesNNN array is missing by default.<br />
+ */
+- (id) initWithName: (NSString*)n;
 
 /** Writes up to count items from buf into the FIFO.
  * If block is YES, this blocks if necessary until at least one item
