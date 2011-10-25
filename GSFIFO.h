@@ -90,7 +90,7 @@
   uint64_t		*getWaitCounts;		// Waits for gets by time
   uint64_t		*putWaitCounts;		// Waits for puts by time
   NSThread		*getThread;		// Single consumer thread
-  NSThread		*putThread;		// Single consumer thread
+  NSThread		*putThread;		// Single producer thread
 }
 
 /** Return statistics for all current GSFIFO instances.<br />

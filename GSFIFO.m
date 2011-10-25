@@ -312,8 +312,10 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 - (NSString*) description
 {
   return [NSString stringWithFormat:
-    @"%@ (%@) get:%llu put:%llu empty:%llu full:%llu",
+    @"%@ (%@) capacity:%llu lockless:%c get:%llu put:%llu empty:%llu full:%llu",
     [super description], name,
+    (unsigned long long)_capacity,
+    ((nil == condition) ? 'Y' : 'N'),
     (unsigned long long)_tail,
     (unsigned long long)_head,
     (unsigned long long)emptyCount,
