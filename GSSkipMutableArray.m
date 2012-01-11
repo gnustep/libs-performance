@@ -78,7 +78,7 @@ static Class	concreteClass = 0;
 
 @interface GSConcreteSkipArrayEnumerator : NSEnumerator
 {
-  GSISLNode node;  
+  GSISLNode node;
 }
 @end
 
@@ -138,29 +138,29 @@ static Class	concreteClass = 0;
   GSISLInitialize();
 }
 
-- (id) initWithObjects: (id *)objects count: (NSUInteger) count
+- (id) initWithObjects: (const id[])objects count: (NSUInteger) count
 {
   int i;
   self = [super init];
 
   if (!self) return nil;
-  
+
   l = GSISLInitList([self zone]);
-  
+
   for (i = 0; i < count; i++)
     {
       GSISLInsertItemAtIndex(l, [objects[i] retain], i);
     }
-  
+
   return self;
 }
 
 - (id) init
 {
-  self = [super init]; 
-  
+  self = [super init];
+
   if (!self) return nil;
-  
+
   l = GSISLInitList([self zone]);
   return self;
 }
@@ -177,8 +177,8 @@ static Class	concreteClass = 0;
       NSZoneFree(l->zone,p);
       p = q;
     }
-  
-  NSZoneFree(l->zone, l->header); 
+
+  NSZoneFree(l->zone, l->header);
   NSZoneFree(l->zone, l);
   [super dealloc];
 }
@@ -210,7 +210,7 @@ static Class	concreteClass = 0;
         [self _raiseRangeExceptionWithIndex: index from: _cmd];
     }
 
-  [GSISLRemoveItemAtIndex(l, index) release]; 
+  [GSISLRemoveItemAtIndex(l, index) release];
 }
 
 - (void) addObject: (id)obj
@@ -239,7 +239,7 @@ static Class	concreteClass = 0;
 }
 
 /* returns an in an NSString suitable for running through graphviz,
- * with the graph named 'graphName' 
+ * with the graph named 'graphName'
  */
 - (NSString *) _makeGraphOfInternalLayoutNamed: (NSString *)graphName
 {
@@ -249,7 +249,7 @@ static Class	concreteClass = 0;
   NSMutableArray *edges;
   NSMutableString *graph;
   NSArray *tmp;
-  
+
   graph = [[NSMutableString alloc] initWithCapacity: 1024];
   [graph appendString:
     [NSString stringWithFormat: @"digraph %@ {\n", graphName]];
@@ -268,7 +268,7 @@ static Class	concreteClass = 0;
         {
 	  NSString	*value;
 	  NSMutableString *foo;
-	  
+
 	  value = [NSString stringWithFormat: @"%p", p];
 	  foo = [values objectForKey: value];
 	  if (foo == nil)
@@ -304,7 +304,7 @@ static Class	concreteClass = 0;
 	    }
 	}
     }
-	  
+
   tmp = [values allKeys];
   for (i = 0; i < [tmp count]; i++)
     {
