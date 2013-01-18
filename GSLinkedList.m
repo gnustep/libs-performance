@@ -43,7 +43,7 @@
   return self;
 }
 
-- (id) item
+- (NSObject*) item
 {
   return item;
 }
@@ -119,17 +119,7 @@
 
 - (void) dealloc
 {
-  count = 0;
-  tail = nil;
-  while (nil != head)
-    {
-      GSListLink	*link = head;
-
-      head = link->next;
-      head->next = head->previous = nil;
-      head->owner = nil;
-      [head release];
-    }
+  [self empty];
   [super dealloc];
 }
 

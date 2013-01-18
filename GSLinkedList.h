@@ -59,6 +59,10 @@ typedef unsigned int NSUInteger;
  */
 - (id) initCircular;
 
+/** Return the item in the link.
+ */
+- (NSObject*) item;
+
 /** Return the next item in the list containing the receiver,
  * or nil if there are no more items.
  */
