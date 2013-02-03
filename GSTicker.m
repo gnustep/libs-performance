@@ -66,6 +66,12 @@ static volatile NSTimeInterval	lastTime = 0;
 @interface	GSTickerThread : NSObject
 {
   @public
+  /* NB. We retain theTimer rather than depending on the run loop to do it.
+   * This is because tis object is typically deallocated on thread exist,
+   * so the thread's run loop may be deallocated before this object is
+   * deallocated, and we want to be sure the timer is not already deallocated
+   * when we invalidate it.
+   */
   NSTimer		*theTimer;
   NSMutableArray	*observers;
   unsigned		last;
@@ -76,6 +82,7 @@ static volatile NSTimeInterval	lastTime = 0;
 - (void) dealloc
 {
   [theTimer invalidate];
+  [theTimer release];
   theTimer = nil;
   [observers release];
   observers = nil;
@@ -88,11 +95,11 @@ static volatile NSTimeInterval	lastTime = 0;
       NSTimeInterval	ti = GSTickerTimeNow();
 
       observers = [NSMutableArray new];
-      theTimer = [NSTimer scheduledTimerWithTimeInterval: ti - (int)ti
-						  target: [GSTicker class]
-						selector: @selector(_tick:)
-						userInfo: self
-						 repeats: NO];
+      theTimer = [[NSTimer scheduledTimerWithTimeInterval: ti - (int)ti
+						   target: [GSTicker class]
+						 selector: @selector(_tick:)
+						 userInfo: self
+						  repeats: NO] retain];
     }
   return self;
 }
@@ -307,11 +314,9 @@ NSTimeInterval	GSTickerTimeNow()
     {
       NSTimeInterval	ti;
 
-      if (tt->theTimer != t)
-	{
-	  [tt->theTimer invalidate];
-	  tt->theTimer = nil;
-	}
+      [tt->theTimer invalidate];
+      [tt->theTimer release];
+      tt->theTimer = nil;
 
       if ([tt->observers count] > 0)
         {
@@ -339,11 +344,11 @@ NSTimeInterval	GSTickerTimeNow()
         }
 
       ti = GSTickerTimeNow();
-      tt->theTimer = [NSTimer scheduledTimerWithTimeInterval: ti - (int)ti
-						      target: self
-						    selector: @selector(_tick:)
-						    userInfo: tt
-						     repeats: NO];
+      tt->theTimer = [[NSTimer scheduledTimerWithTimeInterval: ti - (int)ti
+						       target: self
+						     selector: @selector(_tick:)
+						     userInfo: tt
+						      repeats: NO] retain];
     }
   else
     {

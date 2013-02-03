@@ -1,3 +1,9 @@
+2013-02-03 Richard Frith-Macdonald  <rfm@gnu.org>
+
+	* GSTicker.m: Retain timer so that we can safely invalidate it even
+	on thread exit when the runloop of the current thread may have been
+	deallocated already.
+
 2012-01-11 Niels Grewe <niels.grewe@halbordnung.de>
 
 	* GSSkipMutableArray.m: Change -initWithObjects:count: declaration
