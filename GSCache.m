@@ -94,7 +94,7 @@
 @implementation	GSCache
 
 static NSHashTable	*allCaches = 0;
-static NSLock		*allCachesLock = nil;
+static NSRecursiveLock	*allCachesLock = nil;
 static int		itemOffset = 0;
 
 typedef struct {
@@ -500,7 +500,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
     }
 }
 
-- (void) release
+- (oneway void) release
 {
   /* We lock the table while checking, to prevent
    * another thread from grabbing this object while we are

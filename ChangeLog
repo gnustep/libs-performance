@@ -1,3 +1,7 @@
+2013-02-07 Sebastian Reitenbach <sebastia@l00-bugdead-prods.de>
+	* GSThreadPool.h, GSCache.m
+	  shutup clang warnings
+
 2013-02-03 Richard Frith-Macdonald  <rfm@gnu.org>
 
 	* GSTicker.m: Retain timer so that we can safely invalidate it even

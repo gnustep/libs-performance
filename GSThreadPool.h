@@ -37,16 +37,16 @@
  */
 @interface	GSThreadPool : NSObject
 {
-  NSLock	*poolLock;
-  BOOL		shutdown;
-  BOOL		suspended;
-  NSUInteger	maxThreads;
-  GSLinkedList	*idle;
-  GSLinkedList	*live;
-  NSUInteger	maxOperations;
-  GSLinkedList	*operations;
-  GSLinkedList	*unused;
-  NSUInteger	processed;
+  NSRecursiveLock	*poolLock;
+  BOOL			shutdown;
+  BOOL			suspended;
+  NSUInteger		maxThreads;
+  GSLinkedList		*idle;
+  GSLinkedList		*live;
+  NSUInteger		maxOperations;
+  GSLinkedList		*operations;
+  GSLinkedList		*unused;
+  NSUInteger		processed;
 }
 
 /** Returns an instance intended for sharing between sections of code which
