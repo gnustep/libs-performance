@@ -123,7 +123,9 @@ static GSThreadPool	*shared = nil;
 
   [poolLock lock];
   result = [NSString stringWithFormat:
-    @"%@ queue: %u(%u) threads: %u(%u) active: %u processed: %u",
+    @"%@ queue: %"PRIuPTR"(%"PRIuPTR")"
+    @" threads: %"PRIuPTR"(%"PRIuPTR")"
+    @" active: %"PRIuPTR" processed: %"PRIuPTR"",
     [super description], operations->count, maxOperations,
     idle->count + live->count, maxThreads, live->count, processed];
   [poolLock unlock];

@@ -312,14 +312,15 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 - (NSString*) description
 {
   return [NSString stringWithFormat:
-    @"%@ (%@) capacity:%llu lockless:%c get:%llu put:%llu empty:%llu full:%llu",
+    @"%@ (%@) capacity:%"PRIu64" lockless:%c"
+    @" get:%"PRIu64" put:%"PRIu64" empty:%"PRIu64" full:%"PRIu64"",
     [super description], name,
-    (unsigned long long)_capacity,
+    _capacity,
     ((nil == condition) ? 'Y' : 'N'),
-    (unsigned long long)_tail,
-    (unsigned long long)_head,
-    (unsigned long long)emptyCount,
-    (unsigned long long)fullCount];
+    _tail,
+    _head,
+    emptyCount,
+    fullCount];
 }
 
 - (unsigned) get: (void**)buf count: (unsigned)count shouldBlock: (BOOL)block
@@ -603,10 +604,11 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 
 - (void) _getStats: (NSMutableString*)s
 {
-  [s appendFormat: @"  empty:%llu failures:%llu successes:%llu\n",
-    (unsigned long long)emptyCount,
-    (unsigned long long)_getTryFailure,
-    (unsigned long long)_getTrySuccess];
+  [s appendFormat:
+    @"  empty:%"PRIu64" failures:%"PRIu64" successes:%"PRIu64"\n",
+    emptyCount,
+    _getTryFailure,
+    _getTrySuccess];
   if (boundsCount > 0)
     {
       unsigned	i;
@@ -619,20 +621,20 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 	? getWaitTotal / _getTryFailure : 0.0];
       for (i = 0; i < boundsCount; i++)
 	{
-          [s appendFormat: @"    up to %g: %llu\n",
+          [s appendFormat: @"    up to %g: %"PRIu64"\n",
 	    waitBoundaries[i], getWaitCounts[i]];
 	}
-      [s appendFormat: @"    above %g: %llu\n",
+      [s appendFormat: @"    above %g: %"PRIu64"\n",
 	waitBoundaries[boundsCount-1], getWaitCounts[boundsCount]];
     }
 }
 
 - (void) _putStats: (NSMutableString*)s
 {
-  [s appendFormat: @"  full:%llu failures:%llu successes:%llu\n",
-    (unsigned long long)fullCount,
-    (unsigned long long)_putTryFailure,
-    (unsigned long long)_putTrySuccess];
+  [s appendFormat: @"  full:%"PRIu64" failures:%"PRIu64" successes:%"PRIu64"\n",
+    fullCount,
+    _putTryFailure,
+    _putTrySuccess];
   if (boundsCount > 0)
     {
       unsigned	i;
@@ -645,10 +647,10 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 	? putWaitTotal / _putTryFailure : 0.0];
       for (i = 0; i < boundsCount; i++)
 	{
-          [s appendFormat: @"    up to %g: %llu\n",
+          [s appendFormat: @"    up to %g: %"PRIu64"\n",
 	    waitBoundaries[i], putWaitCounts[i]];
 	}
-      [s appendFormat: @"    above %g: %llu\n",
+      [s appendFormat: @"    above %g: %"PRIu64"\n",
 	waitBoundaries[boundsCount-1], putWaitCounts[boundsCount]];
     }
 }
@@ -657,9 +659,9 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 {
   NSMutableString	*s = [NSMutableString stringWithCapacity: 100];
 
-  [s appendFormat: @"%@ (%@) capacity:%llu lockless:%c\n",
+  [s appendFormat: @"%@ (%@) capacity:%"PRIu64" lockless:%c\n",
     [super description], name,
-    (unsigned long long)_capacity,
+    _capacity,
     ((nil == condition) ? 'Y' : 'N')];
 
   if (nil != condition || [NSThread currentThread] == getThread)
