@@ -145,8 +145,13 @@ best(NSMutableArray *a)
   GSIOThread	*t;
 
   [poolLock lock];
+  if (0 == maxThreads)
+    {
+      [poolLock unlock];
+      return [NSThread mainThread];
+    }
   t = best(threads);
-  if (t->count > 0 && [threads count] < maxThreads)
+  if (nil == t || (t->count > 0 && [threads count] < maxThreads))
     {
       t = [GSIOThread new];
       [threads addObject: t];
