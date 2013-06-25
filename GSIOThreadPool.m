@@ -221,13 +221,7 @@ best(NSMutableArray *a)
 - (void) setThreads: (NSUInteger)max
 {
   [poolLock lock];
-  if (max != maxThreads)
-    {
-      maxThreads = max;
-      while ([threads count] > maxThreads)
-	{
-	}
-    }
+  maxThreads = max;
   [poolLock unlock];
 }
 
@@ -253,6 +247,17 @@ best(NSMutableArray *a)
 		      format: @"-unacquireThread: called too many times"];
 	}
       ((GSIOThread*)aThread)->count--;
+      if (0 == ((GSIOThread*)aThread)->count
+        && [threads count] > maxThreads)
+        {
+          [aThread retain];
+          [threads removeObjectIdenticalTo: aThread];
+          [aThread performSelector: @selector(terminate:)
+                          onThread: aThread
+                        withObject: [NSDate date]
+                     waitUntilDone: NO];
+          [aThread release];
+        }
     }
   [poolLock unlock];
 }
