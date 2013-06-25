@@ -28,6 +28,7 @@
 #import <Foundation/NSThread.h>
 #import <Foundation/NSTimer.h>
 #import <Foundation/NSException.h>
+#import <Foundation/NSUserDefaults.h>
 #import	"GSIOThreadPool.h"
 
 @interface	GSIOThread : NSThread
@@ -131,7 +132,16 @@ best(NSMutableArray *a)
 {
   if ([GSIOThreadPool class] == self && nil == shared)
     {
+      NSInteger size;
+
+      size = [[NSUserDefaults standardUserDefaults]
+        integerForKey: @"GSIOThreadPoolSize"];
+      if (size < 0)
+        {
+          size = 0;
+        }
       shared = [self new];
+      [shared setThreads: size];
     }
 }
 

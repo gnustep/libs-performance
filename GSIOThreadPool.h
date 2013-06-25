@@ -52,8 +52,12 @@ typedef unsigned int NSUInteger;
 /** Returns an instance intended for sharing between sections of code which
  * wish to make use of threading by performing operations in other threads,
  * but which don't mind operations being interleaved with those belonging to
- * oither sections of code.<br />
- * Always returns the same instance whenever the method is called.
+ * other sections of code.<br />
+ * Always returns the same instance whenever the method is called.<br />
+ * The shared pool is created with an initial size as specified by the
+ * GSIOThreadPoolSize user default (zero if there is no such positive
+ * integer in the defauilts system, however, you can modify that using
+ * the -setThreads: method.
  */
 + (GSIOThreadPool*) sharedPool;
 
