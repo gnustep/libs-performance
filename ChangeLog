@@ -1,4 +1,14 @@
+2013-06-25 Richard Frith-Macdonald  <rfm@gnu.org>
+
+        * GNUmakefile: bump subminor version 
+	* GSIOThreadPool.h:
+	* GSIOThreadPool.m:
+        Add default for initialisation of shared pool, fix bug in setting
+        new thread and add code for shrinking the pool size (previously
+        setting it smaller did not actually cause old threads to exit).
+
 2013-02-07 Sebastian Reitenbach <sebastia@l00-bugdead-prods.de>
+
 	* GSThreadPool.h, GSCache.m
 	  shutup clang warnings
 
