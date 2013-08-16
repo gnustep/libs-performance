@@ -273,7 +273,7 @@ GSPutFastNonBlockingFIFO(GSFIFO *receiver, void *item)
 }
 
 /** Function to efficiently put an item to a fast FIFO, blocking if
- * necessary untile there is space in the FIFO or until the timeout
+ * necessary until there is space in the FIFO or until the timeout
  * occurs.<br />
  * Warning ... only for use if the FIFO is NOT configured for multiple
  * producers.
