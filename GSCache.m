@@ -854,7 +854,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
     }
   [exclude addObject: self];
 
-  return class_getInstanceSize(isa); 
+  return class_getInstanceSize(object_getClass(self)); 
 }
 @end
 
