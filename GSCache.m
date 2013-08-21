@@ -65,7 +65,7 @@
   unsigned	life;
   unsigned	warn;
   unsigned	when;
-  unsigned	size;
+  NSUInteger	size;
   id	        key;
   id		object;
 }
@@ -102,10 +102,10 @@ typedef struct {
   void		(*refresh)(id, SEL, id, id, unsigned, unsigned);
   BOOL		(*replace)(id, SEL, id, id, unsigned, unsigned);
   unsigned	currentObjects;
-  unsigned	currentSize;
+  NSUInteger	currentSize;
   unsigned	lifetime;
   unsigned	maxObjects;
-  unsigned	maxSize;
+  NSUInteger	maxSize;
   unsigned	hits;
   unsigned	misses;
   NSMapTable	*contents;
@@ -230,7 +230,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
   return my->currentObjects;
 }
 
-- (unsigned) currentSize
+- (NSUInteger) currentSize
 {
   return my->currentSize;
 }
@@ -269,7 +269,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
   n = [NSString stringWithFormat:
     @"  %@\n"
     @"    Items: %u(%u)\n"
-    @"    Size:  %u(%u)\n"
+    @"    Size:  %"PRIuPTR"(%"PRIuPTR")\n"
     @"    Life:  %u\n"
     @"    Hit:   %u\n"
     @"    Miss: %u\n",
@@ -310,7 +310,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
   return my->maxObjects;
 }
 
-- (unsigned) maxSize
+- (NSUInteger) maxSize
 {
   return my->maxSize;
 }
@@ -568,7 +568,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
   [my->lock unlock];
 }
 
-- (void) setMaxSize: (unsigned)max
+- (void) setMaxSize: (NSUInteger)max
 {
   [my->lock lock];
   if (max > 0 && my->maxSize == 0)
@@ -576,7 +576,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
       NSMapEnumerator	e = NSEnumerateMapTable(my->contents);
       GSCacheItem	*i;
       id		k;
-      unsigned		size = 0;
+      NSUInteger	size = 0;
 
       if (my->exclude == nil)
 	{
@@ -638,9 +638,9 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 {
   GSCacheItem	*item;
   unsigned	maxObjects;
-  unsigned	maxSize;
+  NSUInteger	maxSize;
   unsigned	addObjects = (anObject == nil ? 0 : 1);
-  unsigned	addSize = 0;
+  NSUInteger	addSize = 0;
 
   [my->lock lock];
   maxObjects = my->maxObjects;
@@ -730,9 +730,9 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
     }
 }
 
-- (void) shrinkObjects: (unsigned)objects andSize: (unsigned)size 
+- (void) shrinkObjects: (unsigned)objects andSize: (NSUInteger)size 
 {
-  unsigned	newSize;
+  NSUInteger	newSize;
   unsigned	newObjects;
 
   [my->lock lock];
@@ -785,13 +785,13 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 @end
 
 @implementation	NSArray (GSCacheSizeInBytes)
-- (unsigned) sizeInBytes: (NSMutableSet*)exclude
+- (NSUInteger) sizeInBytes: (NSMutableSet*)exclude
 {
-  unsigned	size = [super sizeInBytes: exclude];
+  NSUInteger	size = [super sizeInBytes: exclude];
 
   if (size > 0)
     {
-      unsigned	count = [self count];
+      NSUInteger	count = [self count];
 
       size += count*sizeof(void*);
       while (count-- > 0)
@@ -804,9 +804,9 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 @end
 
 @implementation	NSData (GSCacheSizeInBytes)
-- (unsigned) sizeInBytes: (NSMutableSet*)exclude
+- (NSUInteger) sizeInBytes: (NSMutableSet*)exclude
 {
-  unsigned	size = [super sizeInBytes: exclude];
+  NSUInteger	size = [super sizeInBytes: exclude];
 
   if (size > 0)
     {
@@ -817,13 +817,13 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 @end
 
 @implementation	NSDictionary (GSCacheSizeInBytes)
-- (unsigned) sizeInBytes: (NSMutableSet*)exclude
+- (NSUInteger) sizeInBytes: (NSMutableSet*)exclude
 {
-  unsigned	size = [super sizeInBytes: exclude];
+  NSUInteger	size = [super sizeInBytes: exclude];
 
   if (size > 0)
     {
-      unsigned	count = [self count];
+      NSUInteger	count = [self count];
 
       size += 3 * sizeof(void*) * count;
       if (count > 0)
@@ -846,7 +846,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 @end
 
 @implementation	NSObject (GSCacheSizeInBytes)
-- (unsigned) sizeInBytes: (NSMutableSet*)exclude
+- (NSUInteger) sizeInBytes: (NSMutableSet*)exclude
 {
   if ([exclude member: self] != nil)
     {
@@ -859,13 +859,13 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 @end
 
 @implementation	NSSet (GSCacheSizeInBytes)
-- (unsigned) sizeInBytes: (NSMutableSet*)exclude
+- (NSUInteger) sizeInBytes: (NSMutableSet*)exclude
 {
-  unsigned	size = [super sizeInBytes: exclude];
+  NSUInteger	size = [super sizeInBytes: exclude];
 
   if (size > 0)
     {
-      unsigned	count = [self count];
+      NSUInteger	count = [self count];
 
       size += 3 * sizeof(void*) * count;
       if (count > 0)
@@ -886,7 +886,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 @end
 
 @implementation	NSString (GSCacheSizeInBytes)
-- (unsigned) sizeInBytes: (NSMutableSet*)exclude
+- (NSUInteger) sizeInBytes: (NSMutableSet*)exclude
 {
   if ([exclude member: self] != nil)
     {
@@ -910,23 +910,23 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
  * The actual memory usage will be larger than this of course.
  */
 @implementation	GSMimeDocument (GSCacheSizeInBytes)
-- (unsigned) sizeInBytes: (NSMutableSet*)exclude
+- (NSUInteger) sizeInBytes: (NSMutableSet*)exclude
 {
   return [[self rawMimeData] sizeInBytes: exclude];
 }
 @end
 
 @implementation	GSMimeHeader (GSCacheSizeInBytes)
-- (unsigned) sizeInBytes: (NSMutableSet*)exclude
+- (NSUInteger) sizeInBytes: (NSMutableSet*)exclude
 {
   return [[self rawMimeData] sizeInBytes: exclude];
 }
 @end
 #else
 @implementation	GSMimeDocument (GSCacheSizeInBytes)
-- (unsigned) sizeInBytes: (NSMutableSet*)exclude
+- (NSUInteger) sizeInBytes: (NSMutableSet*)exclude
 {
-  unsigned	size = [super sizeInBytes: exclude];
+  NSUInteger	size = [super sizeInBytes: exclude];
 
   if (size > 0)
     {
@@ -937,9 +937,9 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 @end
 
 @implementation	GSMimeHeader (GSCacheSizeInBytes)
-- (unsigned) sizeInBytes: (NSMutableSet*)exclude
+- (NSUInteger) sizeInBytes: (NSMutableSet*)exclude
 {
-  unsigned	size = [super sizeInBytes: exclude];
+  NSUInteger	size = [super sizeInBytes: exclude];
 
   if (size > 0)
     {

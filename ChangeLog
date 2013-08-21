@@ -1,3 +1,11 @@
+2013-08-21 Richard Frith-Macdonald  <rfm@gnu.org>
+
+	* GSFIFO.m: 64bit printf format changes
+	* GSSkipMutableArray.m: 64bit printf format changes
+	* GSCache.m: Fix mime size calculations for nonfragile abi.
+	Change API to use NSUInteger for sizes
+	* GNUmakefile: bump version fro new release
+
 2013-06-25 Richard Frith-Macdonald  <rfm@gnu.org>
 
         * GNUmakefile: bump subminor version 

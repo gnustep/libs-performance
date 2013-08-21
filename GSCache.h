@@ -82,7 +82,7 @@
 /**
  * Return the total size of the objects currently in the cache.
  */
-- (unsigned) currentSize;
+- (NSUInteger) currentSize;
 
 /**
  * Return the delegate object previously set using the -setDelegate: method.
@@ -110,7 +110,7 @@
  * Return the maximum tital size of items in the cache.<br />
  * A value of zero means there is no limit.
  */
-- (unsigned) maxSize;
+- (NSUInteger) maxSize;
 
 /**
  * Return the name of this instance (as set using -setName:)
@@ -159,7 +159,7 @@
  * then an attempt to set an object whose size would exceed the cache limit
  * will result in the least recently used items in the cache being removed.
  */
-- (void) setMaxSize: (unsigned)max;
+- (void) setMaxSize: (NSUInteger)max;
 
 /**
  * Sets the name of this instance.
@@ -209,7 +209,7 @@
  * The size argument is used <em>only</em> if a maximum size is set
  * for the cache.
  */
-- (void) shrinkObjects: (unsigned)objects andSize: (unsigned)size; 
+- (void) shrinkObjects: (unsigned)objects andSize: (NSUInteger)size; 
 @end
 
 /**
@@ -277,9 +277,9 @@
  * </p>
  * For example:
  * <example>
- * - (unsigned) sizeInBytes: (NSMutableSet*)exclude
+ * - (NSUInteger) sizeInBytes: (NSMutableSet*)exclude
  * {
- *   unsigned size = [super sizeInBytes: exclude];
+ *   NSUInteger size = [super sizeInBytes: exclude];
  *   if (size > 0)
  *     {
  *       size += [myInstanceVariable sizeInBytes: exclude];
@@ -311,7 +311,7 @@
  * to hold all the instance variables defined for the receiver's class
  * including all superclasses).
  */
-- (unsigned) sizeInBytes: (NSMutableSet*)exclude;
+- (NSUInteger) sizeInBytes: (NSMutableSet*)exclude;
 @end
 
 #endif
