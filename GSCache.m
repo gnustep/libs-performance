@@ -901,8 +901,28 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 
 #if	defined(GNUSTEP_BASE_LIBRARY)
 
+// FIXME ... this should be moved to base additions.
 #import	<GNUstepBase/GSMime.h>
 
+#if	GS_NONFRAGILE
+/* When using the non-fragile ABI, base does not expose the mime class
+ * instance variables, so we use the raw data size as a rough approximation.
+ * The actual memory usage will be larger than this of course.
+ */
+@implementation	GSMimeDocument (GSCacheSizeInBytes)
+- (unsigned) sizeInBytes: (NSMutableSet*)exclude
+{
+  return [[self rawMimeData] sizeInBytes: exclude];
+}
+@end
+
+@implementation	GSMimeHeader (GSCacheSizeInBytes)
+- (unsigned) sizeInBytes: (NSMutableSet*)exclude
+{
+  return [[self rawMimeData] sizeInBytes: exclude];
+}
+@end
+#else
 @implementation	GSMimeDocument (GSCacheSizeInBytes)
 - (unsigned) sizeInBytes: (NSMutableSet*)exclude
 {
@@ -931,6 +951,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
   return size;
 }
 @end
+#endif
 
 #endif
 
