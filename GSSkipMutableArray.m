@@ -125,7 +125,9 @@ static Class	concreteClass = 0;
     [NSNumber numberWithUnsignedInt: l->count], @"Count",
     self, @"Array", nil, nil];
 
-  reason = [NSString stringWithFormat: @"Index %d is out of range %d (in '%@')",    index, l->count, NSStringFromSelector(sel)];
+  reason = [NSString stringWithFormat: @"Index %"PRIuPTR
+    @" is out of range %d (in '%@')",
+    index, l->count, NSStringFromSelector(sel)];
 
   exception = [NSException exceptionWithName: NSRangeException
                                       reason: reason
@@ -276,13 +278,14 @@ static Class	concreteClass = 0;
 	      foo = [[NSMutableString alloc] init];
 	      [foo appendString:
 		[NSString stringWithFormat:
-		  @"\"%p\" [label = \"%p%@ |{ <delta%i> %i | <forward%i> }",
+		  @"\"%p\" [label = \"%p%@ |{ <delta%"PRIuPTR
+		  @"> %i | <forward%"PRIuPTR"> }",
 		  p, p, p == l->header ? @"(HEADER)" : @"", k,
 		  p->forward[k].delta, k]];
 	      if (p != GSISLNil)
 	        [edges addObject:
 		  [NSString stringWithFormat:
-		    @"\"%p\": forward%i -> \"%p\": delta%i;\n",
+		    @"\"%p\": forward%"PRIuPTR" -> \"%p\": delta%"PRIuPTR";\n",
 		    p, k, p->forward[k].next,
 		    p->forward[k].next == GSISLNil ? 0 : k]];
 	      [values setObject: foo forKey: value];
@@ -292,12 +295,12 @@ static Class	concreteClass = 0;
 	    {
 	      [foo appendString:
 		[NSString stringWithFormat:
-		  @"|{ <delta%i> %i | <forward%i> }",
+		  @"|{ <delta%"PRIuPTR"> %i | <forward%"PRIuPTR"> }",
 		  k, p->forward[k].delta, k]];
 	      if (p != GSISLNil)
 	        [edges addObject:
 		  [NSString stringWithFormat:
-		    @"\"%p\": forward%i -> \"%p\": delta%i;\n",
+		    @"\"%p\": forward%"PRIuPTR" -> \"%p\": delta%"PRIuPTR";\n",
 		    p, k, p->forward[k].next,
 		    p->forward[k].next == GSISLNil ? 0 : k]];
 	      [values setObject: foo forKey: value];

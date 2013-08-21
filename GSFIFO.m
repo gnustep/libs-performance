@@ -312,7 +312,7 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 - (NSString*) description
 {
   return [NSString stringWithFormat:
-    @"%@ (%@) capacity:%"PRIu64" lockless:%c"
+    @"%@ (%@) capacity:%"PRIu32" lockless:%c"
     @" get:%"PRIu64" put:%"PRIu64" empty:%"PRIu64" full:%"PRIu64"",
     [super description], name,
     _capacity,
@@ -659,7 +659,7 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 {
   NSMutableString	*s = [NSMutableString stringWithCapacity: 100];
 
-  [s appendFormat: @"%@ (%@) capacity:%"PRIu64" lockless:%c\n",
+  [s appendFormat: @"%@ (%@) capacity:%"PRIu32" lockless:%c\n",
     [super description], name,
     _capacity,
     ((nil == condition) ? 'Y' : 'N')];
