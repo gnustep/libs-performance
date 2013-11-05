@@ -155,7 +155,7 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 	  NSDate	*d;
 
 	  d = [[NSDateClass alloc]
-	    initWithTimeIntervalSinceNow: 1000.0 * timeout];
+	    initWithTimeIntervalSinceNow: timeout / 1000.0f];
 	  while (_head - _tail == 0)
 	    {
 	      if (NO == [condition waitUntilDate: d])
@@ -231,7 +231,7 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 	  NSDate	*d;
 
 	  d = [[NSDateClass alloc]
-	    initWithTimeIntervalSinceNow: 1000.0 * timeout];
+	    initWithTimeIntervalSinceNow: timeout / 1000.0f];
 	  while (_head - _tail == _capacity)
 	    {
 	      if (NO == [condition waitUntilDate: d])
