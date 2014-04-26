@@ -43,6 +43,7 @@ Performance_OBJC_FILES += \
 	GSTicker.m \
 	GSIndexedSkipList.m \
 	GSSkipMutableArray.m \
+	GSUniqued.m \
 
 
 Performance_HEADER_FILES += \
@@ -54,6 +55,7 @@ Performance_HEADER_FILES += \
 	GSThroughput.h \
 	GSTicker.h \
 	GSSkipMutableArray.h \
+	GSUniqued.h \
 
 
 Performance_AGSDOC_FILES += \
@@ -64,7 +66,8 @@ Performance_AGSDOC_FILES += \
 	GSThreadPool.h \
 	GSThroughput.h \
 	GSTicker.h \
-	GSSkipMutableArray.h
+	GSSkipMutableArray.h \
+	GSUniqued.h \
 
 
 # Optional Java wrappers for the library

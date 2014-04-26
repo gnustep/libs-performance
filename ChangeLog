@@ -1,3 +1,12 @@
+2014-04-26 Richard Frith-Macdonald  <rfm@gnu.org>
+
+	* GSUniqued.h:
+	* GSUniqued.m:
+	* Performance.h:
+	* GNUmakefile:
+	New code to implement uniqued copies of objects for lowered memory
+	footprint and faster collection lookups.
+
 2013-11-05 Niels Grewe <niels.grewe@halbordnung.de>
 
 	* GSFIFO.m: Fix calculation of the timeout for cooperating
