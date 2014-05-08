@@ -21,8 +21,8 @@ include $(GNUSTEP_MAKEFILES)/common.make
 -include config.make
 
 PACKAGE_NAME = Performance
-PACKAGE_VERSION = 0.4.0
-Performance_INTERFACE_VERSION=0.4
+PACKAGE_VERSION = 0.5.0
+Performance_INTERFACE_VERSION=0.5
 SVN_BASE_URL = svn+ssh://svn.gna.org/svn/gnustep/libs
 SVN_MODULE_NAME = performance
 
