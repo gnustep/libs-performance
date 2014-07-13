@@ -1,3 +1,7 @@
+2014-07-11  Yavor Doganov  <yavor@gnu.org>
+
+	* GNUmakefile (LIBRARIES_DEPEND_UPON): Define.
+
 2014-04-26 Richard Frith-Macdonald  <rfm@gnu.org>
 
 	* GSUniqued.h:
