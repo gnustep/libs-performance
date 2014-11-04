@@ -56,7 +56,7 @@ typedef unsigned int NSUInteger;
  * Always returns the same instance whenever the method is called.<br />
  * The shared pool is created with an initial size as specified by the
  * GSIOThreadPoolSize user default (zero if there is no such positive
- * integer in the defauilts system, however, you can modify that using
+ * integer in the defauilts system), however you can modify that using
  * the -setThreads: method.
  */
 + (GSIOThreadPool*) sharedPool;
