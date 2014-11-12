@@ -26,7 +26,7 @@
 
 @class	GSLinkedList;
 @class	NSDate;
-@class	NSLock;
+@class	NSRecursiveLock;
 
 /** This class provides a thread pool for performing methods
  * of objects in parallel in other threads.<br />

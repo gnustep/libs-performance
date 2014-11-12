@@ -1,3 +1,8 @@
+2014-11-12 Riccardo Mottola <rm@gnu.org>
+
+	* GSThreadPool.h
+	Forward-declare NSRecursiveLock, not NSLock
+
 2014-07-11  Yavor Doganov  <yavor@gnu.org>
 
 	* GNUmakefile (LIBRARIES_DEPEND_UPON): Define.
