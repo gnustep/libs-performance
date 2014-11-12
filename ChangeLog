@@ -1,5 +1,12 @@
 2014-11-12 Riccardo Mottola <rm@gnu.org>
 
+	* GSThreadPool.m
+	* GSSkipMutableArray.m
+	* GSCache.m
+	Import inttypes.h for pointer formatting
+
+2014-11-12 Riccardo Mottola <rm@gnu.org>
+
 	* GSThreadPool.h
 	Forward-declare NSRecursiveLock, not NSLock
 

@@ -1,3 +1,5 @@
+#include <inttypes.h>
+
 #import "GSLinkedList.h"
 #import "GSThreadPool.h"
 #import <Foundation/NSAutoreleasePool.h>
