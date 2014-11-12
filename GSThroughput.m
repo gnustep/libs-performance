@@ -500,7 +500,11 @@ typedef struct {
 
 - (void) add: (unsigned)count
 {
-  NSAssert(my->supportDurations == NO, @"configured for durations");
+  if (NO != my->supportDurations)
+    {
+      [NSException raise: NSInternalInconsistencyException
+                  format: @"-add: called when set for durations"];
+    }
   if (my->numberOfPeriods == 0)
     {
       cseconds[0].cnt += count; // Total
@@ -514,7 +518,11 @@ typedef struct {
 
 - (void) add: (unsigned)count duration: (NSTimeInterval)length
 {
-  NSAssert(my->supportDurations == YES, @"not configured for durations");
+  if (YES != my->supportDurations)
+    {
+      [NSException raise: NSInternalInconsistencyException
+                  format: @"-add:duration: called when not set for durations"];
+    }
 
   if (count > 0)
     {
@@ -567,7 +575,12 @@ typedef struct {
   unsigned      from;
   unsigned      to;
 
-  NSAssert(my->supportDurations == YES, @"not configured for durations");
+  if (YES != my->supportDurations)
+    {
+      [NSException raise: NSInternalInconsistencyException
+                  format: @"-addDuration: called when not set for durations"];
+    }
+
   if (my->numberOfPeriods == 0)
     {
       from = 0; // Total
@@ -848,9 +861,12 @@ typedef struct {
 {
   if (my->started > 0.0)
     {
-      [self addDuration: (*tiImp)(NSDateClass, tiSel) - my->started];
+      NSTimeInterval    ti;
+
+      ti = (*tiImp)(NSDateClass, tiSel) - my->started;
       my->event = nil;
       my->started = 0.0;
+      [self addDuration: ti];
     }
 }
 
@@ -1019,12 +1035,20 @@ typedef struct {
 
 - (void) startDuration: (NSString*)name
 {
-  NSAssert(my->supportDurations == YES && my->started == 0.0,
-    NSInternalInconsistencyException);
+  if (NO == my->supportDurations)
+    {
+      [NSException raise: NSInternalInconsistencyException
+        format: @"-startDuration: for '%@' when not set for durations", name];
+    }
+  if (0.0 == my->started)
+    {
+      [NSException raise: NSInternalInconsistencyException
+        format: @"-startDuration: for '%@' when already started", name];
+    }
   if (my->event != nil)
     {
       [NSException raise: NSInternalInconsistencyException
-		  format: @"-startDuration: for '%@' nested inside '%@'",
+        format: @"-startDuration: for '%@' nested inside '%@'",
 	my->event, name];
     }
   my->started = (*tiImp)(NSDateClass, tiSel);
