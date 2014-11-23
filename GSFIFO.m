@@ -22,7 +22,7 @@
    */
 #import "GSFIFO.h"
 #import <Foundation/NSArray.h>
-#import <Foundation/NSDate.h>
+#import <Foundation/NSException.h>
 #import <Foundation/NSLock.h>
 #import <Foundation/NSMapTable.h>
 #import <Foundation/NSString.h>
@@ -30,6 +30,8 @@
 #import <Foundation/NSUserDefaults.h>
 #import <Foundation/NSValue.h>
 #import <Foundation/NSZone.h>
+
+#include <inttypes.h>
 
 @implementation	GSFIFO
 
