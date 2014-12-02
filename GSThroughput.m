@@ -1040,7 +1040,7 @@ typedef struct {
       [NSException raise: NSInternalInconsistencyException
         format: @"-startDuration: for '%@' when not set for durations", name];
     }
-  if (0.0 == my->started)
+  if (0.0 != my->started)
     {
       [NSException raise: NSInternalInconsistencyException
         format: @"-startDuration: for '%@' when already started", name];
