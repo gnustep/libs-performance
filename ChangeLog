@@ -1,3 +1,8 @@
+2015-01-09 Richard Frith-Macdonald  <rfm@gnu.org>
+
+	* GSFIFO.[hm]: add methods for working with objects and handling
+	retain/release to treat a FIFO as a container.
+
 2014-11-12 Riccardo Mottola <rm@gnu.org>
 
 	* GSThreadPool.m

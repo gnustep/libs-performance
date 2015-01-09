@@ -396,6 +396,21 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
   return index;
 }
 
+- (unsigned) getObjects: (NSObject**)buf
+                  count: (unsigned)count
+            shouldBlock: (BOOL)block
+{
+  unsigned      result;
+  unsigned      index;
+
+  index = result = [self get: (void**)buf count: count shouldBlock: block];
+  while (index-- > 0)
+    {
+      [buf[index] release];
+    }
+  return result;
+}
+
 - (void*) get
 {
   void	*item = 0;
@@ -403,6 +418,15 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
   while (0 == [self get: &item count: 1 shouldBlock: YES])
     ;
   return item;
+}
+
+- (NSObject*) getObject
+{
+  void	*item = 0;
+
+  while (0 == [self get: &item count: 1 shouldBlock: YES])
+    ;
+  return [(NSObject*)item autorelease];
 }
 
 - (id) initWithCapacity: (uint32_t)c
@@ -598,9 +622,41 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
   return index;
 }
 
+- (unsigned) putObjects: (NSObject**)buf
+                  count: (unsigned)count
+            shouldBlock: (BOOL)block
+{
+  unsigned      result;
+  unsigned      index;
+
+  /* NB we must retain objects *before* putting them in the FIFO since
+   * another thread may grab them immediately.
+   * That means, if we fail to put all of the objects, we must release
+   * any that were left over.
+   */
+  for (index = 0; index < count; index++)
+    {
+      [buf[index] retain];
+    }
+  result = [self put: (void**)buf count: count shouldBlock: block];
+  while (count-- > result)
+    {
+      [buf[count] release];
+    }
+  return result;
+}
+
+
 - (void) put: (void*)item
 {
   while (0 == [self put: &item count: 1 shouldBlock: YES])
+    ;
+}
+
+- (void) putObject: (NSObject*)item
+{
+  [item retain];
+  while (0 == [self put: (void**)&item count: 1 shouldBlock: YES])
     ;
 }
 
@@ -749,12 +805,31 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
   return item;
 }
 
+- (NSObject*) tryGetObject
+{
+  void	*item = nil;
+  
+  [self get: &item count: 1 shouldBlock: NO];
+  return [(NSObject*)item autorelease];
+}
+
 - (BOOL) tryPut: (void*)item
 {
   if (1 == [self put: &item count: 1 shouldBlock: NO])
     {
       return YES;
     }
+  return NO;
+}
+
+- (BOOL) tryPutObject: (NSObject*)item
+{
+  [item retain];
+  if (1 == [self put: (void**)&item count: 1 shouldBlock: NO])
+    {
+      return YES;
+    }
+  [item release];
   return NO;
 }
 

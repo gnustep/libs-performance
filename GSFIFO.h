@@ -60,7 +60,11 @@
  * functions is not allowed (you must call the -get and -put: methods.<br />
  * It is recommended that you create FIFOs using the -initWithName: method
  * so that you can easily use the NSUserDefaults system to adjust their
- * configurations to tests/tweak performance.
+ * configurations to tests/tweak performance.<br />
+ * While a FIFO fundamentally works on abstract items without memory
+ * management, the API provides methods for handling NSObject values
+ * threating the FIFO as a container which retains the objects until
+ * they are removed from the FIFO.
  */
 @interface	GSFIFO : NSObject
 {
@@ -114,12 +118,32 @@
  */
 - (unsigned) get: (void**)buf  count: (unsigned)count  shouldBlock: (BOOL)block;
 
+/** Reads up to count objects from the FIFO (which must contain objects
+ * or nil items) into buf and autoreleases them.<br />
+ * If block is YES, this blocks if necessary until at least one object
+ * is available, and raises an exception if the FIFO is configured
+ * with a timeout and it is exceeded.<br />
+ * Returns the number of object actually read.
+ */
+- (unsigned) getObjects: (NSObject**)buf
+                  count: (unsigned)count
+            shouldBlock: (BOOL)block;
+
 /** Gets the next item from the FIFO, blocking if necessary until an
  * item is available.  Raises an exception if the FIFO is configured
  * with a timeout and it is exceeded.<br />
  * Implemented using -get:count:shouldBlock:
  */
 - (void*) get;
+
+/** Gets the next object from the FIFO (which must contain objects or
+ * nil items), blocking if necessary until an object is available.
+ * Autoreleases the object before returning it.<br />
+ * Raises an exception if the FIFO is configured
+ * with a timeout and it is exceeded.<br />
+ * Implemented using -get:count:shouldBlock:
+ */
+- (NSObject*) getObject;
 
 /** <init/>
  * Initialises the receiver with the specified capacity (buffer size).<br />
@@ -180,12 +204,30 @@
  */
 - (unsigned) put: (void**)buf  count: (unsigned)count  shouldBlock: (BOOL)block;
 
+/** Writes up to count objects from buf into the FIFO, retaining each.<br />
+ * If block is YES, this blocks if necessary until at least one object
+ * can be written, and raises an exception if the FIFO is configured
+ * with a timeout and it is exceeded.<br />
+ * Returns the number of objects actually written.
+ */
+- (unsigned) putObjects: (NSObject**)buf
+                  count: (unsigned)count
+            shouldBlock: (BOOL)block;
+
 /** Adds an item to the FIFO, blocking if necessary until there is
  * space in the buffer.  Raises an exception if the FIFO is configured
  * with a timeout and it is exceeded.br />
  * Implemented using -put:count:shouldBlock:
  */
 - (void) put: (void*)item;
+
+/** Adds an object to the FIFO (retaining the object), blocking if
+ * necessary until there is space in the buffer.<br />
+ * Raises an exception if the FIFO is configured
+ * with a timeout and it is exceeded.br />
+ * Implemented using -put:count:shouldBlock:
+ */
+- (void) putObject: (NSObject*)item;
 
 /** Return any available statistics for the receiver.<br />
  */
@@ -209,11 +251,23 @@
  */
 - (void*) tryGet;
 
-/** Attempts to put an item into the FIFO, returning YES on success or NO
- * if the FIFO is full.<br />
+/** Checks the FIFO and returns the first available object (autoreleased)
+ * or nil if the FIFO is empty (or contains a nil object).<br />
+ * Implemented using -get:count:shouldBlock:
+ */
+- (NSObject*) tryGetObject;
+
+/** Attempts to retain an object while putting it into the FIFO,
+ * returning YES on success or NO if the FIFO is full.<br />
  * Implemented using -put:count:shouldBlock:
  */
 - (BOOL) tryPut: (void*)item;
+
+/** Attempts to put an object (or nil) into the FIFO, returning YES
+ * on success or NO if the FIFO is full.<br />
+ * Implemented using -put:count:shouldBlock:
+ */
+- (BOOL) tryPutObject: (NSObject*)item;
 @end
 
 /** Function to efficiently get an item from a fast FIFO.<br />
