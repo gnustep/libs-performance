@@ -1,3 +1,9 @@
+2015-04-28 Niels Grewe <niels.grewe@halbordnung.de>
+
+	* GSFIFO.m: Use -autorelease rather than -release when returning
+	objects from a FIFO. Fixes a bug where a returned reference would
+	already be invalid because the FIFO was the last owner of the object.
+
 2015-01-09 Richard Frith-Macdonald  <rfm@gnu.org>
 
 	* GSFIFO.[hm]: add methods for working with objects and handling

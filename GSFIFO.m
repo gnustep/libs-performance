@@ -406,7 +406,7 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
   index = result = [self get: (void**)buf count: count shouldBlock: block];
   while (index-- > 0)
     {
-      [buf[index] release];
+      [buf[index] autorelease];
     }
   return result;
 }
