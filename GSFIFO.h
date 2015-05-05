@@ -257,6 +257,21 @@
  */
 - (NSObject*) tryGetObject;
 
+/**
+ * Checks the FIFO and returns a reference to the first available item 
+ * or NULL if the FIFO is empty. <br />Calling this method does
+ * <em>not</em> remove the item from the queue.
+ */
+- (void*) peek;
+
+/**
+ * Checks the FIFO and returns the an autoreleased reference to the first
+ * available object, or nil if the FIFO is empty (or contains a nil object).
+ * <br /> Calling this method does <em>not</em> remove the object from the
+ * queue.
+ */
+- (NSObject*)peekObject;
+
 /** Attempts to retain an object while putting it into the FIFO,
  * returning YES on success or NO if the FIFO is full.<br />
  * Implemented using -put:count:shouldBlock:

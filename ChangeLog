@@ -1,3 +1,8 @@
+2015-05-05 Niels Grewe <niels.grewe@halbordnung.de>
+
+	* GSFIFO.[hm]: Add methods to peek at the top/front object in the
+	FIFO without removing it.
+
 2015-04-28 Niels Grewe <niels.grewe@halbordnung.de>
 
 	* GSFIFO.m: Use -autorelease rather than -release when returning

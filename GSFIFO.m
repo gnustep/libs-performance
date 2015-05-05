@@ -201,6 +201,39 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
   return index;
 }
 
+- (void*) _cooperatingPeek
+{
+  [condition lock];
+  if ((_head - _tail) == 0)
+    {
+      // We do not need to signal the condition because
+      // nothing about the qeuue did change
+      [condition unlock];
+      return NULL;;
+    }
+  void *ptr = _items[_tail % _capacity];
+  [condition unlock];
+  return ptr;
+}
+
+- (void*) peek
+{
+  if (condition != nil)
+    {
+      return [self _cooperatingPeek];
+    }
+  if (_head - _tail == 0)
+    {
+      return NULL;
+    }
+  return _items[_tail % _capacity];
+}
+
+- (NSObject*) peekObject
+{
+  return [[(id<NSObject>)[self peek] retain] autorelease];
+}
+
 - (unsigned) _cooperatingPut: (void**)buf
 		       count: (unsigned)count
 		 shouldBlock: (BOOL)block
