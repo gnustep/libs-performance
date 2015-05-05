@@ -1,5 +1,9 @@
 2015-05-05 Niels Grewe <niels.grewe@halbordnung.de>
 
+	* GSFIFO.m: Fix a potential race condition in -peekObject.
+
+2015-05-05 Niels Grewe <niels.grewe@halbordnung.de>
+
 	* GSFIFO.[hm]: Add methods to peek at the top/front object in the
 	FIFO without removing it.
 
