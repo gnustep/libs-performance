@@ -23,13 +23,32 @@
    Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111 USA.
    */
 #import <Foundation/NSObject.h>
+#import <Foundation/NSThread.h>
 
 #if !defined (GNUSTEP) && (MAC_OS_X_VERSION_MAX_ALLOWED<=MAC_OS_X_VERSION_10_4)
 typedef unsigned int NSUInteger;
 #endif
 
-@class	NSThread;
 @class	NSLock;
+@class	NSTimer;
+
+/** This is the class for threads in the pool.<br />
+ * Each thread runs a runloop and is kept 'alive' waiting for a timer in
+ * the far future, but can be terminated earlier using the -terminate:
+ * method (which is called when the pool size is changed and the pool
+ * wishes to stop an idle thread).<br />
+ */
+@interface	GSIOThread : NSThread
+{
+@private
+  NSTimer	*_timer;                /** Pool termination timer */
+  NSUInteger	_count;                 /** Number of times acquired */ 
+}
+/** Terminates the thread by the specified date (as soon as possible if
+ * the date is nil or is in the past).
+ */
+- (void) terminate: (NSDate*)when;
+@end
 
 /** This class provides a thread pool for performing methods which need to
  * make use of a runloop for I/O and/or timers.<br />
@@ -61,7 +80,9 @@ typedef unsigned int NSUInteger;
  */
 + (GSIOThreadPool*) sharedPool;
 
-/** Selects a thread from the pool to be used for some job.
+/** Selects a thread from the pool to be used for some job.<br />
+ * This method selectes the least used thread in the pool (ie the
+ * one with the lowest acquire count).
  */
 - (NSThread*) acquireThread;
 
@@ -94,7 +115,10 @@ typedef unsigned int NSUInteger;
  */
 - (NSTimeInterval) timeout;
 
-/** Releases a thread previously selected from the pool.
+/** Releases a thread previously selected from the pool.  This decreases the
+ * acquire count for the thread.  If a thread has a zero acquire count, it is
+ * a candidatre for termination and removal from the pool if/when the pool
+ * has its size changed.
  */
 - (void) unacquireThread: (NSThread*)aThread;
 

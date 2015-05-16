@@ -570,6 +570,7 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 {
   NSUserDefaults	*defs = [NSUserDefaults standardUserDefaults];
   NSString		*key;
+  NSInteger             i;
   uint16_t		g;
   uint16_t		t;
   BOOL			mc;
@@ -577,19 +578,27 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
   NSArray		*b;
 
   key = [NSString stringWithFormat: @"GSFIFOCapacity%@", n];
-  if ([defs integerForKey: key] > 0)
+  if (nil == [defs objectForKey: key]) key = @"GSFIFOCapacity";
+  i = [defs integerForKey: key];
+  if (i > 0)
     {
-      c = [defs integerForKey: key];
+      c = i;
     }
+
   key = [NSString stringWithFormat: @"GSFIFOGranularity%@", n];
+  if (nil == [defs objectForKey: key]) key = @"GSFIFOGranularity";
   g = [defs integerForKey: key];
   key = [NSString stringWithFormat: @"GSFIFOTimeout%@", n];
+  if (nil == [defs objectForKey: key]) key = @"GSFIFOTimeout";
   t = [defs integerForKey: key];
   key = [NSString stringWithFormat: @"GSFIFOSingleConsumer%@", n];
+  if (nil == [defs objectForKey: key]) key = @"GSFIFOSingleConsumer";
   mc = (YES == [defs boolForKey: key]) ? NO : YES;
   key = [NSString stringWithFormat: @"GSFIFOSingleProducer%@", n];
+  if (nil == [defs objectForKey: key]) key = @"GSFIFOSingleProducer";
   mp = (YES == [defs boolForKey: key]) ? NO : YES;
   key = [NSString stringWithFormat: @"GSFIFOBoundaries%@", n];
+  if (nil == [defs objectForKey: key]) key = @"GSFIFOBoundaries";
   b = [defs arrayForKey: key];
 
   return [self initWithCapacity: c

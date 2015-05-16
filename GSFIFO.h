@@ -193,6 +193,8 @@
  * The GSFIFOSingleConsumerNNN boolean is NO by default.<br />
  * The GSFIFOSingleProducerNNN boolean is NO by default.<br />
  * The GSFIFOBoundariesNNN array is missing by default.<br />
+ * If no default is found for the specific named FIFO, the default set
+ * for a FIFO with an empty name is used.
  */
 - (id) initWithName: (NSString*)n;
 

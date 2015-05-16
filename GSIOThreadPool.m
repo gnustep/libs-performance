@@ -31,30 +31,71 @@
 #import <Foundation/NSUserDefaults.h>
 #import	"GSIOThreadPool.h"
 
-@interface	GSIOThread : NSThread
+/* Protect changes to a thread's counter
+ */
+static NSLock   *countLock = nil;
+
+@interface	GSIOThread (Private)
+- (NSUInteger) _count;
+- (void) _finish: (NSTimer*)t;
+- (void) _run;
+- (void) _setCount: (NSUInteger)c;
+@end
+
+@implementation	GSIOThread (Private)
+
++ (void) initialize
 {
-  NSTimer	*timer;
-  @public
-  NSUInteger	count;
+  if (nil == countLock)
+    {
+      countLock = [NSLock new];
+    }
 }
-- (void) exit: (NSTimer*)t;
-- (void) run;
-- (void) terminate: (NSDate*)when;
+
+- (NSUInteger) _count
+{
+  return _count;
+}
+
+/* Force termination of this thread.
+ */
+- (void) _finish: (NSTimer*)t
+{
+  _timer = nil;
+  [NSThread exit];
+}
+
+/* Run the thread's main runloop until terminated.
+ */
+- (void) _run
+{
+  NSDate		*when = [NSDate distantFuture];
+  NSTimeInterval	delay = [when timeIntervalSinceNow];
+
+  _timer = [NSTimer scheduledTimerWithTimeInterval: delay
+					    target: self
+					  selector: @selector(_finish:)
+					  userInfo: nil
+					   repeats: NO];
+  [[NSRunLoop currentRunLoop] run];
+}
+
+- (void) _setCount: (NSUInteger)c
+{
+  if (NSNotFound != _count)
+    {
+      _count = c;
+    }
+}
+
 @end
 
 @implementation	GSIOThread
 
-/* Force termination of this thread.
- */
-- (void) exit: (NSTimer*)t
-{
-  [NSThread exit];
-}
-
 #if defined(GNUSTEP) || (MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_4)
 - (id) init
 {
-  self = [super initWithTarget: self selector: @selector(run) object: nil];
+  self = [super initWithTarget: self selector: @selector(_run) object: nil];
   if (nil != self)
     {
       [self start];
@@ -63,40 +104,38 @@
 }
 #endif
 
-/* Run the thread's main runloop until terminated.
- */
-- (void) run
-{
-  NSDate		*when = [NSDate distantFuture];
-  NSTimeInterval	delay = [when timeIntervalSinceNow];
-
-  timer = [NSTimer scheduledTimerWithTimeInterval: delay
-					   target: self
-					 selector: @selector(exit:)
-					 userInfo: nil
-					  repeats: NO];
-  [[NSRunLoop currentRunLoop] run];
-}
-
 /* End execution of the thread by the specified date.
  */
 - (void) terminate: (NSDate*)when
 {
-  NSTimeInterval	delay = [when timeIntervalSinceNow];
+  NSTimeInterval	delay = 0.0;
 
-  [timer invalidate];
+  if ([when isKindOfClass: [NSDate class]])
+    {
+      delay = [when timeIntervalSinceNow];
+    }
+  [_timer invalidate];
+
+  [countLock lock];
+  if (0 == _count || delay <= 0.0)
+    {
+      _count = NSNotFound;      // Mark as terminating
+      _timer = nil;
+      delay = 0.0;
+    }
+  [countLock unlock];
+
   if (delay > 0.0)
     {
-      timer = [NSTimer scheduledTimerWithTimeInterval: delay
-					       target: self
-					     selector: @selector(exit:)
-					     userInfo: nil
-					      repeats: NO];
+      _timer = [NSTimer scheduledTimerWithTimeInterval: delay
+					        target: self
+					      selector: @selector(_finish:)
+					      userInfo: nil
+					       repeats: NO];
     }
   else
     {
-      timer = nil;
-      [self exit: nil];
+      [self _finish: nil];
     }
 }
 @end
@@ -119,11 +158,20 @@ best(NSMutableArray *a)
     {
       GSIOThread	*o = [a objectAtIndex: c];
 
-      if (o->count < l)
-	{
-	  t = o;
-	  l = o->count;
-	}
+      if ([o isExecuting])
+        {
+          NSUInteger    i;
+
+          if ((i = [o _count]) < l)
+            {
+              t = o;
+              l = i;
+            }
+        }
+      else if ([o isCancelled] || [o isFinished])
+        {
+          [a removeObjectAtIndex: c];
+        }
     }
   return t;
 }
@@ -153,6 +201,7 @@ best(NSMutableArray *a)
 - (NSThread*) acquireThread
 {
   GSIOThread	*t;
+  NSUInteger    c;
 
   [poolLock lock];
   if (0 == maxThreads)
@@ -160,14 +209,17 @@ best(NSMutableArray *a)
       [poolLock unlock];
       return [NSThread mainThread];
     }
+  [countLock lock];
   t = best(threads);
-  if (nil == t || (t->count > 0 && [threads count] < maxThreads))
+  if (nil == t || ((c = [t _count]) > 0 && [threads count] < maxThreads))
     {
       t = [GSIOThread new];
       [threads addObject: t];
       [t release];
+      c = 0;
     }
-  t->count++;
+  [t _setCount: c + 1];
+  [countLock unlock];
   [poolLock unlock];
   return t;
 }
@@ -179,7 +231,7 @@ best(NSMutableArray *a)
   [poolLock lock];
   if ([threads indexOfObjectIdenticalTo: aThread] != NSNotFound)
     {
-      count = ((GSIOThread*)aThread)->count;
+      count = [((GSIOThread*)aThread) _count];
     }
   [poolLock unlock];
   return count;
@@ -250,15 +302,20 @@ best(NSMutableArray *a)
   [poolLock lock];
   if ([threads indexOfObjectIdenticalTo: aThread] != NSNotFound)
     {
-      if (0 == ((GSIOThread*)aThread)->count)
+      NSUInteger        c;
+
+      [countLock lock];
+      c = [((GSIOThread*)aThread) _count];
+      if (0 == c)
 	{
+          [countLock unlock];
 	  [poolLock unlock];
 	  [NSException raise: NSInternalInconsistencyException
 		      format: @"-unacquireThread: called too many times"];
 	}
-      ((GSIOThread*)aThread)->count--;
-      if (0 == ((GSIOThread*)aThread)->count
-        && [threads count] > maxThreads)
+      [((GSIOThread*)aThread) _setCount: --c];
+      [countLock unlock];
+      if (0 == c && [threads count] > maxThreads)
         {
           [aThread retain];
           [threads removeObjectIdenticalTo: aThread];
