@@ -29,7 +29,6 @@
 typedef unsigned int NSUInteger;
 #endif
 
-@class	NSLock;
 @class	NSTimer;
 
 /** This is the class for threads in the pool.<br />
@@ -62,7 +61,6 @@ typedef unsigned int NSUInteger;
  */
 @interface	GSIOThreadPool : NSObject
 {
-  NSLock		*poolLock;
   NSMutableArray	*threads;
   NSTimeInterval	timeout;
   NSUInteger		maxThreads;

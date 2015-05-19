@@ -33,7 +33,7 @@
 
 /* Protect changes to a thread's counter
  */
-static NSLock   *countLock = nil;
+static NSRecursiveLock   *classLock = nil;
 
 @interface	GSIOThread (Private)
 - (NSUInteger) _count;
@@ -46,9 +46,9 @@ static NSLock   *countLock = nil;
 
 + (void) initialize
 {
-  if (nil == countLock)
+  if (nil == classLock)
     {
-      countLock = [NSLock new];
+      classLock = [NSRecursiveLock new];
     }
 }
 
@@ -116,14 +116,14 @@ static NSLock   *countLock = nil;
     }
   [_timer invalidate];
 
-  [countLock lock];
+  [classLock lock];
   if (0 == _count || delay <= 0.0)
     {
       _count = NSNotFound;      // Mark as terminating
       _timer = nil;
       delay = 0.0;
     }
-  [countLock unlock];
+  [classLock unlock];
 
   if (delay > 0.0)
     {
@@ -182,6 +182,7 @@ best(NSMutableArray *a)
     {
       NSInteger size;
 
+      [GSIOThread class];
       size = [[NSUserDefaults standardUserDefaults]
         integerForKey: @"GSIOThreadPoolSize"];
       if (size < 0)
@@ -203,13 +204,12 @@ best(NSMutableArray *a)
   GSIOThread	*t;
   NSUInteger    c;
 
-  [poolLock lock];
+  [classLock lock];
   if (0 == maxThreads)
     {
-      [poolLock unlock];
+      [classLock unlock];
       return [NSThread mainThread];
     }
-  [countLock lock];
   t = best(threads);
   if (nil == t || ((c = [t _count]) > 0 && [threads count] < maxThreads))
     {
@@ -219,8 +219,7 @@ best(NSMutableArray *a)
       c = 0;
     }
   [t _setCount: c + 1];
-  [countLock unlock];
-  [poolLock unlock];
+  [classLock unlock];
   return t;
 }
 
@@ -228,12 +227,12 @@ best(NSMutableArray *a)
 {
   NSUInteger	count = 0;
 
-  [poolLock lock];
+  [classLock lock];
   if ([threads indexOfObjectIdenticalTo: aThread] != NSNotFound)
     {
       count = [((GSIOThread*)aThread) _count];
     }
-  [poolLock unlock];
+  [classLock unlock];
   return count;
 }
 
@@ -243,7 +242,7 @@ best(NSMutableArray *a)
   GSIOThread	*thread;
   NSDate	*when = [NSDate dateWithTimeIntervalSinceNow: timeout];
 
-  [poolLock lock];
+  [classLock lock];
   while ((thread = [threads lastObject]) != nil)
     {
       [thread performSelector: @selector(terminate:)
@@ -253,8 +252,7 @@ best(NSMutableArray *a)
       [threads removeLastObject];
     }
   [threads release];
-  [poolLock unlock];
-  [poolLock release];
+  [classLock unlock];
 #endif
   [super dealloc];
 }
@@ -264,7 +262,6 @@ best(NSMutableArray *a)
 #if defined(GNUSTEP) || (MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_4)
   if ((self = [super init]) != nil)
     {
-      poolLock = [NSLock new];
       threads = [NSMutableArray new];
     }
 #else
@@ -282,9 +279,9 @@ best(NSMutableArray *a)
 
 - (void) setThreads: (NSUInteger)max
 {
-  [poolLock lock];
+  [classLock lock];
   maxThreads = max;
-  [poolLock unlock];
+  [classLock unlock];
 }
 
 - (void) setTimeout: (NSTimeInterval)t
@@ -299,22 +296,19 @@ best(NSMutableArray *a)
 
 - (void) unacquireThread: (NSThread*)aThread
 {
-  [poolLock lock];
+  [classLock lock];
   if ([threads indexOfObjectIdenticalTo: aThread] != NSNotFound)
     {
       NSUInteger        c;
 
-      [countLock lock];
       c = [((GSIOThread*)aThread) _count];
       if (0 == c)
 	{
-          [countLock unlock];
-	  [poolLock unlock];
+          [classLock unlock];
 	  [NSException raise: NSInternalInconsistencyException
 		      format: @"-unacquireThread: called too many times"];
 	}
       [((GSIOThread*)aThread) _setCount: --c];
-      [countLock unlock];
       if (0 == c && [threads count] > maxThreads)
         {
           [aThread retain];
@@ -326,7 +320,7 @@ best(NSMutableArray *a)
           [aThread release];
         }
     }
-  [poolLock unlock];
+  [classLock unlock];
 }
 
 @end
