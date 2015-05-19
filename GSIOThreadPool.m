@@ -204,12 +204,12 @@ best(NSMutableArray *a)
   GSIOThread	*t;
   NSUInteger    c;
 
-  [classLock lock];
   if (0 == maxThreads)
     {
-      [classLock unlock];
       return [NSThread mainThread];
     }
+
+  [classLock lock];
   t = best(threads);
   if (nil == t || ((c = [t _count]) > 0 && [threads count] < maxThreads))
     {
@@ -279,9 +279,7 @@ best(NSMutableArray *a)
 
 - (void) setThreads: (NSUInteger)max
 {
-  [classLock lock];
   maxThreads = max;
-  [classLock unlock];
 }
 
 - (void) setTimeout: (NSTimeInterval)t
