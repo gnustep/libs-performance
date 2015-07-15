@@ -1,3 +1,9 @@
+2015-07-15 Richard Frith-Macdonald  <rfm@gnu.org>
+
+	* GSCache.m: Experimental change (use in conjunction with gnustep-base
+	from svn 38799) to put object memory footprint interrogation into the
+	base library and make it more accurate and efficient.
+
 2015-05-05 Niels Grewe <niels.grewe@halbordnung.de>
 
 	* GSFIFO.m: Fix a potential race condition in -peekObject.
