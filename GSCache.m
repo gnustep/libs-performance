@@ -244,36 +244,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 
 - (NSUInteger) currentSize
 {
-  NSUInteger            size = 0;
-  NSMapEnumerator	e;
-  GSCacheItem	        *i;
-  id		        k;
-
-  [my->lock lock];
-  if (nil == my->exclude)
-    {
-      my->exclude = NSCreateHashTable(NSNonOwnedPointerHashCallBacks, 0);
-    }
-  else
-    {
-      [my->exclude removeAllObjects];
-    }
-  e = NSEnumerateMapTable(my->contents);
-  while (NSNextMapEnumeratorPair(&e, (void**)&k, (void**)&i) != 0)
-    {
-      size += [i->object sizeInBytesExcluding: my->exclude];
-    }
-  NSEndMapTableEnumeration(&e);
-  if (my->maxSize > 0)
-    {
-      my->currentSize = size;
-    }
-  else
-    {
-      DESTROY(my->exclude);
-    }
-  [my->lock unlock];
-  return size;
+  return my->currentSize;
 }
 
 - (void) dealloc
@@ -619,7 +590,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
       id		k;
       NSUInteger	size = 0;
 
-      if (my->exclude == nil)
+      if (nil == my->exclude)
 	{
 	  my->exclude
             = NSCreateHashTable(NSNonOwnedPointerHashCallBacks, 0);
@@ -628,8 +599,8 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 	{
 	  if (i->size == 0)
 	    {
-	      [my->exclude removeAllObjects];
 	      i->size = [i->object sizeInBytesExcluding: my->exclude];
+	      [my->exclude removeAllObjects];
 	    }
 	  if (i->size > max)
 	    {
@@ -703,13 +674,13 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
     {
       if (maxSize > 0)
 	{
-          if (my->exclude == nil)
+          if (nil == my->exclude)
             {
               my->exclude
                 = NSCreateHashTable(NSNonOwnedPointerHashCallBacks, 0);
             }
-	  [my->exclude removeAllObjects];
 	  addSize = [anObject sizeInBytesExcluding: my->exclude];
+	  [my->exclude removeAllObjects];
 	  if (addSize > maxSize)
 	    {
 	      addObjects = 0;	// Object too big to cache.
@@ -807,8 +778,10 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 
 - (NSUInteger) sizeInBytesExcluding: (NSHashTable*)exclude
 {
-  NSUInteger    size = [super sizeInBytesExcluding: exclude];
+  NSUInteger    size;
 
+  [my->lock lock];
+  size = [super sizeInBytesExcluding: exclude];
   if (size > 0)
     {
       size += sizeof(Item)
@@ -817,6 +790,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
         + [my->name sizeInBytesExcluding: exclude]
         + [my->lock sizeInBytesExcluding: exclude];
     }
+  [my->lock unlock];
   return size;
 }
 

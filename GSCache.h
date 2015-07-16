@@ -86,7 +86,12 @@
 - (unsigned) currentObjects;
 
 /**
- * Return the total size of the objects currently in the cache.
+ * Return the total size of the objects currently in the cache.<br />
+ * NB.  Object sizes are considered independently ... so where cached
+ * objects are containers with common content, the size of the cache
+ * may appear larger than is actually used.<br />
+ * Also, this figure does not consider memmory used by the cache itself
+ * or by the keys, only the memory used by the objects cached.
  */
 - (NSUInteger) currentSize;
 
