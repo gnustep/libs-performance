@@ -55,6 +55,12 @@
  * (and the copied keys are immutable) and implement the -hash and
  * -isEqual: methods such that any two keys can be tested for equality
  *  and used as dictionary keys.<br />
+ * For object sizing we use the -sizeInBytesExcluding: method, which is
+ * declared in the GNUstep-base additions library headers as follows:<br />
+ * - (NSUInteger) sizeInBytesExcluding: (NSHashTable*)exclude;<br />
+ * If you wish to store objects in a size-limited cache, you should
+ * implement that method to return an appropriate size for the object
+ * you are caching.<br />
  * NB.  GSCache currently does not support subclassing ... use it as is
  * or extend it via categories, but do not try to add instance variables.
  */
@@ -107,7 +113,7 @@
 - (unsigned) maxObjects;
 
 /**
- * Return the maximum tital size of items in the cache.<br />
+ * Return the maximum total size of items in the cache.<br />
  * A value of zero means there is no limit.
  */
 - (NSUInteger) maxSize;
@@ -261,13 +267,6 @@
 		  after: (unsigned)delay;
 
 @end
-
-/**
- * The -sizeInBytes: method is now declared in the GNUstep-base additions
- * header as follows:
- *
- * - (NSUInteger) sizeInBytes: (NSHashTable*)exclude;
- */
 
 #endif
 

@@ -89,16 +89,16 @@
   [object release];
   [super dealloc];
 }
-- (NSUInteger) sizeInBytes: (NSHashTable*)exclude
+- (NSUInteger) sizeInBytesExcluding: (NSHashTable*)exclude
 {
-  NSUInteger    size = [super sizeInBytes: exclude];
+  NSUInteger    bytes = [super sizeInBytesExcluding: exclude];
 
-  if (size > 0)
+  if (bytes > 0)
     {
-      size += [key sizeInBytes: exclude];
-      size += [object sizeInBytes: exclude];
+      bytes += [key sizeInBytesExcluding: exclude];
+      bytes += [object sizeInBytesExcluding: exclude];
     }
-  return size;
+  return bytes;
 }
 @end
 
@@ -261,7 +261,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
   e = NSEnumerateMapTable(my->contents);
   while (NSNextMapEnumeratorPair(&e, (void**)&k, (void**)&i) != 0)
     {
-      size += [i->object sizeInBytes: my->exclude];
+      size += [i->object sizeInBytesExcluding: my->exclude];
     }
   NSEndMapTableEnumeration(&e);
   if (my->maxSize > 0)
@@ -629,7 +629,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 	  if (i->size == 0)
 	    {
 	      [my->exclude removeAllObjects];
-	      i->size = [i->object sizeInBytes: my->exclude];
+	      i->size = [i->object sizeInBytesExcluding: my->exclude];
 	    }
 	  if (i->size > max)
 	    {
@@ -709,7 +709,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
                 = NSCreateHashTable(NSNonOwnedPointerHashCallBacks, 0);
             }
 	  [my->exclude removeAllObjects];
-	  addSize = [anObject sizeInBytes: my->exclude];
+	  addSize = [anObject sizeInBytesExcluding: my->exclude];
 	  if (addSize > maxSize)
 	    {
 	      addObjects = 0;	// Object too big to cache.
@@ -805,17 +805,17 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
   [my->lock unlock];
 }
 
-- (NSUInteger) sizeInBytes: (NSHashTable*)exclude
+- (NSUInteger) sizeInBytesExcluding: (NSHashTable*)exclude
 {
-  NSUInteger    size = [super sizeInBytes: exclude];
+  NSUInteger    size = [super sizeInBytesExcluding: exclude];
 
   if (size > 0)
     {
       size += sizeof(Item)
-        + [my->contents sizeInBytes: exclude]
-        + [my->exclude sizeInBytes: exclude]
-        + [my->name sizeInBytes: exclude]
-        + [my->lock sizeInBytes: exclude];
+        + [my->contents sizeInBytesExcluding: exclude]
+        + [my->exclude sizeInBytesExcluding: exclude]
+        + [my->name sizeInBytesExcluding: exclude]
+        + [my->lock sizeInBytesExcluding: exclude];
     }
   return size;
 }
