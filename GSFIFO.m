@@ -209,7 +209,7 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
       // We do not need to signal the condition because
       // nothing about the qeuue did change
       [condition unlock];
-      return NULL;;
+      return NULL;
     }
   void *ptr = _items[_tail % _capacity];
   [condition unlock];
@@ -900,5 +900,21 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
   return NO;
 }
 
+- (NSUInteger)sizeInBytesExcluding: (NSHashTable*)excluding
+{
+  NSUInteger size = 0;
+  if (0 == (size = [super sizeInBytesExcluding: excluding]))
+    {
+      return 0;
+    }
+  return size
+   + (_capacity * sizeof(void)) // item storage
+   + (boundsCount * sizeof(NSTimeInterval)) // boundaries
+   + (2 * (boundsCount + 1) * sizeof(uint64_t)) // get and put counts
+   + [condition sizeInBytesExcluding: excluding]
+   + [name sizeInBytesExcluding: excluding]
+   + [putThread sizeInBytesExcluding: excluding]
+   + [getThread sizeInBytesExcluding: excluding];
+}
 @end
 

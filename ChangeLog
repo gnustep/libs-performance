@@ -1,3 +1,7 @@
+2015-07-16 Niels Grewe <niels.grewe@halbordnung.de>
+
+	* GSFIFO.m: Implement -sizeInBytesExcluding:
+
 2015-07-15 Richard Frith-Macdonald  <rfm@gnu.org>
 
 	* GSCache.m: Experimental change (use in conjunction with gnustep-base
