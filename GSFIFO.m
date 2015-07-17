@@ -128,6 +128,7 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 - (unsigned) _cooperatingGet: (void**)buf
 		       count: (unsigned)count
 		 shouldBlock: (BOOL)block
+                      before: (NSDate*)before
 {
   NSTimeInterval	ti;
   unsigned		index;
@@ -145,7 +146,7 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 	}
 
       START
-      if (0 == timeout)
+      if ((0 == timeout) && (before == nil))
 	{
 	  while (_head - _tail == 0)
 	    {
@@ -155,22 +156,47 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
       else
 	{
 	  NSDate	*d;
-
-	  d = [[NSDateClass alloc]
-	    initWithTimeIntervalSinceNow: timeout / 1000.0f];
+          NSDate        *effective;
+          [before retain];
+          if (timeout != 0)
+            {
+              d = [[NSDateClass alloc]
+               initWithTimeIntervalSinceNow: timeout / 1000.0f];
+            }
+          if ((d != nil) && (before != nil))
+            {
+              effective = [d earlierDate: before];
+            }
+          else if (d != nil)
+            {
+              effective = d;
+            }
+          else
+            {
+              effective = before;
+            }
 	  while (_head - _tail == 0)
 	    {
-	      if (NO == [condition waitUntilDate: d])
+	      if (NO == [condition waitUntilDate: effective])
 		{
 		  [d release];
+                  [before release];
 		  ENDGET
 		  [condition broadcast];
 		  [condition unlock];
-		  [NSException raise: NSGenericException
-			      format: @"Timeout waiting for new data in FIFO"];
+                  if (before != effective)
+                    {
+                      [NSException raise: NSGenericException
+                                  format: @"Timeout waiting for new data in FIFO"];
+                    }
+                  else
+                    {
+                      return 0;
+                    }
 		}
 	    }
 	  [d release];
+          [before release];
 	  ENDGET
 	}
     }
@@ -383,21 +409,28 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
     fullCount];
 }
 
-- (unsigned) get: (void**)buf count: (unsigned)count shouldBlock: (BOOL)block
+- (unsigned) get: (void**)buf
+           count: (unsigned)count
+     shouldBlock: (BOOL)block
+          before: (NSDate*)date
+
 {
   unsigned		index;
   NSTimeInterval	ti;
   NSTimeInterval	sum;
+  NSTimeInterval        waitLength;
   uint32_t		old;
-  uint32_t		fib;
-  
+  uint32_t		fib; 
   if (0 == count) return 0;
 
   if (nil != condition)
     {
-      return [self _cooperatingGet: buf count: count shouldBlock: block];
+      return [self _cooperatingGet: buf 
+                             count: count 
+                       shouldBlock: block
+                            before: date];
     }
-
+  waitLength = [date timeIntervalSinceNow];
   if (nil == getThread)
     {
       getThread = [NSThread currentThread];
@@ -434,6 +467,11 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 	  [NSException raise: NSGenericException
 		      format: @"Timeout waiting for new data in FIFO"];
 	}
+      else if (date != nil && sum > waitLength)
+        {
+          ENDGET
+          return 0;
+        }
       tmp = fib + old;
       old = fib;
       fib = tmp;
@@ -454,19 +492,41 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
   return index;
 }
 
+
+- (unsigned) get: (void**)buf count: (unsigned)count shouldBlock: (BOOL)block
+{
+  return [self get: buf count: count shouldBlock: block before: nil];
+}
+
+
+
 - (unsigned) getObjects: (NSObject**)buf
                   count: (unsigned)count
             shouldBlock: (BOOL)block
+                 before: (NSDate*)date
 {
   unsigned      result;
   unsigned      index;
 
-  index = result = [self get: (void**)buf count: count shouldBlock: block];
+  index = result = [self get: (void**)buf
+                       count: count 
+                 shouldBlock: block 
+                      before: date];
   while (index-- > 0)
     {
       [buf[index] autorelease];
     }
   return result;
+}
+
+- (unsigned) getObjects: (NSObject**)buf
+                  count: (unsigned)count
+            shouldBlock: (BOOL)block
+{
+  return [self getObjects: buf
+                    count: count
+              shouldBlock: block
+                   before: nil];
 }
 
 - (void*) get

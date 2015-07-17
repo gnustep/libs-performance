@@ -118,6 +118,17 @@
  */
 - (unsigned) get: (void**)buf  count: (unsigned)count  shouldBlock: (BOOL)block;
 
+/**
+ * Reads up to count items from the FIFO into the buf. If blocking is requested
+ * and a before date is specified, the operation blocks until the specified time
+ * and returns 0 if it could not read any items. The timeout configured for the 
+ * FIFO still takes precedence.
+ */
+- (unsigned) get: (void**)buf
+           count: (unsigned)count
+     shouldBlock: (BOOL)block
+          before: (NSDate*)date;
+
 /** Reads up to count objects from the FIFO (which must contain objects
  * or nil items) into buf and autoreleases them.<br />
  * If block is YES, this blocks if necessary until at least one object
@@ -128,6 +139,18 @@
 - (unsigned) getObjects: (NSObject**)buf
                   count: (unsigned)count
             shouldBlock: (BOOL)block;
+
+
+/**
+ * Reads up to count autoreleased objects from the FIFO into the buf. If blocking
+ * is requested and a before date is specified, the operation blocks until the
+ * specified time and returns 0 if it could not read any items. The timeout
+ * configured for the FIFO still takes precedence.
+ */
+- (unsigned) getObjects: (NSObject**)buf
+                  count: (unsigned)count
+            shouldBlock: (BOOL)block
+                 before: (NSDate*)date;
 
 /** Gets the next item from the FIFO, blocking if necessary until an
  * item is available.  Raises an exception if the FIFO is configured
