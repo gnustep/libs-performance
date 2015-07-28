@@ -155,8 +155,9 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 	}
       else
 	{
-	  NSDate	*d;
+	  NSDate	*d = nil;
           NSDate        *effective;
+
           [before retain];
           if (timeout != 0)
             {
@@ -187,7 +188,7 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
                   if (before != effective)
                     {
                       [NSException raise: NSGenericException
-                                  format: @"Timeout waiting for new data in FIFO"];
+                        format: @"Timeout waiting for new data in FIFO"];
                     }
                   else
                     {
