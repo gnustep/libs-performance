@@ -62,6 +62,7 @@ static NSRecursiveLock   *classLock = nil;
 - (void) _finish: (NSTimer*)t
 {
   _timer = nil;
+  [self shutdown];
   [NSThread exit];
 }
 
@@ -72,6 +73,7 @@ static NSRecursiveLock   *classLock = nil;
   NSDate		*when = [NSDate distantFuture];
   NSTimeInterval	delay = [when timeIntervalSinceNow];
 
+  [self startup];
   _timer = [NSTimer scheduledTimerWithTimeInterval: delay
 					    target: self
 					  selector: @selector(_finish:)
@@ -103,6 +105,16 @@ static NSRecursiveLock   *classLock = nil;
   return self;
 }
 #endif
+
+- (void) shutdown
+{
+  return;
+}
+
+- (void) startup
+{
+  return;
+}
 
 /* End execution of the thread by the specified date.
  */

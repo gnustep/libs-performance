@@ -47,6 +47,16 @@ typedef unsigned int NSUInteger;
  * the date is nil or is in the past).
  */
 - (void) terminate: (NSDate*)when;
+
+/** Called when the thread is shut down (immediately before exit).<br />
+ * Does nothing, provided for subclasses to override.
+ */
+- (void) shutdown;
+
+/** Called when the thread is started up (before the run loop starts).<br />
+ * Does nothing, provided for subclasses to override.
+ */
+- (void) startup;
 @end
 
 /** This class provides a thread pool for performing methods which need to
