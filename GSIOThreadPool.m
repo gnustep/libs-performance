@@ -213,7 +213,7 @@ best(NSMutableArray *a)
   t = best(threads);
   if (nil == t || ((c = [t _count]) > 0 && [threads count] < maxThreads))
     {
-      t = [GSIOThread new];
+      t = [threadClass new];
       [threads addObject: t];
       [t release];
       c = 0;
@@ -263,6 +263,7 @@ best(NSMutableArray *a)
   if ((self = [super init]) != nil)
     {
       threads = [NSMutableArray new];
+      threadClass = [GSIOThread class];
     }
 #else
   [self release];
@@ -280,6 +281,16 @@ best(NSMutableArray *a)
 - (void) setThreads: (NSUInteger)max
 {
   maxThreads = max;
+}
+
+- (void) setThreadClass: (Class)aClass
+{
+  if (NO == [aClass isSubclassOfClass: [GSIOThread class]])
+    {
+      [NSException raise: NSInvalidArgumentException
+                  format: @"Thread class must be a subclass of GSIOThread"];
+    }
+  threadClass = aClass;
 }
 
 - (void) setTimeout: (NSTimeInterval)t

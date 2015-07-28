@@ -64,6 +64,7 @@ typedef unsigned int NSUInteger;
   NSMutableArray	*threads;
   NSTimeInterval	timeout;
   NSUInteger		maxThreads;
+  Class                 threadClass;
 }
 
 /** Returns an instance intended for sharing between sections of code which
@@ -80,7 +81,9 @@ typedef unsigned int NSUInteger;
 
 /** Selects a thread from the pool to be used for some job.<br />
  * This method selectes the least used thread in the pool (ie the
- * one with the lowest acquire count).
+ * one with the lowest acquire count).<br />
+ * If the receiver is configured with a size of zero, the main thread
+ * is returned.
  */
 - (NSThread*) acquireThread;
 
@@ -91,6 +94,11 @@ typedef unsigned int NSUInteger;
 /** Returns the currently configured maximum number of threads in the pool.
  */
 - (NSUInteger) maxThreads;
+
+/* Sets the class to be used to create any new threads in this pool.<br />
+ * Must be a subclass of the GSIOThread class.
+ */
+- (void) setThreadClass: (Class)aClass;
 
 /** Specify the maximum number of threads in the pool (the actual number
  * used may be lower than this value).<br />
