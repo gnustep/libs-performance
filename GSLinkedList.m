@@ -362,31 +362,6 @@ GSLinkedListFindIdentical(NSObject *object, GSLinkedList *list,
 }
 
 void
-GSLinkedListInsertBefore(GSListLink *link, GSLinkedList *list, GSListLink *at)
-{
-  if (nil == list->head)
-    {
-      list->head = list->tail = link;
-    }
-  else
-    {
-      link->previous = at->previous;
-      if (nil == link->previous)
-	{
-	  list->head = link;
-	}
-      else
-	{
-	  link->previous->next = link;
-	}
-      at->previous = link;
-      link->next = at;
-    }
-  link->owner = list;
-  list->count++;
-}
-
-void
 GSLinkedListInsertAfter(GSListLink *link, GSLinkedList *list, GSListLink *at)
 {
   if (nil == list->head)
@@ -395,6 +370,10 @@ GSLinkedListInsertAfter(GSListLink *link, GSLinkedList *list, GSListLink *at)
     }
   else
     {
+      if (nil == at)
+        {
+          at = list->tail;
+        }
       link->next = at->next;
       if (nil == link->next)
 	{
@@ -406,6 +385,35 @@ GSLinkedListInsertAfter(GSListLink *link, GSLinkedList *list, GSListLink *at)
 	}
       at->next = link;
       link->previous = at;
+    }
+  link->owner = list;
+  list->count++;
+}
+
+void
+GSLinkedListInsertBefore(GSListLink *link, GSLinkedList *list, GSListLink *at)
+{
+  if (nil == list->head)
+    {
+      list->head = list->tail = link;
+    }
+  else
+    {
+      if (nil == at)
+        {
+          at = list->head;
+        }
+      link->previous = at->previous;
+      if (nil == link->previous)
+	{
+	  list->head = link;
+	}
+      else
+	{
+	  link->previous->next = link;
+	}
+      at->previous = link;
+      link->next = at;
     }
   link->owner = list;
   list->count++;
@@ -484,6 +492,131 @@ GSLinkedListMoveToTail(GSListLink *link, GSLinkedList *list)
       link->previous = list->tail;
       list->tail->next = link;
       list->tail = link;
+    }
+}
+
+@implementation GSLinkStore
+
+- (void) addObject: (id)anObject
+{
+  GSLinkStoreInsertObjectAfter(anObject, self, tail);
+}
+
+- (void) dealloc
+{
+  [self empty];
+  [self purge];
+  [super dealloc];
+}
+
+- (void) empty
+{
+  while (nil != head)
+    {
+      GSLinkStoreRemoveObjectAt(self, head);
+    }
+}
+
+- (id) firstObject
+{
+  return GSLinkedListFirstObject(self);
+}
+
+- (void) insertObject: (id)anObject after: (GSListLink*)at
+{
+  GSLinkStoreInsertObjectAfter(anObject, self, at);
+}
+
+- (void) insertObject: (id)anObject before: (GSListLink*)at
+{
+  GSLinkStoreInsertObjectBefore(anObject, self, at);
+}
+
+- (id) lastObject
+{
+  return GSLinkedListLastObject(self);
+}
+
+- (void) purge
+{
+  while (nil != free)
+    {
+      GSListLink        *link = free;
+
+      free = link->next;
+      link->next = nil;
+      link->owner = nil;
+      [link release];
+    }
+}
+
+- (void) removeFirstObject
+{
+  if (nil != head)
+    {
+      GSLinkStoreRemoveObjectAt(self, head);
+    }
+}
+
+- (void) removeLastObject
+{
+  if (nil != tail)
+    {
+      GSLinkStoreRemoveObjectAt(self, tail);
+    }
+}
+
+@end
+
+void
+GSLinkStoreInsertObjectAfter(
+  NSObject *anObject, GSLinkStore *list, GSListLink *at)
+{
+  GSListLink    *link = list->free;
+
+  if (nil == link)
+    {
+      link = [GSListLink new];
+      link->owner = list;
+    }
+  else
+    {
+      list->free = link->next;
+      link->next = nil;
+    }
+  link->item = [anObject retain];
+  GSLinkedListInsertAfter(link, list, list->tail);
+}
+
+void
+GSLinkStoreInsertObjectBefore(
+  NSObject *anObject, GSLinkStore *list, GSListLink *at)
+{
+  GSListLink    *link = list->free;
+
+  if (nil == link)
+    {
+      link = [GSListLink new];
+      link->owner = list;
+    }
+  else
+    {
+      list->free = link->next;
+      link->next = nil;
+    }
+  link->item = [anObject retain];
+  GSLinkedListInsertBefore(link, list, list->head);
+}
+
+void
+GSLinkStoreRemoveObjectAt(GSLinkStore *list, GSListLink *at)
+{
+  if (nil != at && at->owner == list)
+    {
+      GSLinkedListRemove(at, list);
+      [at->item release];
+      at->next = list->free;
+      list->free = at;
     }
 }
 

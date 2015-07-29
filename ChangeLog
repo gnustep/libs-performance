@@ -1,3 +1,11 @@
+2015-07-29 Richard Frith-Macdonald  <rfm@gnu.org>
+
+	* GSLinkedList.h:
+	* GSLinkedList.m:
+	Add GSLinkedStore for a list which controls its own links and stores
+	unused links to avoid having to create/destroy link objects
+	repeatedly.
+
 2015-07-17 Niels Grewe <niels.grewe@halbordnung.de>
 
 	* GSFIFO.m: Implement methods that allow waiting on an empty
