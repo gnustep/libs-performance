@@ -168,7 +168,10 @@ GSLinkRemove(GSListLink *link)
 }
 
 
-/** GSLinkedList manages a list of GSListLink objects.
+/** GSLinkedList manages a list of GSListLink objects.<br />
+ * The notional direction of the list is from head to tail. So the head
+ * is considered to be the first link in the list and tail is considered
+ * to be the last (head is before tail, tail is after head).
  */
 @interface	GSLinkedList : NSObject
 {
@@ -238,6 +241,8 @@ GSLinkRemove(GSListLink *link)
 
 /** Searches from list to the end looking for the first link containing
  * object (as determined by using object's [NSObject-isEqual:] method).<br />
+ * If back is YES, the search is in the direction from tail to head
+ * rather than the normal search from head to tail.<br />
  * If from is nil the list is search from head or tail as appropriate
  * to the direction in which it is searched.
  */
@@ -247,6 +252,8 @@ GSLinkedListFindEqual(NSObject *object, GSLinkedList *list,
 
 /** Searches from list to the end looking for the first link containing
  * object (as determined by direct pointer comparison).<br />
+ * If back is YES, the search is in the direction from tail to head
+ * rather than the normal search from head to tail.<br />
  * If from is nil the list is search from head or tail as appropriate
  * to the direction in which it is searched.
  */
@@ -324,21 +331,21 @@ GSLinkedListRemove(GSListLink *link, GSLinkedList *list);
  */
 - (void) addObject: (id)anObject;
 
-/** Returns the first object in the list or nil if the list is empty.
+/** Returns the first (head) object in the list or nil if the list is empty.
  */
 - (id) firstObject;
 
 /** Inserts anObject immediately after the specified link.  If at is nil
- * the object is inserted at the end of the list.
+ * the object is inserted at the end of the list (as tail).
  */
 - (void) insertObject: (id)anObject after: (GSListLink*)at;
 
 /** Inserts anObject immediately before the specified link.  If at is nil
- * the object is inserted at the start of the list.
+ * the object is inserted at the start of the list (as head).
  */
 - (void) insertObject: (id)anObject before: (GSListLink*)at;
 
-/** Returns the last object in the list or nil if the list is empty.
+/** Returns the last (tail) object in the list or nil if the list is empty.
  */
 - (id) lastObject;
 
@@ -356,6 +363,15 @@ GSLinkedListRemove(GSListLink *link, GSLinkedList *list);
  * is empty).
  */
 - (void) removeLastObject;
+
+/** Removes the object in the specified link.
+ */
+- (void) removeObjectAt: (GSListLink*)at;
+
+/** Removes the object at the specified position.
+ */
+- (void) removeObjectAtIndex: (NSUInteger)index;
+
 @end
 
 /** Adds the object at the end of the list.

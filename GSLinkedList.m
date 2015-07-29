@@ -278,24 +278,21 @@ GSListLink*
 GSLinkedListFindEqual(NSObject *object, GSLinkedList *list,
   GSListLink *from, BOOL back)
 {
-  if (nil == from)
+  if (nil == object)
     {
-      if (YES == back)
-	{
-	  from = list->tail;
-	}
-      else
-	{
-	  from = list->head;
-	}
+      return GSLinkedListFindIdentical(object, list, from, back);
     }
-  if (nil != object)
+  else
     {
       BOOL	(*imp)(id, SEL, id);
 
       imp = (BOOL(*)(id,SEL,id))[object methodForSelector: @selector(isEqual:)];
       if (YES == back)
 	{
+          if (nil == from)
+            {
+              from = list->tail;
+            }
 	  while (nil != from)
 	    {
 	      if (YES == (*imp)(object, @selector(isEqual:), from->item))
@@ -307,6 +304,10 @@ GSLinkedListFindEqual(NSObject *object, GSLinkedList *list,
 	}
       else
 	{
+          if (nil == from)
+            {
+              from = list->head;
+            }
 	  while (nil != from)
 	    {
 	      if (YES == (*imp)(object, @selector(isEqual:), from->item))
@@ -325,19 +326,12 @@ GSListLink*
 GSLinkedListFindIdentical(NSObject *object, GSLinkedList *list,
   GSListLink *from, BOOL back)
 {
-  if (nil == from)
-    {
-      if (YES == back)
-	{
-	  from = list->tail;
-	}
-      else
-	{
-	  from = list->head;
-	}
-    }
   if (YES == back)
     {
+      if (nil == from)
+        {
+	  from = list->tail;
+        }
       while (nil != from)
 	{
 	  if (object == from->item)
@@ -349,6 +343,10 @@ GSLinkedListFindIdentical(NSObject *object, GSLinkedList *list,
     }
   else
     {
+      if (nil == from)
+        {
+          from = list->head;
+        }
       while (nil != from)
 	{
 	  if (object == from->item)
@@ -545,7 +543,6 @@ GSLinkedListMoveToTail(GSListLink *link, GSLinkedList *list)
 
       free = link->next;
       link->next = nil;
-      link->owner = nil;
       [link release];
     }
 }
@@ -566,6 +563,28 @@ GSLinkedListMoveToTail(GSListLink *link, GSLinkedList *list)
     }
 }
 
+- (void) removeObjectAt: (GSListLink*)at
+{
+  GSLinkStoreRemoveObjectAt(self, at);
+}
+
+- (void) removeObjectAtIndex: (NSUInteger)index
+{
+  GSListLink    *link = head;
+
+  if (index >= count)
+    {
+      [NSException raise: NSInvalidArgumentException
+	format: @"[%@-%@] index too large",
+	NSStringFromClass([self class]), NSStringFromSelector(_cmd)];
+    }
+  while (index-- > 0)
+    {
+      link = link->next;
+    }
+  GSLinkStoreRemoveObjectAt(self, link);
+}
+
 @end
 
 void
@@ -577,7 +596,6 @@ GSLinkStoreInsertObjectAfter(
   if (nil == link)
     {
       link = [GSListLink new];
-      link->owner = list;
     }
   else
     {
@@ -597,7 +615,6 @@ GSLinkStoreInsertObjectBefore(
   if (nil == link)
     {
       link = [GSListLink new];
-      link->owner = list;
     }
   else
     {
