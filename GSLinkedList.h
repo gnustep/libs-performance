@@ -374,11 +374,6 @@ GSLinkedListRemove(GSListLink *link, GSLinkedList *list);
 
 @end
 
-/** Adds the object at the end of the list.
- */
-extern void
-GSLinkStoreAddObject(GSLinkStore *list, NSObject *anObject);
-
 /** Adds the object to the list after the specified link.<br />
  * Calls GSLinkedListInsertAfter().
  */
