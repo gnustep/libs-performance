@@ -29,6 +29,7 @@
 typedef unsigned int NSUInteger;
 #endif
 
+@class	NSMutableArray;
 @class	NSTimer;
 
 /** This is the class for threads in the pool.<br />
