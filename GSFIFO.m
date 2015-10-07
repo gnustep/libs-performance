@@ -361,6 +361,83 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
   return index;
 }
 
+- (void) putAll: (void**)buf count: (unsigned)count shouldRetain: (BOOL)rtn
+{
+  NSTimeInterval	ti;
+  unsigned		index;
+  BOOL			wasEmpty;
+
+  NSAssert(nil != condition, NSGenericException);
+  NSAssert(count <= _capacity, NSInvalidArgumentException);
+
+  [condition lock];
+  if (_head - _tail < count)
+    {
+      if (_head - _tail == _capacity)
+        {
+          _putTryFailure++;
+          fullCount++;
+        }
+
+      START
+      if (0 == timeout)
+	{
+	  while (_head - _tail < count)
+	    {
+	      [condition wait];
+	    }
+	}
+      else
+	{
+	  NSDate	*d;
+
+	  d = [[NSDateClass alloc]
+	    initWithTimeIntervalSinceNow: timeout / 1000.0f];
+	  while (_head - _tail < count)
+	    {
+	      if (NO == [condition waitUntilDate: d])
+		{
+		  [d release];
+		  ENDPUT
+		  [condition broadcast];
+		  [condition unlock];
+		  [NSException raise: NSGenericException
+			      format: @"Timeout waiting for space in FIFO"];
+		}
+	    }
+	  [d release];
+	}
+      ENDPUT
+    }
+  else
+    {
+      _putTrySuccess++;
+    }
+
+  if (_head - _tail == 0)
+    {
+      wasEmpty = YES;
+    }
+  else
+    {
+      wasEmpty = NO;
+    }
+  for (index = 0; index < count; index++)
+    {
+      _items[_head % _capacity] = buf[index];
+      _head++;
+      if (YES == rtn)
+        {
+          RETAIN((NSObject*)buf[index]);
+        }
+    }
+  if (YES == wasEmpty)
+    {
+      [condition broadcast];
+    }
+  [condition unlock];
+}
+
 - (void) dealloc
 {
   [classLock lock];

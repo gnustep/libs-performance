@@ -1,3 +1,8 @@
+2015-10-07 Richard Frith-Macdonald  <rfm@gnu.org>
+
+	* GSFIFO.m: Add method for writing a whole block of data to a FIFO
+	in one go.
+
 2015-07-29 Richard Frith-Macdonald  <rfm@gnu.org>
 
 	* GSLinkedList.h:

@@ -184,7 +184,7 @@
  * time intervals found boundaries of bands into which to categorise wait
  * time stats.  Any wait whose duration is less than the interval specified
  * in the Nth element is counted in the stat's for the Nth band.
- * If this is nil, a default set of bundaries is used.  If it is an empty
+ * If this is nil, a default set of boundaries is used.  If it is an empty
  * array then no time based stats are recorded.<br />
  * The name string is a unique identifier for the receiver and is used when
  * printing diagnostics and statistics.  If an instance with the same name
@@ -221,13 +221,23 @@
  */
 - (id) initWithName: (NSString*)n;
 
+/** Writes exactly count items from buf into the FIFO, blocking if
+ * necessary until there is space for the entire write.<br />
+ * Raises an exception if the FIFO is configured with a timeout and it is
+ * exceeded, or if the count is greater than the FIFO size, or if the
+ * FIFO was not configured for multi producer or multi consumer use.<br />
+ * If rtn is YES, the method treats the buffer as containing objects
+ * which are retained as they are added.
+ */
+- (void) putAll: (void**)buf count: (unsigned)count shouldRetain: (BOOL)rtn;
+
 /** Writes up to count items from buf into the FIFO.
  * If block is YES, this blocks if necessary until at least one item
  * can be written, and raises an exception if the FIFO is configured
  * with a timeout and it is exceeded.<br />
  * Returns the number of items actually written.
  */
-- (unsigned) put: (void**)buf  count: (unsigned)count  shouldBlock: (BOOL)block;
+- (unsigned) put: (void**)buf count: (unsigned)count shouldBlock: (BOOL)block;
 
 /** Writes up to count objects from buf into the FIFO, retaining each.<br />
  * If block is YES, this blocks if necessary until at least one object
@@ -295,16 +305,16 @@
  * <br /> Calling this method does <em>not</em> remove the object from the
  * queue.
  */
-- (NSObject*)peekObject;
+- (NSObject*) peekObject;
 
-/** Attempts to retain an object while putting it into the FIFO,
- * returning YES on success or NO if the FIFO is full.<br />
+/** Attempts to put an object (or nil) into the FIFO, returning YES
+ * on success or NO if the FIFO is full.<br />
  * Implemented using -put:count:shouldBlock:
  */
 - (BOOL) tryPut: (void*)item;
 
-/** Attempts to put an object (or nil) into the FIFO, returning YES
- * on success or NO if the FIFO is full.<br />
+/** Attempts to retain an object while putting it into the FIFO,
+ * returning YES on success or NO if the FIFO is full.<br />
  * Implemented using -put:count:shouldBlock:
  */
 - (BOOL) tryPutObject: (NSObject*)item;

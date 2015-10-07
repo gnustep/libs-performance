@@ -279,7 +279,7 @@ best(NSMutableArray *a)
     }
 #else
   [self release];
-  NSLog(@"WARNING, your OSX system is too old to use GSIOthreadPool");
+  NSLog(@"WARNING, your OSX system is too old to use GSIOThreadPool");
   return nil;
 #endif
   return self;
