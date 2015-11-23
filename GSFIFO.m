@@ -31,6 +31,10 @@
 #import <Foundation/NSValue.h>
 #import <Foundation/NSZone.h>
 
+#if !defined(GNUSTEP)
+#import "NSObject+GSExtensions.h"
+#endif
+
 #include <inttypes.h>
 
 @implementation	GSFIFO

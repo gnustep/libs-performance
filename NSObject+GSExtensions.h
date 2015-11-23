@@ -26,6 +26,12 @@
 
 #import <Foundation/NSObject.h>
 
+#if !defined(GNUSTEP)
+#define RETAIN(x) ([x retain])
+#endif
+
+@class NSHashTable;
+
 @interface      NSObject(MemoryFootprint)
 /* This method returns the memory usage of the receiver, excluding any
  * objects already present in the exclude table.<br />
