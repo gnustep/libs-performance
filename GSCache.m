@@ -51,6 +51,9 @@
 #if (MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_4)
 #define class_getInstanceSize(isa)  ((struct objc_class *)isa)->instance_size
 #endif
+
+#import "NSObject+GSExtensions.h"
+
 #endif
 
 @interface	GSCache (Threading)

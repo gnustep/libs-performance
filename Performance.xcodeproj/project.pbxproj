@@ -24,6 +24,8 @@
 		85872ECF1284CFC700B4601E /* GSTicker.h in Headers */ = {isa = PBXBuildFile; fileRef = 85872EBE1284CFC700B4601E /* GSTicker.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		85872ED01284CFC700B4601E /* GSTicker.m in Sources */ = {isa = PBXBuildFile; fileRef = 85872EBF1284CFC700B4601E /* GSTicker.m */; };
 		85872ED11284CFC700B4601E /* Performance.h in Headers */ = {isa = PBXBuildFile; fileRef = 85872EC01284CFC700B4601E /* Performance.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		85B7DBDC1C034FBA00AF3090 /* NSObject+GSExtensions.h in Headers */ = {isa = PBXBuildFile; fileRef = 85B7DBDA1C034FBA00AF3090 /* NSObject+GSExtensions.h */; };
+		85B7DBDD1C034FBA00AF3090 /* NSObject+GSExtensions.m in Sources */ = {isa = PBXBuildFile; fileRef = 85B7DBDB1C034FBA00AF3090 /* NSObject+GSExtensions.m */; };
 		8DC2EF530486A6940098B216 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C1666FE841158C02AAC07 /* InfoPlist.strings */; };
 		8DC2EF570486A6940098B216 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7B1FEA5585E11CA2CBB /* Cocoa.framework */; };
 /* End PBXBuildFile section */
@@ -52,6 +54,8 @@
 		85872EC01284CFC700B4601E /* Performance.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Performance.h; sourceTree = "<group>"; };
 		8591FBED1A13422800923420 /* ChangeLog */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = ChangeLog; sourceTree = "<group>"; };
 		85B560B3128C6E47003BAF08 /* Performance.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Performance.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		85B7DBDA1C034FBA00AF3090 /* NSObject+GSExtensions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSObject+GSExtensions.h"; sourceTree = "<group>"; };
+		85B7DBDB1C034FBA00AF3090 /* NSObject+GSExtensions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSObject+GSExtensions.m"; sourceTree = "<group>"; };
 		8DC2EF5A0486A6940098B216 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		D2F7E79907B2D74100F64583 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = /System/Library/Frameworks/CoreData.framework; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
@@ -110,6 +114,8 @@
 		08FB77AEFE84172EC02AAC07 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				85B7DBDA1C034FBA00AF3090 /* NSObject+GSExtensions.h */,
+				85B7DBDB1C034FBA00AF3090 /* NSObject+GSExtensions.m */,
 				85872EB01284CFC700B4601E /* GSCache.h */,
 				85872EB11284CFC700B4601E /* GSCache.m */,
 				85872EB21284CFC700B4601E /* GSIndexedSkipList.h */,
@@ -172,6 +178,7 @@
 				85872ECD1284CFC700B4601E /* GSThroughput.h in Headers */,
 				85872ECF1284CFC700B4601E /* GSTicker.h in Headers */,
 				85872ED11284CFC700B4601E /* Performance.h in Headers */,
+				85B7DBDC1C034FBA00AF3090 /* NSObject+GSExtensions.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -207,7 +214,6 @@
 			};
 			buildConfigurationList = 1DEB91B108733DA50010E9CD /* Build configuration list for PBXProject "Performance" */;
 			compatibilityVersion = "Xcode 2.4";
-			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
 				English,
@@ -249,6 +255,7 @@
 				85872ECC1284CFC700B4601E /* GSThreadPool.m in Sources */,
 				85872ECE1284CFC700B4601E /* GSThroughput.m in Sources */,
 				85872ED01284CFC700B4601E /* GSTicker.m in Sources */,
+				85B7DBDD1C034FBA00AF3090 /* NSObject+GSExtensions.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -297,8 +304,8 @@
 		1DEB91AF08733DA50010E9CD /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_BIT_PRE_XCODE_3_1)";
-				ARCHS_STANDARD_32_BIT_PRE_XCODE_3_1 = "ppc i386";
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT_PRE_XCODE_3_1)";
+				ARCHS_STANDARD_32_64_BIT_PRE_XCODE_3_1 = "x86_64 i386 ppc";
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				FRAMEWORK_VERSION = A;
@@ -321,8 +328,7 @@
 		1DEB91B208733DA50010E9CD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_BIT_PRE_XCODE_3_1)";
-				ARCHS_STANDARD_32_BIT_PRE_XCODE_3_1 = "ppc i386";
+				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				PREBINDING = NO;
@@ -336,8 +342,9 @@
 		1DEB91B308733DA50010E9CD /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_BIT_PRE_XCODE_3_1)";
-				ARCHS_STANDARD_32_BIT_PRE_XCODE_3_1 = "ppc i386";
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT_PRE_XCODE_3_1)";
+				ARCHS_STANDARD_32_64_BIT_PRE_XCODE_3_1 = "x86_64 i386 ppc";
+				GCC_MODEL_TUNING = "";
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				PREBINDING = NO;
