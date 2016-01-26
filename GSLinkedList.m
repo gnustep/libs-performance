@@ -632,6 +632,7 @@ GSLinkStoreRemoveObjectAt(GSLinkStore *list, GSListLink *at)
     {
       GSLinkedListRemove(at, list);
       [at->item release];
+      at->item = nil;
       at->next = list->free;
       list->free = at;
     }
