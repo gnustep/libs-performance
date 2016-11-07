@@ -637,7 +637,7 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 	     boundaries: (NSArray*)a
 		   name: (NSString*)n
 {
-  if (c < 1 || c > 1000000)
+  if (c < 1 || c > 100000000)
     {
       [self release];
       return nil;

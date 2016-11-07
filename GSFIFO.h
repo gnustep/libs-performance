@@ -170,7 +170,7 @@
 
 /** <init/>
  * Initialises the receiver with the specified capacity (buffer size).<br />
- * The capacity must lie in the range from one to a million, othewrwise
+ * The capacity must lie in the range from one to a hundred million, otherwise
  * the receiver is deallocated and this method returns nil.<br />
  * If the granularity value is non-zero, it is treated as the maximum time
  * in milliseconds for which a -get or -put: operation will pause between
