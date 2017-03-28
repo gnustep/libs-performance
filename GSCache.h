@@ -141,6 +141,17 @@
 - (void) purge;
 
 /**
+ * Similar to -setObject:forKey:lifetime: but, if there is an existing
+ * object in the cache which -isEqual: to anObject (or is anObject is nil),
+ * the existing object is retained in the cache (though its lifetime is
+ * updated/refreshed).<br />
+ * The value of the object in the cache is returned.
+ */
+- (id) refreshObject: (id)anObject
+              forKey: (id)aKey
+            lifetime: (unsigned)lifetime;
+
+/**
  * Sets the delegate for the receiver.<br />
  * The delegate object is not retained.<br />
  * If a delegate it set, it will be sent the messages in the
