@@ -537,6 +537,46 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
     }
 }
 
+- (id) refreshObject: (id)anObject
+              forKey: (id)aKey
+            lifetime: (unsigned)lifetime
+{
+  id		object;
+  GSCacheItem	*item;
+
+  [my->lock lock];
+  item = (GSCacheItem*)NSMapGet(my->contents, aKey);
+  if (item == nil)
+    {
+      if (nil != anObject)
+        {
+          [self setObject: anObject
+                   forKey: aKey
+                 lifetime: lifetime];
+        }
+      [my->lock unlock];
+      return anObject;
+    }
+
+  if (nil != anObject && NO == [anObject isEqual: item->object])
+    {
+      object = [anObject retain];
+      [item->object release];
+      item->object = object;
+    }
+  if (lifetime > 0)
+    {
+      unsigned	tick = GSTickerTimeTick();
+
+      item->when = tick + lifetime;
+      item->warn = tick + lifetime / 2;
+    }
+  item->life = lifetime;
+  object = [[item->object retain] autorelease];
+  [my->lock unlock];
+  return object;
+}
+
 - (void) setDelegate: (id)anObject
 {
   [my->lock lock];
