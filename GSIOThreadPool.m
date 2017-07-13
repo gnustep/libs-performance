@@ -125,14 +125,15 @@ static NSRecursiveLock   *classLock = nil;
       return;
     }
 
+  if (NO == [when isKindOfClass: [NSDate class]])
+    {
+      when = [NSDate date];
+    }
+  [self retain];
   if ([NSThread currentThread] == self)
     {
-      NSTimeInterval	delay = 0.0;
+      NSTimeInterval	delay = [when timeIntervalSinceNow];
 
-      if ([when isKindOfClass: [NSDate class]])
-        {
-          delay = [when timeIntervalSinceNow];
-        }
       [_timer invalidate];
 
       [classLock lock];
@@ -159,11 +160,38 @@ static NSRecursiveLock   *classLock = nil;
     }
   else if ([self isExecuting])
     {
+      NSRunLoop *loop;
+
+      /* We need to execute -terminate: in the thread itself,
+       * and wait until either the thread actually finishes or
+       * until our time limit expires, whichever comes first.
+       */
       [self performSelector: _cmd
                    onThread: self
                  withObject: when
-              waitUntilDone: YES];
+              waitUntilDone: NO];
+
+      loop = [NSRunLoop currentRunLoop];
+      while ([self isExecuting] && [when timeIntervalSinceNow] > 0.0)
+        {
+          NSDate        *d;
+
+          d = [[NSDate alloc] initWithTimeIntervalSinceNow: 0.01];
+
+          NS_DURING
+            {
+              [loop runUntilDate: d];
+            }
+          NS_HANDLER
+            {
+              NSLog(@"Problem waiting for thread termination: %@",
+                localException);
+            }
+          NS_ENDHANDLER
+          [d release];
+        }
     }
+  [self release];
 }
 @end
 
