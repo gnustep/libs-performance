@@ -120,34 +120,49 @@ static NSRecursiveLock   *classLock = nil;
  */
 - (void) terminate: (NSDate*)when
 {
-  NSTimeInterval	delay = 0.0;
-
-  if ([when isKindOfClass: [NSDate class]])
+  if (YES == [self isFinished])
     {
-      delay = [when timeIntervalSinceNow];
+      return;
     }
-  [_timer invalidate];
 
-  [classLock lock];
-  if (0 == _count || delay <= 0.0)
+  if ([NSThread currentThread] == self)
     {
-      _count = NSNotFound;      // Mark as terminating
-      _timer = nil;
-      delay = 0.0;
-    }
-  [classLock unlock];
+      NSTimeInterval	delay = 0.0;
 
-  if (delay > 0.0)
-    {
-      _timer = [NSTimer scheduledTimerWithTimeInterval: delay
-					        target: self
-					      selector: @selector(_finish:)
-					      userInfo: nil
-					       repeats: NO];
+      if ([when isKindOfClass: [NSDate class]])
+        {
+          delay = [when timeIntervalSinceNow];
+        }
+      [_timer invalidate];
+
+      [classLock lock];
+      if (0 == _count || delay <= 0.0)
+        {
+          _count = NSNotFound;      // Mark as terminating
+          _timer = nil;
+          delay = 0.0;
+        }
+      [classLock unlock];
+
+      if (delay > 0.0)
+        {
+          _timer = [NSTimer scheduledTimerWithTimeInterval: delay
+                                                    target: self
+                                                  selector: @selector(_finish:)
+                                                  userInfo: nil
+                                                   repeats: NO];
+        }
+      else
+        {
+          [self _finish: nil];
+        }
     }
-  else
+  else if ([self isExecuting])
     {
-      [self _finish: nil];
+      [self performSelector: _cmd
+                   onThread: self
+                 withObject: when
+              waitUntilDone: YES];
     }
 }
 @end
@@ -261,7 +276,7 @@ best(NSMutableArray *a)
 		     onThread: thread
 		   withObject: when
 		waitUntilDone: NO];
-      [threads removeLastObject];
+      [threads removeObjectIdenticalTo: thread];
     }
   [threads release];
   [classLock unlock];
