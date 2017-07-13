@@ -45,7 +45,11 @@ typedef unsigned int NSUInteger;
   NSUInteger	_count;                 /** Number of times acquired */ 
 }
 /** Terminates the thread by the specified date (as soon as possible if
- * the date is nil or is in the past).
+ * the date is nil or is in the past).<br />
+ * If called from another thread, this method asks the receiver thread to
+ * perform the method, and waits (running the run loop in the calling
+ * thread) until either the receiver thread finishes executing or until
+ * the timeout date (when) is reached.
  */
 - (void) terminate: (NSDate*)when;
 
