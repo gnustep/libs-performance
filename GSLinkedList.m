@@ -603,7 +603,7 @@ GSLinkStoreInsertObjectAfter(
       link->next = nil;
     }
   link->item = [anObject retain];
-  GSLinkedListInsertAfter(link, list, list->tail);
+  GSLinkedListInsertAfter(link, list, (nil == at) ? list->tail : at);
 }
 
 void
@@ -622,7 +622,7 @@ GSLinkStoreInsertObjectBefore(
       link->next = nil;
     }
   link->item = [anObject retain];
-  GSLinkedListInsertBefore(link, list, list->head);
+  GSLinkedListInsertBefore(link, list, (nil == at) ? list->head : at);
 }
 
 void
