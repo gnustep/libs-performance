@@ -38,7 +38,6 @@ static NSRecursiveLock   *classLock = nil;
 @interface	GSIOThread (Private)
 - (NSUInteger) _count;
 - (void) _finish: (NSTimer*)t;
-- (void) _run;
 - (void) _setCount: (NSUInteger)c;
 @end
 
@@ -66,22 +65,6 @@ static NSRecursiveLock   *classLock = nil;
   [NSThread exit];
 }
 
-/* Run the thread's main runloop until terminated.
- */
-- (void) _run
-{
-  NSDate		*when = [NSDate distantFuture];
-  NSTimeInterval	delay = [when timeIntervalSinceNow];
-
-  [self startup];
-  _timer = [NSTimer scheduledTimerWithTimeInterval: delay
-					    target: self
-					  selector: @selector(_finish:)
-					  userInfo: nil
-					   repeats: NO];
-  [[NSRunLoop currentRunLoop] run];
-}
-
 - (void) _setCount: (NSUInteger)c
 {
   if (NSNotFound != _count)
@@ -94,17 +77,23 @@ static NSRecursiveLock   *classLock = nil;
 
 @implementation	GSIOThread
 
-#if defined(GNUSTEP) || (MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_4)
-- (id) init
+/* Run the thread's main runloop until terminated.
+ */
+- (void) main
 {
-  self = [super initWithTarget: self selector: @selector(_run) object: nil];
-  if (nil != self)
-    {
-      [self start];
-    }
-  return self;
+  NSAutoreleasePool     *pool = [NSAutoreleasePool new];
+  NSDate		*when = [NSDate distantFuture];
+  NSTimeInterval	delay = [when timeIntervalSinceNow];
+
+  [self startup];
+  _timer = [NSTimer scheduledTimerWithTimeInterval: delay
+					    target: self
+					  selector: @selector(_finish:)
+					  userInfo: nil
+					   repeats: NO];
+  [[NSRunLoop currentRunLoop] run];
+  [pool release];
 }
-#endif
 
 - (void) shutdown
 {
@@ -271,6 +260,7 @@ best(NSMutableArray *a)
       t = [threadClass new];
       [threads addObject: t];
       [t release];
+      [t start];
       c = 0;
     }
   [t _setCount: c + 1];
