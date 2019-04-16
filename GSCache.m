@@ -617,24 +617,40 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 - (void) setLifetime: (unsigned)max
 {
   [my->lock lock];
-  if (NO == my->useDefaults)
+  if (YES == my->useDefaults)
     {
-      my->lifetime = max;
+      NSUserDefaults	*defs = [NSUserDefaults standardUserDefaults];
+      NSString          *n = (nil == my->name) ? @"" : my->name;
+      NSString          *k = [@"GSCacheLifetime" stringByAppendingString: n];
+
+      if (nil != [defs objectForKey: k])
+        {
+          max = (unsigned) [defs integerForKey: k];
+        }
     }
+  my->lifetime = max;
   [my->lock unlock];
 }
 
 - (void) setMaxObjects: (unsigned)max
 {
   [my->lock lock];
-  if (NO == my->useDefaults)
+  if (YES == my->useDefaults)
     {
-      my->maxObjects = max;
-      if (my->currentObjects > my->maxObjects)
-	{
-	  [self shrinkObjects: my->maxObjects
-		      andSize: my->maxSize];
-	}
+      NSUserDefaults	*defs = [NSUserDefaults standardUserDefaults];
+      NSString          *n = (nil == my->name) ? @"" : my->name;
+      NSString          *k = [@"GSCacheMaxObjects" stringByAppendingString: n];
+
+      if (nil != [defs objectForKey: k])
+        {
+          max = (unsigned) [defs integerForKey: k];
+        }
+    }
+  my->maxObjects = max;
+  if (my->currentObjects > my->maxObjects)
+    {
+      [self shrinkObjects: my->maxObjects
+                  andSize: my->maxSize];
     }
   [my->lock unlock];
 }
@@ -642,53 +658,61 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 - (void) setMaxSize: (NSUInteger)max
 {
   [my->lock lock];
-  if (NO == my->useDefaults)
+  if (YES == my->useDefaults)
     {
-      if (max > 0 && my->maxSize == 0)
-	{
-	  NSMapEnumerator	e = NSEnumerateMapTable(my->contents);
-	  GSCacheItem	*i;
-	  id		k;
-	  NSUInteger	size = 0;
+      NSUserDefaults	*defs = [NSUserDefaults standardUserDefaults];
+      NSString          *n = (nil == my->name) ? @"" : my->name;
+      NSString          *k = [@"GSCacheMaxSize" stringByAppendingString: n];
 
-	  if (nil == my->exclude)
-	    {
-	      my->exclude
-		= NSCreateHashTable(NSNonOwnedPointerHashCallBacks, 0);
-	    }
-	  while (NSNextMapEnumeratorPair(&e, (void**)&k, (void**)&i) != 0)
-	    {
-	      if (i->size == 0)
-		{
-		  i->size = [i->object sizeInBytesExcluding: my->exclude];
-		  [my->exclude removeAllObjects];
-		}
-	      if (i->size > max)
-		{
-		  /*
-		   * Item in cache is too big for new size limit ...
-		   * Remove it.
-		   */
-		  removeItem(i, &my->first);
-		  NSMapRemove(my->contents, (void*)i->key);
-		  my->currentObjects--;
-		  continue;
-		}
-	      size += i->size;
-	    }
-	  NSEndMapTableEnumeration(&e);
-	  my->currentSize = size;
-	}
-      else if (max == 0)
-	{
-	  my->currentSize = 0;
-	}
-      my->maxSize = max;
-      if (my->currentSize > my->maxSize)
-	{
-	  [self shrinkObjects: my->maxObjects
-		      andSize: my->maxSize];
-	}
+      if (nil != [defs objectForKey: k])
+        {
+          max = (NSUInteger) [defs integerForKey: k];
+        }
+    }
+  if (max > 0 && my->maxSize == 0)
+    {
+      NSMapEnumerator	e = NSEnumerateMapTable(my->contents);
+      GSCacheItem	*i;
+      id		k;
+      NSUInteger	size = 0;
+
+      if (nil == my->exclude)
+        {
+          my->exclude
+            = NSCreateHashTable(NSNonOwnedPointerHashCallBacks, 0);
+        }
+      while (NSNextMapEnumeratorPair(&e, (void**)&k, (void**)&i) != 0)
+        {
+          if (i->size == 0)
+            {
+              i->size = [i->object sizeInBytesExcluding: my->exclude];
+              [my->exclude removeAllObjects];
+            }
+          if (i->size > max)
+            {
+              /*
+               * Item in cache is too big for new size limit ...
+               * Remove it.
+               */
+              removeItem(i, &my->first);
+              NSMapRemove(my->contents, (void*)i->key);
+              my->currentObjects--;
+              continue;
+            }
+          size += i->size;
+        }
+      NSEndMapTableEnumeration(&e);
+      my->currentSize = size;
+    }
+  else if (max == 0)
+    {
+      my->currentSize = 0;
+    }
+  my->maxSize = max;
+  if (my->currentSize > my->maxSize)
+    {
+      [self shrinkObjects: my->maxObjects
+                  andSize: my->maxSize];
     }
   [my->lock unlock];
 }
