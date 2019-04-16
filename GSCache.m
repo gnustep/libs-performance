@@ -41,6 +41,7 @@
 #import	<Foundation/NSNotification.h>
 #import	<Foundation/NSString.h>
 #import	<Foundation/NSThread.h>
+#import	<Foundation/NSUserDefaults.h>
 #import	<Foundation/NSValue.h>
 
 #import	"GSCache.h"
@@ -56,9 +57,10 @@
 
 #endif
 
-@interface	GSCache (Threading)
+@interface	GSCache (Private)
 + (void) _becomeThreaded: (NSNotification*)n;
 - (void) _createLock;
+- (void) _useDefaults: (NSNotification*)n;
 @end
 
 @interface	GSCacheItem : NSObject
@@ -128,6 +130,7 @@ typedef struct {
   NSString	*name;
   NSHashTable	*exclude;
   NSRecursiveLock	*lock;
+  BOOL		useDefaults;
 } Item;
 #define	my	((Item*)((void*)self + itemOffset))
 
@@ -252,6 +255,11 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 
 - (void) dealloc
 {
+  if (my->useDefaults)
+    {
+      [[NSNotificationCenter defaultCenter] removeObserver: self
+	name: NSUserDefaultsDidChangeNotification object: nil];
+    }
   [allCachesLock lock];
   NSHashRemove(allCaches, (void*)self);
   [allCachesLock unlock];
@@ -608,17 +616,25 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 
 - (void) setLifetime: (unsigned)max
 {
-  my->lifetime = max;
+  [my->lock lock];
+  if (NO == my->useDefaults)
+    {
+      my->lifetime = max;
+    }
+  [my->lock lock];
 }
 
 - (void) setMaxObjects: (unsigned)max
 {
   [my->lock lock];
-  my->maxObjects = max;
-  if (my->currentObjects > my->maxObjects)
+  if (NO == my->useDefaults)
     {
-      [self shrinkObjects: my->maxObjects
-		  andSize: my->maxSize];
+      my->maxObjects = max;
+      if (my->currentObjects > my->maxObjects)
+	{
+	  [self shrinkObjects: my->maxObjects
+		      andSize: my->maxSize];
+	}
     }
   [my->lock unlock];
 }
@@ -626,61 +642,89 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 - (void) setMaxSize: (NSUInteger)max
 {
   [my->lock lock];
-  if (max > 0 && my->maxSize == 0)
+  if (NO == my->useDefaults)
     {
-      NSMapEnumerator	e = NSEnumerateMapTable(my->contents);
-      GSCacheItem	*i;
-      id		k;
-      NSUInteger	size = 0;
+      if (max > 0 && my->maxSize == 0)
+	{
+	  NSMapEnumerator	e = NSEnumerateMapTable(my->contents);
+	  GSCacheItem	*i;
+	  id		k;
+	  NSUInteger	size = 0;
 
-      if (nil == my->exclude)
-	{
-	  my->exclude
-            = NSCreateHashTable(NSNonOwnedPointerHashCallBacks, 0);
-	}
-      while (NSNextMapEnumeratorPair(&e, (void**)&k, (void**)&i) != 0)
-	{
-	  if (i->size == 0)
+	  if (nil == my->exclude)
 	    {
-	      i->size = [i->object sizeInBytesExcluding: my->exclude];
-	      [my->exclude removeAllObjects];
+	      my->exclude
+		= NSCreateHashTable(NSNonOwnedPointerHashCallBacks, 0);
 	    }
-	  if (i->size > max)
+	  while (NSNextMapEnumeratorPair(&e, (void**)&k, (void**)&i) != 0)
 	    {
-	      /*
-	       * Item in cache is too big for new size limit ...
-	       * Remove it.
-	       */
-	      removeItem(i, &my->first);
-	      NSMapRemove(my->contents, (void*)i->key);
-	      my->currentObjects--;
-	      continue;
+	      if (i->size == 0)
+		{
+		  i->size = [i->object sizeInBytesExcluding: my->exclude];
+		  [my->exclude removeAllObjects];
+		}
+	      if (i->size > max)
+		{
+		  /*
+		   * Item in cache is too big for new size limit ...
+		   * Remove it.
+		   */
+		  removeItem(i, &my->first);
+		  NSMapRemove(my->contents, (void*)i->key);
+		  my->currentObjects--;
+		  continue;
+		}
+	      size += i->size;
 	    }
-	  size += i->size;
+	  NSEndMapTableEnumeration(&e);
+	  my->currentSize = size;
 	}
-      NSEndMapTableEnumeration(&e);
-      my->currentSize = size;
+      else if (max == 0)
+	{
+	  my->currentSize = 0;
+	}
+      my->maxSize = max;
+      if (my->currentSize > my->maxSize)
+	{
+	  [self shrinkObjects: my->maxObjects
+		      andSize: my->maxSize];
+	}
     }
-  else if (max == 0)
+  [my->lock unlock];
+}
+
+- (void) setName: (NSString*)name forConfiguration: (BOOL)useDefaults
+{
+  NSString	*c;
+
+  [my->lock lock];
+  c = [name copy];
+  [my->name release];
+  my->name = c;
+  useDefaults = (useDefaults ? YES : NO);	// Make sure this is a real bool
+  if (my->useDefaults != useDefaults)
     {
-      my->currentSize = 0;
-    }
-  my->maxSize = max;
-  if (my->currentSize > my->maxSize)
-    {
-      [self shrinkObjects: my->maxObjects
-		  andSize: my->maxSize];
+      if (my->useDefaults)
+	{
+	  [[NSNotificationCenter defaultCenter] removeObserver: self
+	    name: NSUserDefaultsDidChangeNotification object: nil];
+	}
+      my->useDefaults = useDefaults;
+      if (my->useDefaults)
+	{
+	  [[NSNotificationCenter defaultCenter]
+	    addObserver: self
+	    selector: @selector(_useDefaults:)
+	    name: NSUserDefaultsDidChangeNotification
+	    object: nil];
+	}
     }
   [my->lock unlock];
 }
 
 - (void) setName: (NSString*)name
 {
-  [my->lock lock];
-  [name retain];
-  [my->name release];
-  my->name = name;
-  [my->lock unlock];
+  [self setName: name forConfiguration: NO];
 }
 
 - (void) setObject: (id)anObject forKey: (id)aKey
@@ -838,7 +882,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 }
 
 @end
-@implementation	GSCache (Threading)
+@implementation	GSCache (Private)
 + (void) _becomeThreaded: (NSNotification*)n
 {
   NSHashEnumerator	e;
@@ -857,6 +901,45 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 - (void) _createLock
 {
   my->lock = [NSRecursiveLock new];
+}
+- (void) _useDefaults: (NSNotification*)n
+{
+  NSUserDefaults	*defs = [NSUserDefaults standardUserDefaults];
+  NSString		*conf = (nil == my->name ? @"" : my->name);
+  NSString		*key;
+
+  [my->lock lock];
+  NS_DURING
+    {
+      if (YES == my->useDefaults)
+	{
+	  my->useDefaults = NO;
+	  key = [@"GSCacheLifetime" stringByAppendingString: conf];
+	  if (nil != [defs objectForKey: key])
+	    {
+	      [self setLifetime: (unsigned)[defs integerForKey: key]];
+	    }
+	  key = [@"GSCacheMaxObjects" stringByAppendingString: conf];
+	  if (nil != [defs objectForKey: key])
+	    {
+	      [self setMaxObjects: (unsigned)[defs integerForKey: key]];
+	    }
+	  key = [@"GSCacheMaxSize" stringByAppendingString: conf];
+	  if (nil != [defs objectForKey: key])
+	    {
+	      [self setMaxSize: (NSUInteger)[defs integerForKey: key]];
+	    }
+	  my->useDefaults = YES;
+	}
+      [my->lock unlock];
+    }
+  NS_HANDLER
+    {
+      my->useDefaults = YES;
+      [my->lock unlock];
+      [localException raise];
+    }
+  NS_ENDHANDLER
 }
 @end
 

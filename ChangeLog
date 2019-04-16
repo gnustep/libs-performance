@@ -1,3 +1,10 @@
+2019-04-16 Richard Frith-Macdonald  <rfm@gnu.org>
+
+	* GSCache.h:
+	* GSCache.m:
+	Added -setName:forConfiguration: method to set a cache to be
+	configured by NSUserDefaults settings rather than programmatically.
+
 2018-03-27 Richard Frith-Macdonald  <rfm@gnu.org>
 
 	* GSIOThreadPool.m: Make the code use NSThread's designated

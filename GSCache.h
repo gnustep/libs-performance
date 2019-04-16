@@ -124,7 +124,7 @@
 - (NSUInteger) maxSize;
 
 /**
- * Return the name of this instance (as set using -setName:)
+ * Return the name of this instance (as set using -setName:forConfiguration:)
  */
 - (NSString*) name;
 
@@ -161,11 +161,11 @@
 - (void) setDelegate: (id)anObject;
 
 /**
- * Sets the lifetime (seconds) for items added to the cache.  If this
- * is set to zero then items are not removed from the cache based on
- * lifetimes when the cache is full and an object is added, though
- * <em>expired</em> items are still removed when an attempt to retrieve
- * them is made.
+ * Sets the default lifetime (seconds) for items added to the cache.
+ * If this is set to zero then items are not removed from the cache
+ * based on lifetimes when the cache is full and an object is added,
+ * though <em>expired</em> items are still removed when an attempt to
+ * retrieve them is made.
  */
 - (void) setLifetime: (unsigned)max;
 
@@ -184,19 +184,33 @@
 - (void) setMaxSize: (NSUInteger)max;
 
 /**
- * Sets the name of this instance.
+ * Sets the name of this instance and whether the instance is to be
+ * configured using information from the user defaults system.<br />
+ * If useDefaults is YES, values from the user defaults system will be
+ * used to override the -setLifetime: -setMaxObjects: and -setMaxSize:
+ * methods.<br />
+ * The defaults keys for the configurationm are GSCacheLifetimeX,
+ * GSCacheMaxObjectsX and GSCacheMaxSizeX where X is the name of the
+ * cache being configured (an empty string for caches with no name).
+ */
+- (void) setName: (NSString*)name forConfiguration: (BOOL)useDefaults;
+
+/**
+ * Calls -setName:forConfiguration: to have the receiver configured
+ * by calling configuration methods rather than by using the defaults
+ * system.
  */
 - (void) setName: (NSString*)name;
 
 /**
- * Sets (or replaces)the cached value for the specified key.<br />
+ * Sets (or replaces) the cached value for the specified key.<br />
  * The value of anObject may be nil to remove any cached object
  * for aKey.
  */
 - (void) setObject: (id)anObject forKey: (id)aKey;
 
 /**
- * Sets (or replaces)the cached value for the specified key, giving
+ * Sets (or replaces) the cached value for the specified key, giving
  * the value the specified lifetime (in seconds).  A lifetime of zero
  * means that the item is not limited by lifetime.<br />
  * The value of anObject may be nil to remove any cached object
@@ -207,7 +221,7 @@
 	  lifetime: (unsigned)lifetime;
 
 /**
- * Sets (or replaces)the cached value for the specified key, giving
+ * Sets (or replaces) the cached value for the specified key, giving
  * the value the specified expiry date.  Calls -setObject:forKey:lifetime:
  * to do the real work ... this is just a convenience method to
  * handle working out the lifetime in seconds.<br />
