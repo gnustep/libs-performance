@@ -621,7 +621,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
     {
       my->lifetime = max;
     }
-  [my->lock lock];
+  [my->lock unlock];
 }
 
 - (void) setMaxObjects: (unsigned)max
