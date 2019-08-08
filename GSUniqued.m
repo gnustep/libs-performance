@@ -75,6 +75,8 @@ uRelease(id self, SEL _cmd)
 
 @implementation GSUniqued
 
+static Class    NSObjectClass;
+
 + (void) initialize
 {
   if (Nil == GSUniquedClass)
@@ -86,6 +88,7 @@ uRelease(id self, SEL _cmd)
       iUnlock = [uniquedObjectsLock methodForSelector: @selector(unlock)];
       uniquedObjects = NSCreateHashTable(
         NSNonRetainedObjectHashCallBacks, 10000);
+      NSObjectClass = [NSObject class];
       GSUniquedClass = [GSUniqued class];
     }
 }
@@ -113,10 +116,33 @@ uRelease(id self, SEL _cmd)
       Class     u;
 
       aCopy = [anObject copyWithZone: NSDefaultMallocZone()];
+      if (aCopy == anObject)
+        {
+          /* Unable to make a copy ... that probably means the object
+           * is already unique and we can just return it.
+           */
+          if (NO == [aCopy isKindOfClass: [NSString class]])
+            {
+              return aCopy;
+            }
+          else
+            {
+              NSMutableString   *m;
+
+              /* We have different subclasses of NSString and we can't swizzle
+               * a constant string, so in that case we need to work with another
+               * type of string.
+               */
+              m = [aCopy mutableCopy];
+              [aCopy release];
+              aCopy = [m copy];
+              [m release];
+            }
+        }
       c = object_getClass(aCopy);
 
       [classLock lock];
-      u = [classMap objectForKey: c];
+      u = [classMap objectForKey: (id<NSCopying>)c];
       if (Nil == u)
         {
           const char    *cn = class_getName(c);
@@ -126,18 +152,25 @@ uRelease(id self, SEL _cmd)
           sprintf(name, "GSUniqued%s", cn);
           u = objc_allocateClassPair(c, name, 0);
 
-          method = class_getInstanceMethod([NSObject class],
+          method = class_getInstanceMethod(NSObjectClass,
             @selector(dealloc));
           class_addMethod(u, @selector(dealloc),
             (IMP)uDealloc, method_getTypeEncoding(method));
 
-          method = class_getInstanceMethod([NSObject class],
+          method = class_getInstanceMethod(NSObjectClass,
             @selector(release));
           class_addMethod(u, @selector(release),
             (IMP)uRelease, method_getTypeEncoding(method));
 
+          method = class_getInstanceMethod(GSUniquedClass,
+            @selector(copyUniqued));
+          class_addMethod(u, @selector(copyUniqued),
+            class_getMethodImplementation(GSUniquedClass,
+            @selector(copyUniqued)),
+            method_getTypeEncoding(method));
+
           objc_registerClassPair(u);
-          [classMap setObject: u forKey: c];
+          [classMap setObject: u forKey: (id<NSCopying>)c];
         }
       [classLock unlock];
 
@@ -162,6 +195,10 @@ uRelease(id self, SEL _cmd)
   return found;
 }
 
+- (id) copyUniqued
+{
+  return [self retain];
+}
 @end
 
 @implementation NSObject (GSUniqued)
