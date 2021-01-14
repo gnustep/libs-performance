@@ -372,7 +372,7 @@ GSLinkedListInsertAfter(GSListLink *link, GSLinkedList *list, GSListLink *at)
         {
           at = list->tail;
         }
-      link->next = at->next;
+      link->next = at ? at->next : nil;
       if (nil == link->next)
 	{
 	  list->tail = link;
@@ -381,7 +381,10 @@ GSLinkedListInsertAfter(GSListLink *link, GSLinkedList *list, GSListLink *at)
 	{
 	  link->next->previous = link;
 	}
-      at->next = link;
+      if (at)
+	{
+	  at->next = link;
+	}
       link->previous = at;
     }
   link->owner = list;
