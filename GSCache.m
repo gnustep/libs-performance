@@ -58,8 +58,6 @@
 #endif
 
 @interface	GSCache (Private)
-+ (void) _becomeThreaded: (NSNotification*)n;
-- (void) _createLock;
 - (void) _useDefaults: (NSNotification*)n;
 @end
 
@@ -220,25 +218,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
   if (allCaches == 0)
     {
       itemOffset = class_getInstanceSize(self);
-      allCaches
-	= NSCreateHashTable(NSNonRetainedObjectHashCallBacks, 0);
-      if ([NSThread isMultiThreaded] == YES)
-	{
-	  [self _becomeThreaded: nil];
-	}
-      else
-	{
-	  /* If and when we become multi-threaded, the +_becomeThreaded:
-	   * method will remove us as an observer and will create a lock
-	   * for the table of all caches, then ask each cache to create
-	   * its own lock.
-	   */
-	  [[NSNotificationCenter defaultCenter]
-	    addObserver: self
-	    selector: @selector(_becomeThreaded:)
-	    name: NSWillBecomeMultiThreadedNotification
-	    object: nil];
-	}
+      allCaches = NSCreateHashTable(NSNonRetainedObjectHashCallBacks, 0);
       GSTickerTimeNow();
     }
 }
@@ -310,10 +290,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 {
   if (nil != (self = [super init]))
     {
-      if ([NSThread isMultiThreaded] == YES)
-	{
-	  [self _createLock];
-	}
+      my->lock = [NSRecursiveLock new];
       my->contents = NSCreateMapTable(NSObjectMapKeyCallBacks,
 	NSObjectMapValueCallBacks, 0);
       [allCachesLock lock];
@@ -907,25 +884,6 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 
 @end
 @implementation	GSCache (Private)
-+ (void) _becomeThreaded: (NSNotification*)n
-{
-  NSHashEnumerator	e;
-  GSCache		*c;
-
-  [[NSNotificationCenter defaultCenter] removeObserver: self
-    name: NSWillBecomeMultiThreadedNotification object: nil];
-  allCachesLock = [NSRecursiveLock new];
-  e = NSEnumerateHashTable(allCaches);
-  while ((c = (GSCache*)NSNextHashEnumeratorItem(&e)) != nil)
-    {
-      [c _createLock];
-    }
-  NSEndHashTableEnumeration(&e);
-}
-- (void) _createLock
-{
-  my->lock = [NSRecursiveLock new];
-}
 - (void) _useDefaults: (NSNotification*)n
 {
   NSUserDefaults	*defs = [NSUserDefaults standardUserDefaults];
