@@ -656,6 +656,34 @@ typedef struct {
   [super dealloc];
 }
 
+static void 
+appendCountInfo(CountInfo *info, NSMutableString *m, NSTimeInterval base)
+{
+  NSDate	*d = [NSDate alloc];
+
+  d = [d initWithTimeIntervalSinceReferenceDate: info->tick + base];
+  [m appendFormat: @"%u, %@\n", info->cnt, d];
+  RELEASE(d);
+}
+
+static void 
+appendDurationInfo(DurationInfo *info, NSMutableString *m, NSTimeInterval base)
+{
+  NSDate	*d = [NSDate alloc];
+
+  d = [d initWithTimeIntervalSinceReferenceDate: info->tick + base];
+  if (info->cnt)
+    {
+      [m appendFormat: @"%u, %g, %g, %g, %@\n",
+	info->cnt, info->max, info->min, info->sum, d];
+    }
+  else
+    {
+      [m appendFormat: @"0, -, -, -, %@\n", d];
+    }
+  RELEASE(d);
+}
+
 - (NSString*) description
 {
   NSAutoreleasePool     *pool = [NSAutoreleasePool new];
@@ -702,16 +730,12 @@ typedef struct {
 		  tick = 0;
 		  for (i = 0; i < my->second; i++)
 		    {
-		      DurationInfo		*info = &dseconds[i];
-		      NSTimeInterval	ti = info->tick + baseTime;
+		      DurationInfo	*info = &dseconds[i];
 
 		      if (info->tick != tick)
 			{
 			  tick = info->tick;
-			  [m appendFormat: @"%u, %g, %g, %g, %@\n",
-			    info->cnt, info->max, info->min, info->sum,
-			    [NSDate dateWithTimeIntervalSinceReferenceDate:
-			      ti]];
+			  appendDurationInfo(info, m, baseTime);
 			}
 		    }
 		}
@@ -722,16 +746,12 @@ typedef struct {
 		  tick = 0;
 		  for (i = 0; i < my->minute; i++)
 		    {
-		      DurationInfo		*info = &dminutes[i];
-		      NSTimeInterval	ti = info->tick + baseTime;
+		      DurationInfo	*info = &dminutes[i];
 
 		      if (info->tick != tick)
 			{
 			  tick = info->tick;
-			  [m appendFormat: @"%u, %g, %g, %g, %@\n",
-			    info->cnt, info->max, info->min, info->sum,
-			    [NSDate dateWithTimeIntervalSinceReferenceDate:
-			      ti]];
+			  appendDurationInfo(info, m, baseTime);
 			}
 		    }
 		}
@@ -744,32 +764,24 @@ typedef struct {
                    */
 		  for (i = my->period; i < my->numberOfPeriods; i++)
 		    {
-		      DurationInfo		*info = &dperiods[i];
-		      NSTimeInterval	ti = info->tick + baseTime;
+		      DurationInfo	*info = &dperiods[i];
 
 		      if (info->tick != tick)
 			{
 			  tick = info->tick;
-			  [m appendFormat: @"%u, %g, %g, %g, %@\n",
-			    info->cnt, info->max, info->min, info->sum,
-			    [NSDate dateWithTimeIntervalSinceReferenceDate:
-			      ti]];
+			  appendDurationInfo(info, m, baseTime);
 			}
 		    }
                   /* Periods from current cycle
                    */
 		  for (i = 0; i < my->period; i++)
 		    {
-		      DurationInfo		*info = &dperiods[i];
-		      NSTimeInterval	ti = info->tick + baseTime;
+		      DurationInfo	*info = &dperiods[i];
 
 		      if (info->tick != tick)
 			{
 			  tick = info->tick;
-			  [m appendFormat: @"%u, %g, %g, %g, %@\n",
-			    info->cnt, info->max, info->min, info->sum,
-			    [NSDate dateWithTimeIntervalSinceReferenceDate:
-			      ti]];
+			  appendDurationInfo(info, m, baseTime);
 			}
 		    }
 		}
@@ -783,14 +795,11 @@ typedef struct {
 		  for (i = 0; i < my->second; i++)
 		    {
 		      CountInfo		*info = &cseconds[i];
-		      NSTimeInterval	ti = info->tick + baseTime;
 
 		      if (info->tick != tick)
 			{
 			  tick = info->tick;
-			  [m appendFormat: @"%u, %@\n", info->cnt,
-			    [NSDate dateWithTimeIntervalSinceReferenceDate:
-			      ti]];
+			  appendCountInfo(info, m, baseTime);
 			}
 		    }
 		}
@@ -802,14 +811,11 @@ typedef struct {
 		  for (i = 0; i < my->minute; i++)
 		    {
 		      CountInfo		*info = &cminutes[i];
-		      NSTimeInterval	ti = info->tick + baseTime;
 
 		      if (info->tick != tick)
 			{
 			  tick = info->tick;
-			  [m appendFormat: @"%u, %@\n", info->cnt,
-			    [NSDate dateWithTimeIntervalSinceReferenceDate:
-			      ti]];
+			  appendCountInfo(info, m, baseTime);
 			}
 		    }
 		}
@@ -823,14 +829,11 @@ typedef struct {
 		  for (i = my->period; i < my->numberOfPeriods; i++)
                     {
 		      CountInfo		*info = &cperiods[i];
-		      NSTimeInterval	ti = info->tick + baseTime;
 
 		      if (info->tick != tick)
 			{
 			  tick = info->tick;
-			  [m appendFormat: @"%u, %@\n", info->cnt,
-			    [NSDate dateWithTimeIntervalSinceReferenceDate:
-			      ti]];
+			  appendCountInfo(info, m, baseTime);
 			}
                     }
                   /* Periods from current cycle
@@ -838,14 +841,11 @@ typedef struct {
 		  for (i = 0; i < my->period; i++)
 		    {
 		      CountInfo		*info = &cperiods[i];
-		      NSTimeInterval	ti = info->tick + baseTime;
 
 		      if (info->tick != tick)
 			{
 			  tick = info->tick;
-			  [m appendFormat: @"%u, %@\n", info->cnt,
-			    [NSDate dateWithTimeIntervalSinceReferenceDate:
-			      ti]];
+			  appendCountInfo(info, m, baseTime);
 			}
 		    }
 		}
