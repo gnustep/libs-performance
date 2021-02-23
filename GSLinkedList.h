@@ -329,8 +329,8 @@ GSLinkedListRemove(GSListLink *link, GSLinkedList *list);
   GSListLink    *free;  /** The unused links     */
 }
 
-/** Adds an object at the head of the list (calls -insertObject:after:),
- * making it the first object in the list.<br />
+/** Adds an object at the tail of the list (calls -insertObject:after:),
+ * making it the last object in the list.<br />
  * Returns the list link that the object is stored in.
  */
 - (GSListLink*) addObject: (id)anObject;
