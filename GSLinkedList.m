@@ -498,9 +498,9 @@ GSLinkedListMoveToTail(GSListLink *link, GSLinkedList *list)
 
 @implementation GSLinkStore
 
-- (void) addObject: (id)anObject
+- (GSListLink*) addObject: (id)anObject
 {
-  GSLinkStoreInsertObjectAfter(anObject, self, tail);
+  return GSLinkStoreInsertObjectAfter(anObject, self, tail);
 }
 
 - (void) dealloc
@@ -523,14 +523,14 @@ GSLinkedListMoveToTail(GSListLink *link, GSLinkedList *list)
   return GSLinkedListFirstObject(self);
 }
 
-- (void) insertObject: (id)anObject after: (GSListLink*)at
+- (GSListLink*) insertObject: (id)anObject after: (GSListLink*)at
 {
-  GSLinkStoreInsertObjectAfter(anObject, self, at);
+  return GSLinkStoreInsertObjectAfter(anObject, self, at);
 }
 
-- (void) insertObject: (id)anObject before: (GSListLink*)at
+- (GSListLink*) insertObject: (id)anObject before: (GSListLink*)at
 {
-  GSLinkStoreInsertObjectBefore(anObject, self, at);
+  return GSLinkStoreInsertObjectBefore(anObject, self, at);
 }
 
 - (id) lastObject
@@ -590,7 +590,7 @@ GSLinkedListMoveToTail(GSListLink *link, GSLinkedList *list)
 
 @end
 
-void
+GSListLink*
 GSLinkStoreInsertObjectAfter(
   NSObject *anObject, GSLinkStore *list, GSListLink *at)
 {
@@ -607,9 +607,10 @@ GSLinkStoreInsertObjectAfter(
     }
   link->item = [anObject retain];
   GSLinkedListInsertAfter(link, list, (nil == at) ? list->tail : at);
+  return link;
 }
 
-void
+GSListLink*
 GSLinkStoreInsertObjectBefore(
   NSObject *anObject, GSLinkStore *list, GSListLink *at)
 {
@@ -626,6 +627,7 @@ GSLinkStoreInsertObjectBefore(
     }
   link->item = [anObject retain];
   GSLinkedListInsertBefore(link, list, (nil == at) ? list->head : at);
+  return link;
 }
 
 void

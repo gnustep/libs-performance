@@ -261,7 +261,7 @@ extern GSListLink*
 GSLinkedListFindIdentical(NSObject *object, GSLinkedList *list,
   GSListLink *from, BOOL back);
 
-/** Returns the first object in the list.
+/** Returns the first (head) object in the list.
  */
 static inline id
 GSLinkedListFirstObject(GSLinkedList *list)
@@ -287,7 +287,7 @@ GSLinkedListInsertAfter(GSListLink *link, GSLinkedList *list, GSListLink *at);
 extern void
 GSLinkedListInsertBefore(GSListLink *link, GSLinkedList *list, GSListLink *at);
 
-/** Returns the last object in the list.
+/** Returns the last (tail) object in the list.
  */
 static inline id
 GSLinkedListLastObject(GSLinkedList *list)
@@ -297,12 +297,14 @@ GSLinkedListLastObject(GSLinkedList *list)
   return list->tail->item;
 }
 
-/** Moves the link to the head of the list if it is not already there.
+/** Moves the link to the head of the list (makes it the first object)
+ * if it is not already there.
  */
 extern void
 GSLinkedListMoveToHead(GSListLink *link, GSLinkedList *list);
 
-/** Moves the link to the tail of the list if it is not already there.
+/** Moves the link to the tail of the list (makes it the last object)
+ * if it is not already there.
  */
 extern void
 GSLinkedListMoveToTail(GSListLink *link, GSLinkedList *list);
@@ -327,23 +329,27 @@ GSLinkedListRemove(GSListLink *link, GSLinkedList *list);
   GSListLink    *free;  /** The unused links     */
 }
 
-/** Adds an object at the end of the list (calls -insertObject:after:).
+/** Adds an object at the head of the list (calls -insertObject:after:),
+ * making it the first object in the list.<br />
+ * Returns the list link that the object is stored in.
  */
-- (void) addObject: (id)anObject;
+- (GSListLink*) addObject: (id)anObject;
 
 /** Returns the first (head) object in the list or nil if the list is empty.
  */
 - (id) firstObject;
 
 /** Inserts anObject immediately after the specified link.  If at is nil
- * the object is inserted at the end of the list (as tail).
+ * the object is inserted at the end of the list (as tail).<br />
+ * Returns the list link that the object is stored in.
  */
-- (void) insertObject: (id)anObject after: (GSListLink*)at;
+- (GSListLink*) insertObject: (id)anObject after: (GSListLink*)at;
 
 /** Inserts anObject immediately before the specified link.  If at is nil
- * the object is inserted at the start of the list (as head).
+ * the object is inserted at the start of the list (as head).<br />
+ * Returns the list link that the object is stored in.
  */
-- (void) insertObject: (id)anObject before: (GSListLink*)at;
+- (GSListLink*) insertObject: (id)anObject before: (GSListLink*)at;
 
 /** Returns the last (tail) object in the list or nil if the list is empty.
  */
@@ -354,12 +360,12 @@ GSLinkedListRemove(GSListLink *link, GSLinkedList *list);
  */
 - (void) purge;
 
-/** Removes the first object from the list (or does nothing if the list
+/** Removes the first (head) object from the list (or does nothing if the list
  * is empty).
  */
 - (void) removeFirstObject;
 
-/** Removes the last object from the list (or does nothing if the list
+/** Removes the last (tail) object from the list (or does nothing if the list
  * is empty).
  */
 - (void) removeLastObject;
@@ -375,16 +381,18 @@ GSLinkedListRemove(GSListLink *link, GSLinkedList *list);
 @end
 
 /** Adds the object to the list after the specified link.<br />
- * Calls GSLinkedListInsertAfter().
+ * Calls GSLinkedListInsertAfter().<br />
+ * Returns the list link that the object is stored in.
  */
-extern void
+extern GSListLink*
 GSLinkStoreInsertObjectAfter(
   NSObject *anObject, GSLinkStore *list, GSListLink *at);
 
 /** Adds the object to the list before the specified link.<br />
- * Calls GSLinkedListInsertBefore().
+ * Calls GSLinkedListInsertBefore().<br />
+ * Returns the list link that the object is stored in.
  */
-extern void
+extern GSListLink*
 GSLinkStoreInsertObjectBefore(
   NSObject *anObject, GSLinkStore *list, GSListLink *at);
 
