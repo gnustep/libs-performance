@@ -95,8 +95,8 @@
 /** Adds the object to the queue for which operations should be performed.<br />
  * You may add an object more than once, but that may result in the operation
  * being performed simultaneously in more than one thread.<br />
- * If the pool is configured with zero threads or zero operations,
- * this method will simply perform the operation immediately.<br />
+ * If the pool is configured with zero threads or the queue of operations is
+ * full, this method will simply perform the operation immediately.<br />
  * The operation will be performed in a context where there is an exception
  * handler set to trap exceptions, and an autorelease pool to deal with
  * autoreleased objects.
