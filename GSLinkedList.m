@@ -498,6 +498,21 @@ GSLinkedListMoveToTail(GSListLink *link, GSLinkedList *list)
 
 @implementation GSLinkStore
 
++ (GSLinkStore*) storeFor: (Class)theLinkClass
+{
+  Class		c = [GSListLink class];
+  GSLinkStore	*s;
+
+  if (Nil == theLinkClass)
+    {
+      theLinkClass = c;
+    }
+  NSAssert([theLinkClass isSubclassOfClass: c], NSInvalidArgumentException);
+  s = [self new];
+  s->linkClass = c;
+  return AUTORELEASE(s);
+}
+
 - (GSListLink*) addObject: (id)anObject
 {
   return GSLinkStoreInsertObjectAfter(anObject, self, tail);
@@ -507,7 +522,7 @@ GSLinkedListMoveToTail(GSListLink *link, GSLinkedList *list)
 {
   [self empty];
   [self purge];
-  [super dealloc];
+  DEALLOC
 }
 
 - (void) empty
@@ -521,6 +536,15 @@ GSLinkedListMoveToTail(GSListLink *link, GSLinkedList *list)
 - (id) firstObject
 {
   return GSLinkedListFirstObject(self);
+}
+
+- (id) init
+{
+  if (nil != (self = [super init]))
+    {
+      linkClass = [GSListLink class];
+    }
+  return self;
 }
 
 - (GSListLink*) insertObject: (id)anObject after: (GSListLink*)at
@@ -546,7 +570,7 @@ GSLinkedListMoveToTail(GSListLink *link, GSLinkedList *list)
 
       free = link->next;
       link->next = nil;
-      [link release];
+      RELEASE(link);
     }
 }
 
@@ -598,14 +622,14 @@ GSLinkStoreInsertObjectAfter(
 
   if (nil == link)
     {
-      link = [GSListLink new];
+      link = [list->linkClass new];
     }
   else
     {
       list->free = link->next;
       link->next = nil;
     }
-  link->item = [anObject retain];
+  link->item = RETAIN(anObject);
   GSLinkedListInsertAfter(link, list, (nil == at) ? list->tail : at);
   return link;
 }
@@ -618,14 +642,14 @@ GSLinkStoreInsertObjectBefore(
 
   if (nil == link)
     {
-      link = [GSListLink new];
+      link = [list->linkClass new];
     }
   else
     {
       list->free = link->next;
       link->next = nil;
     }
-  link->item = [anObject retain];
+  link->item = RETAIN(anObject);
   GSLinkedListInsertBefore(link, list, (nil == at) ? list->head : at);
   return link;
 }
@@ -636,7 +660,7 @@ GSLinkStoreRemoveObjectAt(GSLinkStore *list, GSListLink *at)
   if (nil != at && at->owner == list)
     {
       GSLinkedListRemove(at, list);
-      [at->item release];
+      RELEASE(at->item);
       at->item = nil;
       at->next = list->free;
       list->free = at;

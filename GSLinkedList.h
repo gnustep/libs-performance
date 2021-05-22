@@ -326,8 +326,15 @@ GSLinkedListRemove(GSListLink *link, GSLinkedList *list);
 @interface	GSLinkStore : GSLinkedList
 {
 @public
-  GSListLink    *free;  /** The unused links     */
+  Class		linkClass;	/** The class used for links	*/
+  GSListLink    *free;  	/** The unused links     */
 }
+
+/** Creates an instance of a store to be used to create links using the
+ * specified class (must be a subclass of GSListLink).  If the class is
+ * nil then GSListLink is used.
+ */
++ (GSLinkStore*) storeFor: (Class)theLinkClass;
 
 /** Adds an object at the tail of the list (calls -insertObject:after:),
  * making it the last object in the list.<br />
