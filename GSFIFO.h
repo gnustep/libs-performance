@@ -142,7 +142,8 @@
 
 
 /**
- * Reads up to count autoreleased objects from the FIFO into the buf. If blocking
+ * Reads up to count autoreleased objects from the FIFO into the buf.
+ * If blocking
  * is requested and a before date is specified, the operation blocks until the
  * specified time and returns 0 if it could not read any items. The timeout
  * configured for the FIFO still takes precedence.
@@ -167,6 +168,14 @@
  * Implemented using -get:count:shouldBlock:
  */
 - (NSObject*) getObject;
+
+/** Gets the next item from the FIFO, blocking if necessary until an
+ * item is available.  Raises an exception if the FIFO is configured
+ * with a timeout and it is exceeded.<br />
+ * The returned item/object, is not autoreleased.<br />
+ * Implemented using -get:count:shouldBlock:
+ */
+- (NSObject*) getObjectRetained NS_RETURNS_RETAINED;
 
 /** <init/>
  * Initialises the receiver with the specified capacity (buffer size).<br />
@@ -252,6 +261,9 @@
 /** Adds an item to the FIFO, blocking if necessary until there is
  * space in the buffer.  Raises an exception if the FIFO is configured
  * with a timeout and it is exceeded.br />
+ * The item may be an object (which is not retained when added) or a
+ * pointer to memory.  The ownership of the item memory should be
+ * transferred to the FIFO.<br />
  * Implemented using -put:count:shouldBlock:
  */
 - (void) put: (void*)item;
@@ -263,6 +275,15 @@
  * Implemented using -put:count:shouldBlock:
  */
 - (void) putObject: (NSObject*)item;
+
+/** Adds an object to the FIFO, blocking if necessary until there is
+ * space in the buffer.  Raises an exception if the FIFO is configured
+ * with a timeout and it is exceeded.br />
+ * The object is not retained when added, so ownership of the memory
+ * should be transferred to the FIFO.<br />
+ * Implemented using -put:count:shouldBlock:
+ */
+- (void) putObjectConsumed: (NSObject*) NS_CONSUMED item;
 
 /** Return any available statistics for the receiver.<br />
  */

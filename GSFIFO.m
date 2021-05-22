@@ -629,6 +629,15 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
   return [(NSObject*)item autorelease];
 }
 
+- (NSObject*) getObjectRetained NS_RETURNS_RETAINED
+{
+  void	*item = 0;
+
+  while (0 == [self get: &item count: 1 shouldBlock: YES])
+    ;
+  return (NSObject*)item;
+}
+
 - (id) initWithCapacity: (uint32_t)c
 	    granularity: (uint16_t)g
 		timeout: (uint16_t)t
@@ -858,13 +867,19 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 
 - (void) put: (void*)item
 {
-  while (0 == [self put: &item count: 1 shouldBlock: YES])
+  while (0 == [self put: (void**)&item count: 1 shouldBlock: YES])
     ;
 }
 
 - (void) putObject: (NSObject*)item
 {
   [item retain];
+  while (0 == [self put: (void**)&item count: 1 shouldBlock: YES])
+    ;
+}
+
+- (void) putObjectConsumed: (NSObject*) NS_CONSUMED item
+{
   while (0 == [self put: (void**)&item count: 1 shouldBlock: YES])
     ;
 }
