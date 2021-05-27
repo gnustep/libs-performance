@@ -509,7 +509,7 @@ GSLinkedListMoveToTail(GSListLink *link, GSLinkedList *list)
     }
   NSAssert([theLinkClass isSubclassOfClass: c], NSInvalidArgumentException);
   s = [self new];
-  s->linkClass = c;
+  s->linkClass = theLinkClass;
   return AUTORELEASE(s);
 }
 
