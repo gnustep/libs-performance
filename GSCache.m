@@ -718,6 +718,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 	    selector: @selector(_useDefaults:)
 	    name: NSUserDefaultsDidChangeNotification
 	    object: nil];
+	  [self _useDefaults: nil];
 	}
     }
   [my->lock unlock];
