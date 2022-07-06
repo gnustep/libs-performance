@@ -80,6 +80,8 @@ typedef unsigned int NSUInteger;
   NSTimeInterval	timeout;
   NSUInteger		maxThreads;
   Class                 threadClass;
+  NSString		*poolName;
+  unsigned		created;
 }
 
 /** Returns an instance intended for sharing between sections of code which
@@ -138,7 +140,7 @@ typedef unsigned int NSUInteger;
 
 /** Releases a thread previously selected from the pool.  This decreases the
  * acquire count for the thread.  If a thread has a zero acquire count, it is
- * a candidatre for termination and removal from the pool if/when the pool
+ * a candidate for termination and removal from the pool if/when the pool
  * has its size changed.
  */
 - (void) unacquireThread: (NSThread*)aThread;

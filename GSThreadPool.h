@@ -38,6 +38,8 @@
 @interface	GSThreadPool : NSObject
 {
   NSRecursiveLock	*poolLock;
+  NSString		*poolName;
+  unsigned		created;
   BOOL			shutdown;
   BOOL			suspended;
   NSUInteger		maxThreads;
@@ -88,6 +90,10 @@
  */
 - (NSUInteger) maxThreads;
 
+/** Returns the name of the pool as set using the -setPoolName: method.
+ */
+- (NSString*) poolName;
+
 /** Reverses the effect of -suspend.
  */
 - (void) resume;
@@ -111,6 +117,10 @@
  * immediately rather than being queued.
  */
 - (void) setOperations: (NSUInteger)max;
+
+/** Sets the pool name, used as a prefix for thread names.
+ */
+- (void) setPoolName: (NSString*)aName;
 
 /** Specify the maximum number of threads in the pool (the actual number
  * used may be lower than this value).<br />

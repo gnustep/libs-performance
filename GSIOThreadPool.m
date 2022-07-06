@@ -257,7 +257,15 @@ best(NSMutableArray *a)
   t = best(threads);
   if (nil == t || ((c = [t _count]) > 0 && [threads count] < maxThreads))
     {
+      NSString	*n;
+
       t = [threadClass new];
+      if (nil == (n = poolName))
+	{
+	  n = @"GSIOThreadPool";
+	}
+      n = [NSString stringWithFormat: @"%@-%u", n, ++created];
+      [t setName: n];
       [threads addObject: t];
       [t release];
       [t start];
@@ -299,6 +307,7 @@ best(NSMutableArray *a)
   [threads release];
   [classLock unlock];
 #endif
+  DESTROY(poolName);
   [super dealloc];
 }
 
@@ -321,6 +330,30 @@ best(NSMutableArray *a)
 - (NSUInteger) maxThreads
 {
   return maxThreads;
+}
+
+- (NSString*) poolName
+{
+  NSString	*n;
+
+  [classLock lock];
+  n = RETAIN(poolName);
+  [classLock unlock];
+  return AUTORELEASE(n);
+}
+
+- (void) setPoolName: (NSString*)aName
+{
+  NSString      *s = nil;
+
+  if (aName)
+    {
+      s = AUTORELEASE([aName copy]);
+      NSAssert([s isKindOfClass: [NSString class]], NSInvalidArgumentException);
+    }
+  [classLock lock];
+  ASSIGN(poolName, s);
+  [classLock unlock];
 }
 
 - (void) setThreads: (NSUInteger)max

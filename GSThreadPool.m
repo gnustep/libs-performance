@@ -114,6 +114,7 @@ static GSThreadPool	*shared = nil;
       [live release];
       live = nil;
     }
+  [poolName release];
   [poolLock unlock];
   [poolLock release];
   [super dealloc];
@@ -125,10 +126,10 @@ static GSThreadPool	*shared = nil;
 
   [poolLock lock];
   result = [NSString stringWithFormat:
-    @"%@ queue: %"PRIuPTR"(%"PRIuPTR")"
+    @"%@ %@ queue: %"PRIuPTR"(%"PRIuPTR")"
     @" threads: %"PRIuPTR"(%"PRIuPTR")"
     @" active: %"PRIuPTR" processed: %"PRIuPTR"",
-    [super description], operations->count, maxOperations,
+    [super description], poolName, operations->count, maxOperations,
     idle->count + live->count, maxThreads, live->count, processed];
   [poolLock unlock];
   return result;
@@ -170,6 +171,7 @@ static GSThreadPool	*shared = nil;
   if ((self = [super init]) != nil)
     {
       poolLock = [NSRecursiveLock new];
+      poolName = @"GSThreadPool";
       idle = [GSLinkedList new];
       live = [GSLinkedList new];
       operations = [GSLinkedList new];
@@ -203,6 +205,16 @@ static GSThreadPool	*shared = nil;
 - (NSUInteger) maxThreads
 {
   return maxThreads;
+}
+
+- (NSString*) poolName
+{
+  NSString	*n;
+
+  [poolLock lock];
+  n = RETAIN(poolName);
+  [poolLock unlock];
+  return AUTORELEASE(n);
 }
 
 - (void) resume
@@ -284,6 +296,20 @@ static GSThreadPool	*shared = nil;
   maxOperations = max;
 }
 
+- (void) setPoolName: (NSString*)aName
+{
+  NSString	*s = nil;
+
+  if (aName)
+    {
+      s = AUTORELEASE([aName copy]);
+      NSAssert([s isKindOfClass: [NSString class]], NSInvalidArgumentException);
+    }
+  [poolLock lock];
+  ASSIGN(poolName, s);
+  [poolLock unlock];
+}
+
 - (void) setThreads: (NSUInteger)max
 {
   [poolLock lock];
@@ -344,6 +370,7 @@ static GSThreadPool	*shared = nil;
 	      if (maxThreads > idle->count + live->count)
 		{
 		  NSThread	*thread;
+		  NSString	*name;
 
 		  /* Create a new link, add it to the idle list, and start the
 		   * thread which will work with it.
@@ -378,6 +405,13 @@ static GSThreadPool	*shared = nil;
 		  thread = [[NSThread alloc] initWithTarget: self
 						   selector: @selector(_run:)
 						     object: link];
+		  if (nil == (name = poolName))
+		    {
+		      name = @"GSThreadPool";
+		    }
+		  name = [NSString stringWithFormat: @"%@-%u",
+		    name, ++created];
+		  [thread setName: name];
 		  [link setItem: thread];
 		  [thread start];
 		  [thread release];	// Retained by link

@@ -1,7 +1,12 @@
+2022-07-06 Richard Frith-Macdonald  <rfm@gnu.org>
 2019-08-08 Richard Frith-Macdonald  <rfm@gnu.org>
 
-	* GSUniqued.m:
-	Add special case code for handling objcts which can't be copied.
+	* GSThreadPool.h:
+	* GSIOThreadPool.h:
+	* GSThreadPool.m:
+	* GSIOThreadPool.m:
+	Add support for naming the pools, with threads named sequentially (as
+	they are created) based on the pool name.
 
 2019-04-16 Richard Frith-Macdonald  <rfm@gnu.org>
 
