@@ -112,7 +112,12 @@ typedef unsigned int NSUInteger;
  */
 - (NSUInteger) maxThreads;
 
-/* Sets the class to be used to create any new threads in this pool.<br />
+/** Sets the base name for threads in this pool.  As threads are created they
+ * are given names formed by assing the value of a counter to the base name.
+ */
+- (void) setPoolName: (NSString*)aName;
+
+/** Sets the class to be used to create any new threads in this pool.<br />
  * Must be a subclass of the GSIOThread class.
  */
 - (void) setThreadClass: (Class)aClass;
