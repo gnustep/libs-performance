@@ -618,17 +618,8 @@ GSListLink*
 GSLinkStoreInsertObjectAfter(
   NSObject *anObject, GSLinkStore *list, GSListLink *at)
 {
-  GSListLink    *link = list->free;
+  GSListLink    *link = GSLinkStoreProvideLink(list);
 
-  if (nil == link)
-    {
-      link = [list->linkClass new];
-    }
-  else
-    {
-      list->free = link->next;
-      link->next = nil;
-    }
   link->item = RETAIN(anObject);
   GSLinkedListInsertAfter(link, list, (nil == at) ? list->tail : at);
   return link;
@@ -638,17 +629,8 @@ GSListLink*
 GSLinkStoreInsertObjectBefore(
   NSObject *anObject, GSLinkStore *list, GSListLink *at)
 {
-  GSListLink    *link = list->free;
+  GSListLink    *link = GSLinkStoreProvideLink(list);
 
-  if (nil == link)
-    {
-      link = [list->linkClass new];
-    }
-  else
-    {
-      list->free = link->next;
-      link->next = nil;
-    }
   link->item = RETAIN(anObject);
   GSLinkedListInsertBefore(link, list, (nil == at) ? list->head : at);
   return link;
@@ -662,8 +644,7 @@ GSLinkStoreRemoveObjectAt(GSLinkStore *list, GSListLink *at)
       GSLinkedListRemove(at, list);
       RELEASE(at->item);
       at->item = nil;
-      at->next = list->free;
-      list->free = at;
+      GSLinkStoreConsumeLink(list, at);
     }
 }
 

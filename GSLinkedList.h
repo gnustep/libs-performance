@@ -387,6 +387,30 @@ GSLinkedListRemove(GSListLink *link, GSLinkedList *list);
 
 @end
 
+static inline void
+GSLinkStoreConsumeLink(GSLinkStore *list, GSListLink NS_CONSUMED *link)
+{
+  link->next = list->free;
+  list->free = link;
+}
+
+static inline GSListLink* NS_RETURNS_RETAINED
+GSLinkStoreProvideLink(GSLinkStore *list)
+{
+  GSListLink    *link = list->free;
+
+  if (nil == link)
+    {
+      link = [list->linkClass new];
+    }
+  else
+    {
+      list->free = link->next;
+      link->next = nil;
+    }
+  return link;
+}
+
 /** Adds the object to the list after the specified link.<br />
  * Calls GSLinkedListInsertAfter().<br />
  * Returns the list link that the object is stored in.
