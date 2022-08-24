@@ -54,7 +54,7 @@
 /** Returns an instance intended for sharing between sections of code which
  * wish to make use of threading by performing operations in other threads,
  * but which don't mind operations being interleaved with those belonging to
- * oither sections of code.<br />
+ * other sections of code.<br />
  * Always returns the same instance whenever the method is called.
  */
 + (GSThreadPool*) sharedPool;

@@ -128,9 +128,11 @@ static GSThreadPool	*shared = nil;
   result = [NSString stringWithFormat:
     @"%@ %@ queue: %"PRIuPTR"(%"PRIuPTR")"
     @" threads: %"PRIuPTR"(%"PRIuPTR")"
-    @" active: %"PRIuPTR" processed: %"PRIuPTR"",
+    @" active: %"PRIuPTR" processed: %"PRIuPTR""
+    @" suspended: %s",
     [super description], poolName, operations->count, maxOperations,
-    idle->count + live->count, maxThreads, live->count, processed];
+    idle->count + live->count, maxThreads, live->count, processed,
+    (suspended ? "yes" : "no")];
   [poolLock unlock];
   return result;
 }
@@ -507,7 +509,7 @@ static GSThreadPool	*shared = nil;
 
 #if !defined (GNUSTEP) && (MAC_OS_X_VERSION_MAX_ALLOWED<=MAC_OS_X_VERSION_10_4)
   /* With the older thread API we must set up the link item *after* the
-   * thread starts.  With the new API this is not needed as we cans set
+   * thread starts.  With the new API this is not needed as we can set
    * things up and then start the thread.
    */
   [link setItem: [NSThread currentThread]];
