@@ -69,6 +69,10 @@
  */
 - (NSUInteger) flush;
 
+/** Returns humnan resdable pool statistics.
+ */
+- (NSString*) info;
+
 /** Returns YES if no operations are waiting to be performed, NO otherwise.
  */
 - (BOOL) isEmpty;

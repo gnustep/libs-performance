@@ -122,17 +122,11 @@ static GSThreadPool	*shared = nil;
 
 - (NSString*) description
 {
-  NSString	*result;
+  NSString	*result = [self info];
 
   [poolLock lock];
-  result = [NSString stringWithFormat:
-    @"%@ %@ queue: %"PRIuPTR"(%"PRIuPTR")"
-    @" threads: %"PRIuPTR"(%"PRIuPTR")"
-    @" active: %"PRIuPTR" processed: %"PRIuPTR""
-    @" suspended: %s",
-    [super description], poolName, operations->count, maxOperations,
-    idle->count + live->count, maxThreads, live->count, processed,
-    (suspended ? "yes" : "no")];
+  result = [NSString stringWithFormat: @"%@ %@ %@",
+    [super description], poolName, result];
   [poolLock unlock];
   return result;
 }
@@ -182,6 +176,23 @@ static GSThreadPool	*shared = nil;
       [self setThreads: 2];
     }
   return self;
+}
+
+- (NSString*) info
+{
+  NSString	*result;
+
+  [poolLock lock];
+  result = [NSString stringWithFormat:
+    @"queue: %"PRIuPTR"(%"PRIuPTR")"
+    @" threads: %"PRIuPTR"(%"PRIuPTR")"
+    @" active: %"PRIuPTR" processed: %"PRIuPTR""
+    @" suspended: %s",
+    operations->count, maxOperations,
+    idle->count + live->count, maxThreads, live->count, processed,
+    (suspended ? "yes" : "no")];
+  [poolLock unlock];
+  return result;
 }
 
 - (BOOL) isEmpty
