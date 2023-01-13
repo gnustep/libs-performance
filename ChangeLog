@@ -1,5 +1,8 @@
+2023-01-13 Richard Frith-Macdonald  <rfm@gnu.org>
+
+	* GNUmakefile: bump version for 0.6.0 release
+
 2022-07-06 Richard Frith-Macdonald  <rfm@gnu.org>
-2019-08-08 Richard Frith-Macdonald  <rfm@gnu.org>
 
 	* GSThreadPool.h:
 	* GSIOThreadPool.h:
