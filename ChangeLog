@@ -1,3 +1,10 @@
+2023-01-20 Richard Frith-Macdonald  <rfm@gnu.org>
+
+	* GSLinkedList.h: The produce and consume functins of a link store
+	should not count as modifying ownership of the link ... we should
+	consider the link store to own links whether in the free list or
+	the main list.
+
 2023-01-13 Richard Frith-Macdonald  <rfm@gnu.org>
 
 	* GNUmakefile: bump version for 0.6.0 release
