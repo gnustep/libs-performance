@@ -387,14 +387,22 @@ GSLinkedListRemove(GSListLink *link, GSLinkedList *list);
 
 @end
 
+/** Returns a link to the free list of the store.  The link must either have
+ * been provided by GSLinkStoreProvideLink() or have been removed from the 
+ * store list using GSLinkRemove().
+ */
 static inline void
-GSLinkStoreConsumeLink(GSLinkStore *list, GSListLink NS_CONSUMED *link)
+GSLinkStoreConsumeLink(GSLinkStore *list, GSListLink *link)
 {
   link->next = list->free;
   list->free = link;
 }
-
-static inline GSListLink* NS_RETURNS_RETAINED
+ 
+/** Fetches a link from the free list of the store (allocating if necessary).
+ * The link is still nominally owned by the store and must be inserted into
+ * the list or returned to the free list.
+ */
+static inline GSListLink*
 GSLinkStoreProvideLink(GSLinkStore *list)
 {
   GSListLink    *link = list->free;
