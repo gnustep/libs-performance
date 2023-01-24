@@ -348,21 +348,12 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 	  GSCacheItem	*orig = [item retain];
 
 	  [my->lock unlock];
-	  NS_DURING
-	    {
-	      keep = (*(my->replace))(my->delegate,
-		@selector(shouldKeepItem:withKey:lifetime:after:),
-		item->object,
-		aKey,
-		item->life,
-		when - item->when);
-	    }
-	  NS_HANDLER
-	    {
-	      [my->lock unlock];
-	      [localException raise];
-	    }
-	  NS_ENDHANDLER
+          keep = (*(my->replace))(my->delegate,
+	    @selector(shouldKeepItem:withKey:lifetime:after:),
+	    item->object,
+	    aKey,
+	    item->life,
+	    when - item->when);
 	  [my->lock lock];
 	  if (keep == YES)
 	    {
@@ -424,21 +415,12 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 	  GSCacheItem	*current;
 
 	  [my->lock unlock];
-	  NS_DURING
-	    {
-	      (*(my->refresh))(my->delegate,
-		@selector(mayRefreshItem:withKey:lifetime:after:),
-		item->object,
-		aKey,
-		item->life,
-		when - item->when);
-	    }
-	  NS_HANDLER
-	    {
-	      [my->lock unlock];
-	      [localException raise];
-	    }
-	  NS_ENDHANDLER
+          (*(my->refresh))(my->delegate,
+	    @selector(mayRefreshItem:withKey:lifetime:after:),
+	    item->object,
+	    aKey,
+	    item->life,
+	    when - item->when);
 	  [my->lock lock];
 
 	  /* Refetch in case delegate changed it.
