@@ -726,6 +726,11 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
   unsigned	addObjects = (anObject == nil ? 0 : 1);
   NSUInteger	addSize = 0;
 
+  if (aKey == nil)
+    {
+      [NSException raise: NSInvalidArgumentException
+                  format: @"Attempt to add nil key to cache"];
+    }
   [my->lock lock];
   maxObjects = my->maxObjects;
   maxSize = my->maxSize;

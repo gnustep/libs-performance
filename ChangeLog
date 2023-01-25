@@ -1,5 +1,7 @@
 2023-01-25  Wolfgang Lux  <wolfgang.lux@gmail.com>
 
+	* GSCache.m: Raise exception when attempting to insert object with
+	nil key.
 	* GSCache.m: Remove erroneous unlock in exception handler.
 
 2023-01-20 Richard Frith-Macdonald  <rfm@gnu.org>
