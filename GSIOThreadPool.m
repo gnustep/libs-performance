@@ -190,14 +190,21 @@ static NSRecursiveLock   *classLock = nil;
 static GSIOThreadPool	*shared = nil;
 
 /* Return the thread with the lowest usage.
+ * If there are more threads in the array than we want to use,
+ * those excess threads are excluded from the check so that
+ * their usage can drop to zero and they can be terminated.
  */
 static GSIOThread *
-best(NSMutableArray *a)
+best(NSMutableArray *a, NSUInteger max)
 {
   NSUInteger	c = [a count];
   NSUInteger	l = NSNotFound;
   GSIOThread	*t = nil;
 
+  if (c > max)
+    {
+      c = max;
+    }
   while (c-- > 0)
     {
       GSIOThread	*o = [a objectAtIndex: c];
@@ -254,7 +261,7 @@ best(NSMutableArray *a)
     }
 
   [classLock lock];
-  t = best(threads);
+  t = best(threads, maxThreads);
   if (nil == t || ((c = [t _count]) > 0 && [threads count] < maxThreads))
     {
       NSString	*n;

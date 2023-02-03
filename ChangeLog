@@ -1,3 +1,11 @@
+2023-02-03 Richard Frith-Macdonald  <rfm@gnu.org>
+
+	* GSIOThreadPool.m: If the maximum number of threads desired is
+	decreased  so that we have more threads than we want, the excess
+	threads are now excluded from the set which may be acquired.
+	This should increase the chance of those threads being unacquired
+	so they can be terminated and removed from the pool.
+
 2023-01-25  Wolfgang Lux  <wolfgang.lux@gmail.com>
 
 	* GSCache.m: Raise exception when attempting to insert object with
