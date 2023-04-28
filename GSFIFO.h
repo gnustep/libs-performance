@@ -25,6 +25,14 @@
 #import <Foundation/NSObject.h>
 #import <Foundation/NSDate.h>
 
+#ifndef NS_CONSUMED
+#  if __has_feature(attribute_ns_consumed)
+#    define NS_CONSUMED __attribute__((ns_consumed))
+#  else
+#    define NS_CONSUMED
+#  endif
+#endif
+
 @class NSArray;
 @class NSCondition;
 @class NSNumber;
