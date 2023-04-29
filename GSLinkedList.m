@@ -25,6 +25,7 @@
 #import <Foundation/NSException.h>
 #import "GSLinkedList.h"
 
+
 @implementation	GSListLink
 
 - (void) dealloc
@@ -522,7 +523,7 @@ GSLinkedListMoveToTail(GSListLink *link, GSLinkedList *list)
 {
   [self empty];
   [self purge];
-  DEALLOC
+  [super dealloc];
 }
 
 - (void) empty
