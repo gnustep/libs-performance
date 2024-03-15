@@ -133,7 +133,7 @@ static GSThreadPool	*shared = nil;
 
 - (BOOL) drain: (NSDate*)before
 {
-  BOOL	result = [self isEmpty];
+  BOOL	result = ([self isEmpty] && [self isIdle]) ? YES : NO;
 
   while (NO == result && [before timeIntervalSinceNow] > 0.0)
     {
@@ -146,7 +146,7 @@ static GSThreadPool	*shared = nil;
 #else
       [NSThread sleepForTimeInterval: 0.1];
 #endif
-      result = [self isEmpty];
+      result = ([self isEmpty] && [self isIdle]) ? YES : NO;
     }
   return result;
 }

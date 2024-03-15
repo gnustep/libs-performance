@@ -59,8 +59,8 @@
  */
 + (GSThreadPool*) sharedPool;
 
-/** Waits until the pool of operations is empty or until the specified
- * timestamp.  Returns YES if the pool was emptied, NO otherwise.
+/** Waits until the pool of operations is empty (and idle) or until the
+ * specified timestamp.  Returns YES if the pool was emptied, NO otherwise.
  */
 - (BOOL) drain: (NSDate*)before;
 
@@ -69,7 +69,7 @@
  */
 - (NSUInteger) flush;
 
-/** Returns humnan resdable pool statistics.
+/** Returns human resdable pool statistics.
  */
 - (NSString*) info;
 
