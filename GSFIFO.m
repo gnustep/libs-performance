@@ -442,15 +442,33 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
   [condition unlock];
 }
 
+- (oneway void) release
+{
+  /* We lock the table while checking, to prevent
+   * another thread from grabbing this object while we are
+   * checking it.
+   * If we are going to deallocate the object, we first remove
+   * it from the table so that no other thread will find it
+   * and try to use it while it is being deallocated.
+   */
+  [classLock lock];
+  if (NSDecrementExtraRefCountWasZero(self))
+    {
+      if (NSMapGet(allFIFOs, name) == self)
+	{
+	  NSMapRemove(allFIFOs, name);
+	}
+      [classLock unlock];
+      [self dealloc];
+    }
+  else
+    {
+      [classLock unlock];
+    }
+}
+
 - (void) dealloc
 {
-  [classLock lock];
-  if (NSMapGet(allFIFOs, name) == self)
-    {
-      NSMapRemove(allFIFOs, name);
-    }
-  [classLock unlock];
-
   [name release];
   [condition release];
   if (0 != _items)
