@@ -240,9 +240,6 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
       [[NSNotificationCenter defaultCenter] removeObserver: self
 	name: NSUserDefaultsDidChangeNotification object: nil];
     }
-  [allCachesLock lock];
-  NSHashRemove(allCaches, (void*)self);
-  [allCachesLock unlock];
   if (my->contents != 0)
     {
       [self shrinkObjects: 0 andSize: 0];
