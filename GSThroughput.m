@@ -43,6 +43,11 @@
 #import	"GSThroughput.h"
 #import	"GSTicker.h"
 
+#if !defined (GNUSTEP)
+#import  "GNUstep.h"
+#endif
+
+
 NSString * const GSThroughputNotification = @"GSThroughputNotification";
 NSString * const GSThroughputCountKey = @"Count";
 NSString * const GSThroughputMaximumKey = @"Maximum";

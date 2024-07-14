@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 42;
+	objectVersion = 46;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -28,6 +28,7 @@
 		85B7DBDD1C034FBA00AF3090 /* NSObject+GSExtensions.m in Sources */ = {isa = PBXBuildFile; fileRef = 85B7DBDB1C034FBA00AF3090 /* NSObject+GSExtensions.m */; };
 		85B7DC031C036A0900AF3090 /* GSFIFO.h in Headers */ = {isa = PBXBuildFile; fileRef = 85B7DC011C036A0900AF3090 /* GSFIFO.h */; };
 		85B7DC041C036A0900AF3090 /* GSFIFO.m in Sources */ = {isa = PBXBuildFile; fileRef = 85B7DC021C036A0900AF3090 /* GSFIFO.m */; };
+		85DA4C012C41D1A900FC0E77 /* GNUstep.h in Headers */ = {isa = PBXBuildFile; fileRef = 85DA4C002C41D1A900FC0E77 /* GNUstep.h */; };
 		8DC2EF530486A6940098B216 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C1666FE841158C02AAC07 /* InfoPlist.strings */; };
 		8DC2EF570486A6940098B216 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7B1FEA5585E11CA2CBB /* Cocoa.framework */; };
 /* End PBXBuildFile section */
@@ -60,6 +61,7 @@
 		85B7DBDB1C034FBA00AF3090 /* NSObject+GSExtensions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSObject+GSExtensions.m"; sourceTree = "<group>"; };
 		85B7DC011C036A0900AF3090 /* GSFIFO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GSFIFO.h; sourceTree = "<group>"; };
 		85B7DC021C036A0900AF3090 /* GSFIFO.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GSFIFO.m; sourceTree = "<group>"; };
+		85DA4C002C41D1A900FC0E77 /* GNUstep.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GNUstep.h; sourceTree = "<group>"; };
 		8DC2EF5A0486A6940098B216 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		D2F7E79907B2D74100F64583 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = /System/Library/Frameworks/CoreData.framework; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
@@ -139,6 +141,7 @@
 				85872EC01284CFC700B4601E /* Performance.h */,
 				85B7DBDA1C034FBA00AF3090 /* NSObject+GSExtensions.h */,
 				85B7DBDB1C034FBA00AF3090 /* NSObject+GSExtensions.m */,
+				85DA4C002C41D1A900FC0E77 /* GNUstep.h */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -180,6 +183,7 @@
 				85872EC51284CFC700B4601E /* GSIOThreadPool.h in Headers */,
 				85872EC71284CFC700B4601E /* GSLinkedList.h in Headers */,
 				85872EC91284CFC700B4601E /* GSSkipMutableArray.h in Headers */,
+				85DA4C012C41D1A900FC0E77 /* GNUstep.h in Headers */,
 				85872ECB1284CFC700B4601E /* GSThreadPool.h in Headers */,
 				85872ECD1284CFC700B4601E /* GSThroughput.h in Headers */,
 				85872ECF1284CFC700B4601E /* GSTicker.h in Headers */,
@@ -217,10 +221,12 @@
 		0867D690FE84028FC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				LastUpgradeCheck = 0510;
 				ORGANIZATIONNAME = gnustep.org;
 			};
 			buildConfigurationList = 1DEB91B108733DA50010E9CD /* Build configuration list for PBXProject "Performance" */;
-			compatibilityVersion = "Xcode 2.4";
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
 				English,
@@ -284,7 +290,7 @@
 		1DEB91AE08733DA50010E9CD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
@@ -304,6 +310,7 @@
 				INSTALL_PATH = "$(HOME)/Library/Frameworks";
 				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = YES;
 				PRODUCT_NAME = Performance;
+				SDKROOT = macosx;
 				WRAPPER_EXTENSION = framework;
 				ZERO_LINK = YES;
 			};
@@ -312,8 +319,7 @@
 		1DEB91AF08733DA50010E9CD /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT_PRE_XCODE_3_1)";
-				ARCHS_STANDARD_32_64_BIT_PRE_XCODE_3_1 = "x86_64 i386 ppc";
+				COMBINE_HIDPI_IMAGES = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				FRAMEWORK_VERSION = A;
@@ -329,6 +335,7 @@
 				INSTALL_PATH = "$(HOME)/Library/Frameworks";
 				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = NO;
 				PRODUCT_NAME = Performance;
+				SDKROOT = macosx;
 				WRAPPER_EXTENSION = framework;
 			};
 			name = Release;
@@ -336,13 +343,13 @@
 		1DEB91B208733DA50010E9CD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(NATIVE_ARCH_ACTUAL)";
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				ONLY_ACTIVE_ARCH = YES;
 				PREBINDING = NO;
 				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = YES;
 				PRODUCT_NAME = Performance;
-				SDKROOT = /Developer/SDKs/MacOSX10.5.sdk;
+				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.5.sdk";
 				SYMROOT = "$(PROJECT_DIR)/build";
 			};
 			name = Debug;
@@ -350,15 +357,13 @@
 		1DEB91B308733DA50010E9CD /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT_PRE_XCODE_3_1)";
-				ARCHS_STANDARD_32_64_BIT_PRE_XCODE_3_1 = "x86_64 i386 ppc";
 				GCC_MODEL_TUNING = "";
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				PREBINDING = NO;
 				PRECOMPS_INCLUDE_HEADERS_FROM_BUILT_PRODUCTS_DIR = YES;
 				PRODUCT_NAME = Performance;
-				SDKROOT = /Developer/SDKs/MacOSX10.5.sdk;
+				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.5.sdk";
 				SYMROOT = "$(PROJECT_DIR)/build";
 			};
 			name = Release;

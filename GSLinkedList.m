@@ -25,13 +25,18 @@
 #import <Foundation/NSException.h>
 #import "GSLinkedList.h"
 
+#if !defined (GNUSTEP)
+#import  "GNUstep.h"
+#endif
+
+
 @implementation	GSListLink
 
 - (void) dealloc
 {
   NSAssert(nil == owner, NSInternalInconsistencyException);
   [item release];
-  [super dealloc];
+  DEALLOC;
 }
 
 - (id) initCircular
@@ -76,7 +81,7 @@
   id	o = item;
 
   item = [anItem retain];
-  [o release];
+  RELEASE(o);
 }
 
 @end
@@ -108,7 +113,7 @@
 	    NSStringFromClass([self class]), NSStringFromSelector(_cmd)];
 	}
       GSLinkedListInsertAfter(link, self, tail);
-      [link retain];
+      RETAIN(link);
     }
 }
 
@@ -120,7 +125,7 @@
 - (void) dealloc
 {
   [self empty];
-  [super dealloc];
+  DEALLOC;
 }
 
 - (void) empty
@@ -132,7 +137,7 @@
       head = link->next;
       link->owner = nil;
       link->next = link->previous = nil;
-      [link release];
+      RELEASE(link);
     }
   tail = nil;
   count = 0;
@@ -205,7 +210,7 @@
 	    NSStringFromClass([self class]), NSStringFromSelector(_cmd)];
 	}
       GSLinkedListInsertAfter(link, self, at);
-      [link retain];
+      RETAIN(link);
     }
 }
 
@@ -245,7 +250,7 @@
 	    NSStringFromClass([self class]), NSStringFromSelector(_cmd)];
 	}
       GSLinkedListInsertBefore(link, self, at);
-      [link retain];
+      RETAIN(link);
     }
 }
 
@@ -264,7 +269,7 @@
 	NSStringFromClass([self class]), NSStringFromSelector(_cmd)];
     }
   GSLinkedListRemove(link, self);
-  [link release];
+  RETAIN(link);
 }
 
 - (GSListLink*) tail
