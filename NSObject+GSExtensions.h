@@ -26,8 +26,8 @@
 
 #import <Foundation/NSObject.h>
 
-#if !defined(GNUSTEP)
-#define RETAIN(x) ([x retain])
+#if !defined (GNUSTEP)
+#import  "GNUstep.h"
 #endif
 
 @class NSHashTable;

@@ -25,6 +25,11 @@
 #import <Foundation/NSObject.h>
 #import <Foundation/NSDate.h>
 
+#if !defined (GNUSTEP)
+#import  "GNUstep.h"
+#endif
+
+
 @class NSArray;
 @class NSCondition;
 @class NSNumber;

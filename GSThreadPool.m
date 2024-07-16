@@ -9,6 +9,11 @@
 #import <Foundation/NSString.h>
 #import <Foundation/NSException.h>
 
+#if !defined (GNUSTEP)
+#import  "GNUstep.h"
+#endif
+
+
 @class	GSThreadPool;
 
 @interface	GSOperation : GSListLink

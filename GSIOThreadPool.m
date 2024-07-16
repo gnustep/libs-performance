@@ -29,7 +29,12 @@
 #import <Foundation/NSTimer.h>
 #import <Foundation/NSException.h>
 #import <Foundation/NSUserDefaults.h>
+#import <Foundation/NSAutoreleasePool.h>
 #import	"GSIOThreadPool.h"
+
+#if !defined (GNUSTEP)
+#import  "GNUstep.h"
+#endif
 
 /* Protect changes to a thread's counter
  */
