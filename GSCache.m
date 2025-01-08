@@ -489,16 +489,13 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
    * and try to use it while it is being deallocated.
    */
   [allCachesLock lock];
-  if (NSDecrementExtraRefCountWasZero(self))
+  if ([self retainCount] == 1
+    && NSHashGet(allCaches, (void*)self) == self)
     {
       NSHashRemove(allCaches, (void*)self);
-      [allCachesLock unlock];
-      [self dealloc];
     }
-  else
-    {
-      [allCachesLock unlock];
-    }
+  [super release];
+  [allCachesLock unlock];
 }
 
 - (id) refreshObject: (id)anObject

@@ -452,19 +452,13 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
    * and try to use it while it is being deallocated.
    */
   [classLock lock];
-  if (NSDecrementExtraRefCountWasZero(self))
+  if ([self retainCount] == 1
+    && NSMapGet(allFIFOs, name) == self)
     {
-      if (NSMapGet(allFIFOs, name) == self)
-	{
-	  NSMapRemove(allFIFOs, name);
-	}
-      [classLock unlock];
-      [self dealloc];
+      NSMapRemove(allFIFOs, name);
     }
-  else
-    {
-      [classLock unlock];
-    }
+  [super release];
+  [classLock unlock];
 }
 
 - (void) dealloc
@@ -685,7 +679,7 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
   if ((c = [a count]) > 0)
     {
       NSTimeInterval	l;
-      NSNumber		*n;
+      NSNumber		*number;
 
       waitBoundaries
 	= (NSTimeInterval*)NSAllocateCollectable(c * sizeof(NSTimeInterval), 0);
@@ -695,9 +689,9 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
       putWaitCounts
 	= (uint64_t*)NSAllocateCollectable(c * sizeof(uint64_t), 0);
 
-      n = [a lastObject];
-      if (NO == [n isKindOfClass: [NSNumber class]]
-	|| (l = [n doubleValue]) <= 0.0)
+      number = [a lastObject];
+      if (NO == [number isKindOfClass: [NSNumber class]]
+	|| (l = [number doubleValue]) <= 0.0)
 	{
 	  [self release];
 	  [NSException raise: NSInvalidArgumentException
@@ -709,9 +703,9 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 	{
 	  NSTimeInterval	t;
 
-	  n = [a objectAtIndex: c];
-	  if (NO == [n isKindOfClass: [NSNumber class]]
-	    || (t = [n doubleValue]) <= 0.0 || t >= l)
+	  number = [a objectAtIndex: c];
+	  if (NO == [number isKindOfClass: [NSNumber class]]
+	    || (t = [number doubleValue]) <= 0.0 || t >= l)
 	    {
 	      [self release];
 	      [NSException raise: NSInvalidArgumentException
@@ -722,12 +716,12 @@ stats(NSTimeInterval ti, uint32_t max, NSTimeInterval *bounds, uint64_t *bands)
 	}
     }
   [classLock lock];
-  if (nil != NSMapGet(allFIFOs, n))
+  if (nil != NSMapGet(allFIFOs, name))
     {
       [classLock unlock];
       [self release];
       [NSException raise: NSInvalidArgumentException
-		  format: @"GSFIFO ... name (%@) already in use", n];
+		  format: @"GSFIFO ... name (%@) already in use", name];
     }
   NSMapInsert(allFIFOs, name, self);
   [classLock unlock];
