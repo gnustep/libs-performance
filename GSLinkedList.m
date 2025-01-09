@@ -377,20 +377,17 @@ GSLinkedListInsertAfter(GSListLink *link, GSLinkedList *list, GSListLink *at)
         {
           at = list->tail;
         }
-      link->next = at ? at->next : nil;
-      if (nil == link->next)
+      link->next = at->next;
+      link->previous = at;
+      if (at->next)
+	{
+	  at->next->previous = link;
+	}
+      at->next = link;
+      if (list->tail == at)
 	{
 	  list->tail = link;
 	}
-      else
-	{
-	  link->next->previous = link;
-	}
-      if (at)
-	{
-	  at->next = link;
-	}
-      link->previous = at;
     }
   link->owner = list;
   list->count++;
@@ -410,16 +407,16 @@ GSLinkedListInsertBefore(GSListLink *link, GSLinkedList *list, GSListLink *at)
           at = list->head;
         }
       link->previous = at->previous;
-      if (nil == link->previous)
+      link->next = at;
+      if (at->previous)
+	{
+	  at->previous->next = link;
+	}
+      at->previous = link;
+      if (list->head == at)
 	{
 	  list->head = link;
 	}
-      else
-	{
-	  link->previous->next = link;
-	}
-      at->previous = link;
-      link->next = at;
     }
   link->owner = list;
   list->count++;
@@ -448,7 +445,7 @@ GSLinkedListRemove(GSListLink *link, GSLinkedList *list)
           list->tail->next = nil;
 	}
     }
-  else if (nil != link->next)
+  else
     {
       link->next->previous = link->previous;
     }
@@ -521,6 +518,17 @@ GSLinkedListMoveToTail(GSListLink *link, GSLinkedList *list)
 - (GSListLink*) addObject: (id)anObject
 {
   return GSLinkStoreInsertObjectAfter(anObject, self, tail);
+}
+
+- (void) consumeLink: (GSListLink*)link
+{
+  NSAssert(link, NSInvalidArgumentException);
+  NSAssert(nil == link->previous, NSInvalidArgumentException);
+  NSAssert(nil == link->next, NSInvalidArgumentException);
+  NSAssert(nil == link->owner, NSInvalidArgumentException);
+  NSAssert(nil == link->item, NSInvalidArgumentException);
+  NSAssert([link class] == linkClass, NSInvalidArgumentException);
+  GSLinkStoreConsumeLink(self, link);
 }
 
 - (void) dealloc
@@ -626,7 +634,7 @@ GSLinkStoreInsertObjectAfter(
   GSListLink    *link = GSLinkStoreProvideLink(list);
 
   link->item = RETAIN(anObject);
-  GSLinkedListInsertAfter(link, list, (nil == at) ? list->tail : at);
+  GSLinkedListInsertAfter(link, list, at);
   return link;
 }
 
@@ -637,7 +645,7 @@ GSLinkStoreInsertObjectBefore(
   GSListLink    *link = GSLinkStoreProvideLink(list);
 
   link->item = RETAIN(anObject);
-  GSLinkedListInsertBefore(link, list, (nil == at) ? list->head : at);
+  GSLinkedListInsertBefore(link, list, at);
   return link;
 }
 

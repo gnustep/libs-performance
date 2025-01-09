@@ -338,6 +338,13 @@ GSLinkedListRemove(GSListLink *link, GSLinkedList *list);
  */
 - (GSListLink*) addObject: (id)anObject;
 
+/** Adds an link to the list of unused links in the store.
+ * Raises an NSInvalidArgumentException if the link is still in use
+ * or if it is not of the class used by this instance.
+ * Calls GSLinkStoreConsumeLink() to add a usable link ot the store.
+ */
+- (void) consumeLink: (GSListLink*)link;
+
 /** Returns the first (head) object in the list or nil if the list is empty.
  */
 - (id) firstObject;
