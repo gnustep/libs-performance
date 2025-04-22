@@ -862,17 +862,22 @@ appendDurationInfo(DurationInfo *info, NSMutableString *m, NSTimeInterval base)
   return [m autorelease];
 }
 
-- (void) endDuration
+- (NSTimeInterval) endDuration
 {
+  NSTimeInterval    ti;
+
   if (my->started > 0.0)
     {
-      NSTimeInterval    ti;
-
       ti = (*tiImp)(NSDateClass, tiSel) - my->started;
       my->event = nil;
       my->started = 0.0;
       [self addDuration: ti];
     }
+  else
+    {
+      ti = 0.0;
+    }
+  return ti;
 }
 
 - (BOOL) enableNotifications: (BOOL)flag
@@ -883,14 +888,22 @@ appendDurationInfo(DurationInfo *info, NSMutableString *m, NSTimeInterval base)
   return old;
 }
 
-- (void) endDuration: (unsigned)count
+- (NSTimeInterval) endDuration: (unsigned)count
 {
+  NSTimeInterval    ti;
+
   if (my->started > 0.0)
     {
-      [self add: count duration: (*tiImp)(NSDateClass, tiSel) - my->started];
+      ti = (*tiImp)(NSDateClass, tiSel) - my->started;
+      [self add: count duration: ti];
       my->event = nil;
       my->started = 0.0;
     }
+  else
+    {
+      ti = 0.0;
+    }
+  return ti;
 }
 
 - (id) init

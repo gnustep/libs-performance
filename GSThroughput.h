@@ -171,25 +171,24 @@ extern NSString * const GSThroughputTotalKey;
  */
 - (BOOL) enableNotifications: (BOOL)flag;
 
-/**
- * Ends duration recording for the current event started by a matching
+/** Ends duration recording for the current event started by a matching
  * call to the -startDuration: method.<br />
+ * Returns the interval between start and end (or 0.0 if there is none).<br />
  * Calls to this method without a matching call to -startDuration: are
  * quietly ignored.  This is useful if you wish to time a function or
  * method by starting/ending timing before/after calling it, but also
  * want the function/method to be able to end timing of itsself before
  * it calls another function/method.
  */
-- (void) endDuration;
+- (NSTimeInterval) endDuration;
 
-/**
- * Acts like -endDuration but records the duration as a total for
+/** Acts like -endDuration but records the duration as a total for
  * count events (if count is zero then this ends the interval started
  * by the corresponding -startDuration: call, but nothing is logged).<br />
  * This can be used when recording multiple events where the overhead of
  * timing each event individually would be too great.
  */
-- (void) endDuration: (unsigned)count;
+- (NSTimeInterval) endDuration: (unsigned)count;
 
 /**
  * Initialises the receiver for duration logging (in the current thread only)
