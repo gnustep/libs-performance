@@ -1,3 +1,9 @@
+2025-04-23 Richard Frith-Macdonald  <rfm@gnu.org>
+
+	* GSThroughput.m: add code to ensure that instances are deallocated
+	by the thread that owns them (to avoid the possibility of the hash
+	table containing the instances owned by the thread being corrupted).
+
 2023-02-03 Richard Frith-Macdonald  <rfm@gnu.org>
 
 	* GSIOThreadPool.m: If the maximum number of threads desired is

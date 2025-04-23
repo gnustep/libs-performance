@@ -107,9 +107,11 @@ typedef struct {
 
 @interface	GSThroughputThread : NSObject
 {
+  NSThread		*thread;	// Owning thread
   @public
   NSHashTable		*instances;
 }
+- (NSThread*) thread;
 @end
 
 @interface	GSThroughput (Private)
@@ -122,6 +124,7 @@ typedef struct {
 
 
 @implementation	GSThroughputThread
+
 - (void) dealloc
 {
   if (instances != 0)
@@ -138,6 +141,7 @@ typedef struct {
       NSFreeHashTable(instances);
       instances = 0;
     }
+  DESTROY(thread);
   [super dealloc];
 }
 
@@ -146,10 +150,15 @@ typedef struct {
   if (nil != (self = [super init]))
     {
       instances = NSCreateHashTable(NSNonRetainedObjectHashCallBacks, 0);
+      ASSIGN(thread, [NSThread currentThread]);
     }
   return self;
 }
 
+- (NSThread*) thread
+{
+  return thread;
+}
 @end
 
 
@@ -641,10 +650,35 @@ typedef struct {
   return NSOrderedAscending;
 }
 
+- (oneway void) release
+{
+  if (_data != NULL && my->thread != nil && [self retainCount] == 1)  
+    {
+      NSThread	*t = [my->thread thread];
+
+      if ([NSThread currentThread] != t)
+        {
+          [self performSelector: _cmd
+		       onThread: t
+		     withObject: nil
+		  waitUntilDone: NO];
+          return;
+        }
+    }
+  [super release];
+}
+
 - (void) dealloc
 {
   if (_data)
     {
+      NSThread	*t = [my->thread thread];
+
+      /* Deallocation should only occur in owning thread unless we are
+       * already detached from any owner.
+       */
+      NSAssert(nil == t || [NSThread currentThread] == t,
+	NSInternalInconsistencyException);
       if (my->seconds != 0)
 	{
 	  NSZoneFree(NSDefaultMallocZone(), my->seconds);

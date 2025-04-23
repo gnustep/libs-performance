@@ -68,7 +68,7 @@ extern NSString * const GSThroughputTotalKey;
  */
 @interface	GSThroughput : NSObject
 {
-  void	*_data;
+  void		*_data;
 }
 
 /**
