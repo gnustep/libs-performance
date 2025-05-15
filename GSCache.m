@@ -283,6 +283,16 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
   return n;
 }
 
+- (void) empty
+{
+  [my->lock lock];
+  if (my->contents)
+    {
+      NSResetMapTable(my->contents);
+    }
+  [my->lock unlock];
+}
+
 - (id) init
 {
   if (nil != (self = [super init]))

@@ -105,6 +105,10 @@
  */
 - (NSString*) description;
 
+/** Removes all objects from the cache.
+ */
+- (void) empty;
+
 /**
  * Return the default lifetime for items set in the cache.<br />
  * A value of zero means that items are not purged based on lifetime.

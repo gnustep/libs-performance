@@ -1,3 +1,8 @@
+2025-05-15 Richard Frith-Macdonald  <rfm@gnu.org>
+
+	GSCache.h: Add -empty method declaration.
+	GSCache.m: Add -empty method to remove all objects from the cache.
+
 2025-04-23 Richard Frith-Macdonald  <rfm@gnu.org>
 
 	* GSThroughput.m: add code to ensure that instances are deallocated
