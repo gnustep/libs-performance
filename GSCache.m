@@ -285,12 +285,7 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 
 - (void) empty
 {
-  [my->lock lock];
-  if (my->contents)
-    {
-      NSResetMapTable(my->contents);
-    }
-  [my->lock unlock];
+  [self shrinkObjects: 0 andSize: 0];
 }
 
 - (id) init
