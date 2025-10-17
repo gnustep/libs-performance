@@ -405,22 +405,8 @@ GSLinkStoreConsumeLink(GSLinkStore *list, GSListLink *link)
  * The link is still nominally owned by the store and must be inserted into
  * the list or returned to the free list.
  */
-static inline GSListLink*
-GSLinkStoreProvideLink(GSLinkStore *list)
-{
-  GSListLink    *link = list->free;
-
-  if (nil == link)
-    {
-      link = [list->linkClass new];
-    }
-  else
-    {
-      list->free = link->next;
-      link->next = nil;
-    }
-  return link;
-}
+extern GSListLink*
+GSLinkStoreProvideLink(GSLinkStore *list);
 
 /** Adds the object to the list after the specified link.<br />
  * Calls GSLinkedListInsertAfter().<br />
@@ -438,7 +424,8 @@ extern GSListLink*
 GSLinkStoreInsertObjectBefore(
   NSObject *anObject, GSLinkStore *list, GSListLink *at);
 
-/** Removes the object held in the specified link.<br />
+/** Removes the object held in the specified link and returns the
+ * link to the free list of the store.<br />
  * If at is nil or is not owned by the list, this does nothing.
  */
 extern void

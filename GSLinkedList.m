@@ -649,6 +649,23 @@ GSLinkStoreInsertObjectBefore(
   return link;
 }
 
+GSListLink*
+GSLinkStoreProvideLink(GSLinkStore *list)
+{
+  GSListLink    *link = list->free;
+
+  if (nil == link)
+    {
+      link = [list->linkClass new];
+    }
+  else
+    {
+      list->free = link->next;
+      link->next = nil;
+    }
+  return link;
+}
+
 void
 GSLinkStoreRemoveObjectAt(GSLinkStore *list, GSListLink *at)
 {
