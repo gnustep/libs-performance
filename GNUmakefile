@@ -76,6 +76,7 @@ Performance_AGSDOC_FILES += \
 JAVA_WRAPPER_NAME = Performance
 
 Performance_HEADER_FILES_INSTALL_DIR = Performance
+Performance_DOC_INSTALL_DIR = Developer
 
 -include GNUmakefile.preamble
 
