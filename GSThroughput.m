@@ -36,6 +36,7 @@
 #import	<Foundation/NSNotification.h>
 #import	<Foundation/NSHashTable.h>
 #import	<Foundation/NSAutoreleasePool.h>
+#import	<Foundation/NSLock.h>
 #import	<Foundation/NSDebug.h>
 #import	<Foundation/NSThread.h>
 #import	<Foundation/NSValue.h>
@@ -57,11 +58,10 @@ NSString * const GSThroughputTotalKey = @"Total";
 
 #define	MAXDURATION	24.0*60.0*60.0
 
-@class	GSThroughputThread;
+static NSLock		*classLock = nil;
+static NSHashTable	*allObjects = nil;
 
-static Class		NSDateClass = 0;
-static SEL		tiSel = 0;
-static NSTimeInterval	(*tiImp)(Class,SEL) = 0;
+@class	GSThroughputThread;
 
 typedef	struct {
   unsigned		cnt;	// Number of events.
@@ -93,6 +93,7 @@ typedef struct {
   NSString		*event;		// Name of current event 
   NSString		*name;		// Name of this instance
   GSThroughputThread	*thread;	// Thread info
+  NSRecursiveLock	*lock;
 } Item;
 #define	my	((Item*)_data)
 
@@ -103,100 +104,35 @@ typedef struct {
 #define	dminutes	((DurationInfo*)my->minutes)
 #define	dperiods	((DurationInfo*)my->periods)
 
-
+static SEL	lSel;
+static void (*lImp)(NSRecursiveLock*, SEL);
+static SEL	uSel;
+static void (*uImp)(NSRecursiveLock*, SEL);
 
-@interface	GSThroughputThread : NSObject
-{
-  NSThread		*thread;	// Owning thread
-  @public
-  NSHashTable		*instances;
-}
-- (NSThread*) thread;
-@end
-
-@interface	GSThroughput (Private)
-+ (GSThroughputThread*) _threadInfo;
-+ (void) newSecond: (GSThroughputThread*)t;
-- (void) _detach;
-- (void) _update;
-@end
-
-
-
-@implementation	GSThroughputThread
-
-- (void) dealloc
-{
-  if (instances != 0)
-    {
-      NSHashEnumerator	e;
-      GSThroughput	*i;
-
-      e = NSEnumerateHashTable(instances);
-      while ((i = (GSThroughput*)NSNextHashEnumeratorItem(&e)) != nil)
-	{
-	  [i _detach];
-	}
-      NSEndHashTableEnumeration(&e);
-      NSFreeHashTable(instances);
-      instances = 0;
-    }
-  DESTROY(thread);
-  [super dealloc];
+#define	DOLOCK() \
+{ \
+  (*lImp)(my->lock, lSel); \
 }
 
-- (id) init
-{
-  if (nil != (self = [super init]))
-    {
-      instances = NSCreateHashTable(NSNonRetainedObjectHashCallBacks, 0);
-      ASSIGN(thread, [NSThread currentThread]);
-    }
-  return self;
+#define	UNLOCK() \
+{ \
+  (*uImp)(my->lock, uSel); \
 }
-
-- (NSThread*) thread
-{
-  return thread;
-}
-@end
 
 
 
 @implementation	GSThroughput (Private)
 
-+ (GSThroughputThread*) _threadInfo
++ (void) newSecond: (id)userInfo
 {
-  GSThroughputThread	*t;
+  NSArray	*a = [self allInstances];
+  NSEnumerator	*e = [a objectEnumerator];
+  GSThroughput	*i;
 
-  t = [[[NSThread currentThread] threadDictionary]
-    objectForKey: @"GSThroughput"];
-  if (t == nil)
-    {
-      t = [GSThroughputThread new];
-      [[[NSThread currentThread] threadDictionary] setObject: t
-       forKey: @"GSThroughput"];
-      [t release];
-    }
-  return t;
-}
-
-+ (void) newSecond: (GSThroughputThread*)t
-{
-  NSHashEnumerator	e;
-  GSThroughput		*i;
-
-  e = NSEnumerateHashTable(t->instances);
-  while ((i = (GSThroughput*)NSNextHashEnumeratorItem(&e)) != nil)
+  while ((i = (GSThroughput*)[e nextObject]) != nil)
     {
       [i _update];
     }
-  NSEndHashTableEnumeration(&e);
-}
-
-- (void) _detach
-{
-  my->thread = nil;
 }
 
 - (void) _update
@@ -204,18 +140,14 @@ typedef struct {
   NSTimeInterval        base;
   unsigned	        tick;
 
-  if (my->thread == nil)
-    {
-      return;
-    }
-
+  DOLOCK()
   base = GSTickerTimeStart();
   tick = GSTickerTimeTick();
   if (my->numberOfPeriods > 0)
     {
       unsigned	i;
 
-      if (my->supportDurations == YES)
+      if (my->supportDurations)
 	{
 	  while (my->last < tick)
 	    {
@@ -376,7 +308,7 @@ typedef struct {
           if (my->second++ == 59)
             {
               my->second = 0;
-              if (my->supportDurations == YES)
+              if (my->supportDurations)
                 {
                   DurationInfo		*info = &dseconds[1];
 
@@ -431,6 +363,7 @@ typedef struct {
           my->last++;
         }
     }
+  UNLOCK()
 }
 
 @end
@@ -441,65 +374,51 @@ typedef struct {
 
 + (NSArray*) allInstances
 {
-  GSThroughputThread	*t;
-  NSArray		*a;
+  NSArray	*a;
 
-  t = [[[NSThread currentThread] threadDictionary]
-    objectForKey: @"GSThroughput"];
-  if (t == nil)
-    {
-      a = nil;
-    }
-  else
-    {
-      a = NSAllHashTableObjects(t->instances);
-    }
+  [classLock lock];
+  a = NSAllHashTableObjects(allObjects);
+  [classLock unlock];
   return a;
 }
 
 + (NSString*) description
 {
-  GSThroughputThread	*t;
   NSMutableString	*ms;
+  NSArray		*a;
+  NSEnumerator		*e;
+  GSThroughput		*c;
 
+  a = [[self allInstances] sortedArrayUsingSelector: @selector(compare:)];
   ms = [NSMutableString stringWithString: [super description]];
-  t = [[[NSThread currentThread] threadDictionary]
-    objectForKey: @"GSThroughput"];
-  if (t != nil)
+  e = [a objectEnumerator];
+  while ((c = (GSThroughput*)[e nextObject]) != nil)
     {
-      NSArray		*a;
-      NSEnumerator	*e;
-      GSThroughput	*c;
-
-      a = [NSAllHashTableObjects(t->instances) sortedArrayUsingSelector:
-        @selector(compare:)];
-      e = [a objectEnumerator];
-      while ((c = (GSThroughput*)[e nextObject]) != nil)
-	{
-	  [ms appendFormat: @"\n%@", [c description]];
-	}
+      [ms appendFormat: @"\n%@", [c description]];
     }
   return ms;
 }
 
 + (void) initialize
 {
-  if (NSDateClass == 0)
+  if (nil == classLock)
     {
-      NSDateClass = [NSDate class];
-      tiSel = @selector(timeIntervalSinceReferenceDate);
-      tiImp
-	= (NSTimeInterval (*)(Class,SEL))[NSDateClass methodForSelector: tiSel];
+      classLock = [NSLock new];
+      ASSIGN(allObjects, [NSHashTable weakObjectsHashTable]); 
+      lSel = @selector(lock);
+      lImp = (void (*)(id,SEL))[NSRecursiveLock
+	instanceMethodForSelector: lSel];
+      uSel = @selector(unlock);
+      uImp = (void (*)(id,SEL))[NSRecursiveLock
+	instanceMethodForSelector: uSel];
     }
 }
 
 + (void) setTick: (BOOL)aFlag
 {
-  if (aFlag == YES)
+  if (aFlag)
     {
-      GSThroughputThread	*t = [self _threadInfo];
-
-      [GSTicker registerObserver: (id<GSTicker>)self userInfo: t];
+      [GSTicker registerObserver: (id<GSTicker>)self userInfo: nil];
     }
   else
     {
@@ -509,16 +428,17 @@ typedef struct {
 
 + (void) tick
 {
-  [self newSecond: [self _threadInfo]];
+  [self newSecond: nil];
 }
 
 - (void) add: (unsigned)count
 {
-  if (NO != my->supportDurations)
+  if (my->supportDurations)
     {
       [NSException raise: NSInternalInconsistencyException
                   format: @"-add: called when set for durations"];
     }
+  DOLOCK()
   if (my->numberOfPeriods == 0)
     {
       cseconds[0].cnt += count; // Total
@@ -528,16 +448,18 @@ typedef struct {
     {
       cseconds[my->second].cnt += count;
     }
+  UNLOCK()
 }
 
 - (void) add: (unsigned)count duration: (NSTimeInterval)length
 {
-  if (YES != my->supportDurations)
+  if (NO == my->supportDurations)
     {
       [NSException raise: NSInternalInconsistencyException
                   format: @"-add:duration: called when not set for durations"];
     }
 
+  DOLOCK()
   if (count > 0)
     {
       NSTimeInterval	total = length;
@@ -582,6 +504,7 @@ typedef struct {
             }
         }
     }
+  UNLOCK()
 }
 
 - (void) addDuration: (NSTimeInterval)length
@@ -589,12 +512,13 @@ typedef struct {
   unsigned      from;
   unsigned      to;
 
-  if (YES != my->supportDurations)
+  if (NO == my->supportDurations)
     {
       [NSException raise: NSInternalInconsistencyException
                   format: @"-addDuration: called when not set for durations"];
     }
 
+  DOLOCK()
   if (my->numberOfPeriods == 0)
     {
       from = 0; // Total
@@ -628,6 +552,7 @@ typedef struct {
             }
         }
     }
+  UNLOCK()
 }
 
 - (NSComparisonResult) compare: (id)other
@@ -650,49 +575,20 @@ typedef struct {
   return NSOrderedAscending;
 }
 
-- (oneway void) release
-{
-  if (_data != NULL && my->thread != nil && [self retainCount] == 1)  
-    {
-      NSThread	*t = [my->thread thread];
-
-      if ([NSThread currentThread] != t)
-        {
-          [self performSelector: _cmd
-		       onThread: t
-		     withObject: nil
-		  waitUntilDone: NO];
-          return;
-        }
-    }
-  [super release];
-}
-
 - (void) dealloc
 {
   if (_data)
     {
-      NSThread	*t = [my->thread thread];
-
-      /* Deallocation should only occur in owning thread unless we are
-       * already detached from any owner.
-       */
-      NSAssert(nil == t || [NSThread currentThread] == t,
-	NSInternalInconsistencyException);
       if (my->seconds != 0)
 	{
 	  NSZoneFree(NSDefaultMallocZone(), my->seconds);
 	}
-      [my->name release];
-      if (my->thread != nil)
-	{
-	  NSHashRemove(my->thread->instances, (void*)self);
-	  my->thread = nil;
-	}
+      RELEASE(my->name);
+      RELEASE(my->lock);
       NSZoneFree(NSDefaultMallocZone(), _data);
       _data = 0;
     }
-  [super dealloc];
+  DEALLOC
 }
 
 static void 
@@ -725,184 +621,183 @@ appendDurationInfo(DurationInfo *info, NSMutableString *m, NSTimeInterval base)
 
 - (NSString*) description
 {
-  NSAutoreleasePool     *pool = [NSAutoreleasePool new];
-  NSString		*n = my->name;
   NSMutableString	*m;
+
+  ENTER_POOL
+  NSTimeInterval	baseTime = GSTickerTimeStart();
+  unsigned		tick;
+  NSString		*n;
   unsigned		i;
 
-  if (n == nil)
+  DOLOCK()
+  if ((n = my->name) == nil)
     {
       n = [super description];
     }
   m = [n mutableCopy];
 
-  if (my->thread != nil)
+  if (my->numberOfPeriods == 0)
     {
-      NSTimeInterval	baseTime = GSTickerTimeStart();
-      unsigned		tick;
-
-      if (my->numberOfPeriods == 0)
+      if (my->supportDurations)
 	{
-	  if (my->supportDurations == YES)
-	    {
-	      DurationInfo	*info = &dseconds[0];
+	  DurationInfo	*info = &dseconds[0];
 
-	      [m appendFormat: @": cnt %u, max %g, min %g, avg %g",
-		info->cnt, info->max,
-		info->min == MAXDURATION ? 0.0 : info->min,
-		info->cnt == 0 ? 0 : info->sum / info->cnt];
+	  [m appendFormat: @": cnt %u, max %g, min %g, avg %g",
+	    info->cnt, info->max,
+	    info->min == MAXDURATION ? 0.0 : info->min,
+	    info->cnt == 0 ? 0 : info->sum / info->cnt];
+	}
+      else
+	{
+	  CountInfo	*info = &cseconds[0];
+
+	  [m appendFormat: @": cnt %u", info->cnt];
+	}
+    }
+  else
+    {
+      if (my->supportDurations)
+	{
+	  [m appendString: @"\nSeconds in current minute:\n"];
+	  if (my->second > 0)
+	    {
+	      tick = 0;
+	      for (i = 0; i < my->second; i++)
+		{
+		  DurationInfo	*info = &dseconds[i];
+
+		  if (info->tick != tick)
+		    {
+		      tick = info->tick;
+		      appendDurationInfo(info, m, baseTime);
+		    }
+		}
 	    }
-	  else
-	    {
-	      CountInfo	*info = &cseconds[0];
 
-	      [m appendFormat: @": cnt %u", info->cnt];
+	  [m appendString: @"\nPrevious minutes in current period:\n"];
+	  if (my->minute > 0)
+	    {
+	      tick = 0;
+	      for (i = 0; i < my->minute; i++)
+		{
+		  DurationInfo	*info = &dminutes[i];
+
+		  if (info->tick != tick)
+		    {
+		      tick = info->tick;
+		      appendDurationInfo(info, m, baseTime);
+		    }
+		}
+	    }
+
+	  [m appendString: @"\nPrevious periods:\n"];
+	  if (my->period > 0)
+	    {
+	      tick = 0;
+	      /* Periods from last cycle
+	       */
+	      for (i = my->period; i < my->numberOfPeriods; i++)
+		{
+		  DurationInfo	*info = &dperiods[i];
+
+		  if (info->tick != tick)
+		    {
+		      tick = info->tick;
+		      appendDurationInfo(info, m, baseTime);
+		    }
+		}
+	      /* Periods from current cycle
+	       */
+	      for (i = 0; i < my->period; i++)
+		{
+		  DurationInfo	*info = &dperiods[i];
+
+		  if (info->tick != tick)
+		    {
+		      tick = info->tick;
+		      appendDurationInfo(info, m, baseTime);
+		    }
+		}
 	    }
 	}
       else
 	{
-	  if (my->supportDurations == YES)
+	  [m appendString: @"\nSeconds in current minute:\n"];
+	  if (my->second > 0)
 	    {
-	      [m appendString: @"\nSeconds in current minute:\n"];
-	      if (my->second > 0)
+	      tick = 0;
+	      for (i = 0; i < my->second; i++)
 		{
-		  tick = 0;
-		  for (i = 0; i < my->second; i++)
+		  CountInfo		*info = &cseconds[i];
+
+		  if (info->tick != tick)
 		    {
-		      DurationInfo	*info = &dseconds[i];
-
-		      if (info->tick != tick)
-			{
-			  tick = info->tick;
-			  appendDurationInfo(info, m, baseTime);
-			}
-		    }
-		}
-
-	      [m appendString: @"\nPrevious minutes in current period:\n"];
-	      if (my->minute > 0)
-		{
-		  tick = 0;
-		  for (i = 0; i < my->minute; i++)
-		    {
-		      DurationInfo	*info = &dminutes[i];
-
-		      if (info->tick != tick)
-			{
-			  tick = info->tick;
-			  appendDurationInfo(info, m, baseTime);
-			}
-		    }
-		}
-
-	      [m appendString: @"\nPrevious periods:\n"];
-	      if (my->period > 0)
-		{
-		  tick = 0;
-                  /* Periods from last cycle
-                   */
-		  for (i = my->period; i < my->numberOfPeriods; i++)
-		    {
-		      DurationInfo	*info = &dperiods[i];
-
-		      if (info->tick != tick)
-			{
-			  tick = info->tick;
-			  appendDurationInfo(info, m, baseTime);
-			}
-		    }
-                  /* Periods from current cycle
-                   */
-		  for (i = 0; i < my->period; i++)
-		    {
-		      DurationInfo	*info = &dperiods[i];
-
-		      if (info->tick != tick)
-			{
-			  tick = info->tick;
-			  appendDurationInfo(info, m, baseTime);
-			}
+		      tick = info->tick;
+		      appendCountInfo(info, m, baseTime);
 		    }
 		}
 	    }
-	  else
+
+	  [m appendString: @"\nPrevious minutes in current period:\n"];
+	  if (my->minute > 0)
 	    {
-	      [m appendString: @"\nSeconds in current minute:\n"];
-	      if (my->second > 0)
+	      tick = 0;
+	      for (i = 0; i < my->minute; i++)
 		{
-		  tick = 0;
-		  for (i = 0; i < my->second; i++)
-		    {
-		      CountInfo		*info = &cseconds[i];
+		  CountInfo		*info = &cminutes[i];
 
-		      if (info->tick != tick)
-			{
-			  tick = info->tick;
-			  appendCountInfo(info, m, baseTime);
-			}
+		  if (info->tick != tick)
+		    {
+		      tick = info->tick;
+		      appendCountInfo(info, m, baseTime);
 		    }
 		}
+	    }
 
-	      [m appendString: @"\nPrevious minutes in current period:\n"];
-	      if (my->minute > 0)
+	  [m appendString: @"\nPrevious periods:\n"];
+	  if (my->period > 0)
+	    {
+	      tick = 0;
+	      /* Periods from last cycle
+	       */
+	      for (i = my->period; i < my->numberOfPeriods; i++)
 		{
-		  tick = 0;
-		  for (i = 0; i < my->minute; i++)
-		    {
-		      CountInfo		*info = &cminutes[i];
+		  CountInfo		*info = &cperiods[i];
 
-		      if (info->tick != tick)
-			{
-			  tick = info->tick;
-			  appendCountInfo(info, m, baseTime);
-			}
+		  if (info->tick != tick)
+		    {
+		      tick = info->tick;
+		      appendCountInfo(info, m, baseTime);
 		    }
 		}
-
-	      [m appendString: @"\nPrevious periods:\n"];
-	      if (my->period > 0)
+	      /* Periods from current cycle
+	       */
+	      for (i = 0; i < my->period; i++)
 		{
-		  tick = 0;
-                  /* Periods from last cycle
-                   */
-		  for (i = my->period; i < my->numberOfPeriods; i++)
-                    {
-		      CountInfo		*info = &cperiods[i];
+		  CountInfo		*info = &cperiods[i];
 
-		      if (info->tick != tick)
-			{
-			  tick = info->tick;
-			  appendCountInfo(info, m, baseTime);
-			}
-                    }
-                  /* Periods from current cycle
-                   */
-		  for (i = 0; i < my->period; i++)
+		  if (info->tick != tick)
 		    {
-		      CountInfo		*info = &cperiods[i];
-
-		      if (info->tick != tick)
-			{
-			  tick = info->tick;
-			  appendCountInfo(info, m, baseTime);
-			}
+		      tick = info->tick;
+		      appendCountInfo(info, m, baseTime);
 		    }
 		}
 	    }
 	}
     }
-
-  [pool release];
-  return [m autorelease];
+  UNLOCK()
+  LEAVE_POOL
+  return AUTORELEASE(m);
 }
 
 - (NSTimeInterval) endDuration
 {
   NSTimeInterval    ti;
 
+  DOLOCK()
   if (my->started > 0.0)
     {
-      ti = (*tiImp)(NSDateClass, tiSel) - my->started;
+      ti = GSTickerTimeNow() - my->started;
       my->event = nil;
       my->started = 0.0;
       [self addDuration: ti];
@@ -911,14 +806,18 @@ appendDurationInfo(DurationInfo *info, NSMutableString *m, NSTimeInterval base)
     {
       ti = 0.0;
     }
+  UNLOCK()
   return ti;
 }
 
 - (BOOL) enableNotifications: (BOOL)flag
 {
-  BOOL  old = my->notify;
+  BOOL  old;
 
+  DOLOCK()
+  old = my->notify;
   my->notify = flag;
+  UNLOCK()
   return old;
 }
 
@@ -926,9 +825,10 @@ appendDurationInfo(DurationInfo *info, NSMutableString *m, NSTimeInterval base)
 {
   NSTimeInterval    ti;
 
+  DOLOCK()
   if (my->started > 0.0)
     {
-      ti = (*tiImp)(NSDateClass, tiSel) - my->started;
+      ti = GSTickerTimeNow() - my->started;
       [self add: count duration: ti];
       my->event = nil;
       my->started = 0.0;
@@ -937,6 +837,7 @@ appendDurationInfo(DurationInfo *info, NSMutableString *m, NSTimeInterval base)
     {
       ti = 0.0;
     }
+  UNLOCK()
   return ti;
 }
 
@@ -958,12 +859,7 @@ appendDurationInfo(DurationInfo *info, NSMutableString *m, NSTimeInterval base)
 
       _data = (Item*)NSZoneCalloc(NSDefaultMallocZone(), 1, sizeof(Item));
 
-      /*
-       * Add this instance to the current thread.
-       */
-      my->thread = [[self class] _threadInfo];
-      NSHashInsert(my->thread->instances, (void*)self);
-
+      my->lock = [NSRecursiveLock new];
       my->supportDurations = aFlag;
       my->notify = NO;
       my->last = GSTickerTimeTick();
@@ -1069,20 +965,30 @@ appendDurationInfo(DurationInfo *info, NSMutableString *m, NSTimeInterval base)
 	    }
 	}
       [c release];
+      [classLock lock];
+      [allObjects addObject: self];
+      [classLock unlock];
     }
   return self;
 }
 
 - (NSString*) name
 {
-  return my->name;
+  NSString	*name;
+
+  DOLOCK()
+  name = RETAIN(my->name);
+  UNLOCK()
+  return AUTORELEASE(name);
 }
 
 - (void) setName: (NSString*)name
 {
+  DOLOCK()
   [name retain];
   [my->name release];
   my->name = name;
+  UNLOCK()
 }
 
 - (void) startDuration: (NSString*)name
@@ -1092,19 +998,25 @@ appendDurationInfo(DurationInfo *info, NSMutableString *m, NSTimeInterval base)
       [NSException raise: NSInternalInconsistencyException
         format: @"-startDuration: for '%@' when not set for durations", name];
     }
+  DOLOCK()
   if (0.0 != my->started)
     {
+      UNLOCK()
       [NSException raise: NSInternalInconsistencyException
         format: @"-startDuration: for '%@' when already started", name];
     }
   if (my->event != nil)
     {
+      NSString	*e = AUTORELEASE(RETAIN(my->event));
+
+      UNLOCK()
       [NSException raise: NSInternalInconsistencyException
         format: @"-startDuration: for '%@' nested inside '%@'",
-	my->event, name];
+	e, name];
     }
-  my->started = (*tiImp)(NSDateClass, tiSel);
+  my->started = GSTickerTimeNow();
   my->event = name;
+  UNLOCK()
 }
 
 @end

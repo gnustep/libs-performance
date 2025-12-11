@@ -1,7 +1,15 @@
+2025-12-11 Richard Frith-Macdonald  <rfm@gnu.org>
+
+	* GSThroughput.h:
+	* GSThroughput.m:
+	Major update to make instances individually thread-safe using locks,
+	and to have a single map (with weak references) of all instances
+	rather than a separate one for each thread.
+
 2025-05-15 Richard Frith-Macdonald  <rfm@gnu.org>
 
-	GSCache.h: Add -empty method declaration.
-	GSCache.m: Add -empty method to remove all objects from the cache.
+	* GSCache.h: Add -empty method declaration.
+	* GSCache.m: Add -empty method to remove all objects from the cache.
 
 2025-04-23 Richard Frith-Macdonald  <rfm@gnu.org>
 

@@ -1,8 +1,8 @@
 /** 
-   Copyright (C) 2005-2008 Free Software Foundation, Inc.
+   Copyright (C) 2005-2025 Free Software Foundation, Inc.
    
    Written by:  Richard Frith-Macdonald <rfm@gnu.org>
-   Date:	October 2005
+   Date:	December 2025
    
    This file is part of the Performance Library.
 
@@ -42,11 +42,9 @@ extern NSString * const GSThroughputTotalKey;
  * <p>The GSThroughput class is used maintain statistics about the number
  * of events or the duration of operations in your software.
  * </p>
- * <p>For performance reasons, the class avoids locking and you must ensure
- * that an instance of the class is only ever used by a single thread
- * (the one in which it was created).  You are responsible for ensuring
- * that a run loop runs in each thread in which you use an instance, so that
- * stats can be updated for that thread every second.
+ * <p>The current version of the class is designed to be thread-safe.
+ * You are responsible for ensuring that a run loop runs in at last one
+ * thread and that the stats are updated from that thread every second.
  * </p>
  * <p>You create an instance of the class for each event/operation that you
  * are interested in monitoring, and you call the -add: or -addDuration:
@@ -57,13 +55,11 @@ extern NSString * const GSThroughputTotalKey;
  * </p>
  * <p>To dump a record of the gathered statistics, you may call the
  * -description method of an instance or the class +description method
- * to dump statistics for all instances in the current thread.<br />
- * If you need to gather a record for all the threads you use, you must
- * generate a dump in each thread and combine the results.
+ * to dump statistics for all instances of the class.
  * </p>
  * <p>To be notified of statistics at the end of each minute, you may call
  * the -enableNotifications: method for an instance.  The notifications are
- * generated in the thread that instance belongs to.
+ * generated in the thread that updates the statistics.
  * </p>
  */
 @interface	GSThroughput : NSObject
@@ -72,13 +68,12 @@ extern NSString * const GSThroughputTotalKey;
 }
 
 /**
- * Return all the current throughput measuring objects in the current thread.
- * NB. This does not return instances from other threads.
+ * Return all the current throughput measuring objects.
  */
 + (NSArray*) allInstances;
 
 /**
- * Return a report on all GSThroughput instances in the current thread...<br />
+ * Return a report on all GSThroughput instances...<br />
  * This calls the [GSThroughput-description] method of the individual instances
  * to get a report on each one.<br />
  * The results are ordered alphabetically by name of the instances (an
@@ -86,10 +81,9 @@ extern NSString * const GSThroughputTotalKey;
  */
 + (NSString*) description;
 
-/**
- * Instructs the monitoring system to use a timer at the start of each second
+/** Instructs the monitoring system to use a timer at the start of each second
  * for keeping its idea of the current time up to date.  This timer is used
- * to call the +tick method in the current thread.<br />
+ * to call the +tick method.<br />
  * Passing a value of NO for aFlag will turn off the timer for the current
  * thread.<br />
  * For the timer to work, the thread's runloop must be running.<br />
@@ -105,7 +99,7 @@ extern NSString * const GSThroughputTotalKey;
  * This should be called at the start of each second (or more often) if
  * you want an accurate breakdown of monitoring by the second.<br />
  * If you don't want to call this yourself, you can call +setTick: to
- * have it called automatically.<br />
+ * have it called automatically by a repeating timer.<br />
  * If you are not using any instances of the class configured to maintain
  * a breakdown of stats by periods, you do not need to call this method.
  */
@@ -191,13 +185,13 @@ extern NSString * const GSThroughputTotalKey;
 - (NSTimeInterval) endDuration: (unsigned)count;
 
 /**
- * Initialises the receiver for duration logging (in the current thread only)
+ * Initialises the receiver for duration logging
  * for fifteen minute periods over the last twentyfour hours.
  */
 - (id) init;
 
 /** <init />
- * <p>Initialises the receiver to maintain stats (for the current thread only)
+ * <p>Initialises the receiver to maintain stats 
  * over a particular time range, specifying whether duration statistics are
  * to be maintained, or just event/transaction counts.
  * </p>
