@@ -121,6 +121,11 @@ static void (*uImp)(NSRecursiveLock*, SEL);
 
 
 
+@interface	GSThroughput (Private)
++ (void) newSecond: (id)userInfo;
+- (void) _update;
+@end
+
 @implementation	GSThroughput (Private)
 
 + (void) newSecond: (id)userInfo
