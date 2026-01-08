@@ -677,12 +677,12 @@ static void removeItem(GSCacheItem *item, GSCacheItem **first)
 
 - (void) setName: (NSString*)name forConfiguration: (BOOL)useDefaults
 {
-  NSString	*c;
-
   [my->lock lock];
-  c = [name copy];
-  [my->name release];
-  my->name = c;
+  if (name != my->name)
+    {
+      [my->name release];
+      my->name = [name copy];
+    }
   useDefaults = (useDefaults ? YES : NO);	// Make sure this is a real bool
   if (my->useDefaults != useDefaults)
     {

@@ -377,13 +377,20 @@ GSLinkedListInsertAfter(GSListLink *link, GSLinkedList *list, GSListLink *at)
         {
           at = list->tail;
         }
-      link->next = at->next;
       link->previous = at;
-      if (at->next)
+      if (at)
 	{
-	  at->next->previous = link;
+          link->next = at->next;
+	  if (at->next)
+	    {
+	      at->next->previous = link;
+	    }
+	  at->next = link;
 	}
-      at->next = link;
+      else
+	{
+	  link->next = nil;
+	}
       if (list->tail == at)
 	{
 	  list->tail = link;
@@ -445,7 +452,7 @@ GSLinkedListRemove(GSListLink *link, GSLinkedList *list)
           list->tail->next = nil;
 	}
     }
-  else
+  else if (link->next)
     {
       link->next->previous = link->previous;
     }
