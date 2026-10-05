@@ -16,14 +16,14 @@
 
 @class	GSThreadPool;
 
-@interface	GSOperation : GSListLink
+@interface	GSThreadPoolOperation : GSListLink
 {
   @public
   SEL		sel;
   NSObject	*arg;
 }
 @end
-@implementation	GSOperation
+@implementation	GSThreadPoolOperation
 - (void) dealloc
 {
   [arg release];
@@ -36,7 +36,7 @@
   @public
   GSThreadPool		*pool;	// Not retained
   NSConditionLock	*lock;
-  GSOperation		*op;
+  GSThreadPoolOperation		*op;
 }
 @end
 
@@ -266,11 +266,11 @@ static GSThreadPool	*shared = nil;
   [poolLock lock];
   if (operations->count < maxOperations && maxThreads > 0)
     {
-      GSOperation	*op = (GSOperation*)unused->head;
+      GSThreadPoolOperation	*op = (GSThreadPoolOperation*)unused->head;
 
       if (nil == op)
 	{
-	  op = [GSOperation new];		// Need a new one
+	  op = [GSThreadPoolOperation new];		// Need a new one
 	}
       else
 	{
@@ -377,9 +377,9 @@ static GSThreadPool	*shared = nil;
 {
   if (NO == suspended)
     {
-      GSOperation	*op;
+      GSThreadPoolOperation	*op;
 
-      while (nil != (op = (GSOperation*)operations->head))
+      while (nil != (op = (GSThreadPoolOperation*)operations->head))
 	{
 	  GSThreadLink	*link = (GSThreadLink*)idle->head;
 
@@ -490,7 +490,7 @@ static GSThreadPool	*shared = nil;
  */
 - (BOOL) _more: (GSThreadLink*)link
 {
-  GSOperation	*op = link->op;
+  GSThreadPoolOperation	*op = link->op;
   BOOL		more = NO;
 
   [poolLock lock];
@@ -509,7 +509,7 @@ static GSThreadPool	*shared = nil;
     {
       [op release];
     }
-  link->op = (GSOperation*)operations->head;
+  link->op = (GSThreadPoolOperation*)operations->head;
   if (nil != link->op)
     {
       GSLinkedListRemove(link->op, operations);
@@ -533,7 +533,7 @@ static GSThreadPool	*shared = nil;
 
   for (;;)
     {
-      GSOperation	*op;
+      GSThreadPoolOperation	*op;
 
       [link->lock lockWhenCondition: 1];
 //NSLog(@"locked");
